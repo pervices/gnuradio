@@ -1,0 +1,26 @@
+From 510dcb439db6cc2ea4b3aabd3d2516d72ee27955 Mon Sep 17 00:00:00 2001
+From: "A. Maitland Bottoms" <bottoms@debian.org>
+Date: Sun, 27 Sep 2020 17:30:52 -0400
+Subject: [PATCH 11/12] look for x-terminal-emulator
+
+---
+ grc/CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/grc/CMakeLists.txt
++++ b/grc/CMakeLists.txt
+@@ -91,12 +91,12 @@
+ 
+ if(UNIX)
+     find_program(GRC_XTERM_EXE
+-        NAMES xterminal-emulator gnome-terminal konsole xterm
++        NAMES x-terminal-emulator gnome-terminal konsole xterm
+         HINTS ENV PATH
+         DOC "graphical terminal emulator used in GRC's no-gui-mode"
+     )
+     if(NOT GRC_XTERM_EXE)
+-        set(GRC_XTERM_EXE "")
++        set(GRC_XTERM_EXE "x-terminal-emulator")
+     endif()
+ else()  # APPLE CYGWIN
+     set(GRC_XTERM_EXE "xterm")

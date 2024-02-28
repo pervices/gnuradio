@@ -1,0 +1,85 @@
+
+pkgname=gnuradio-git
+_gitname=gnuradio
+pkgver=3.10.9.2
+pkgrel=1
+pkgdesc="General purpose DSP and SDR toolkit, with drivers for usrp and fcd."
+arch=('i686' 'x86_64')
+url="https://github.com/gnuradio/gnuradio"
+license=('GPL')
+makedepends=('git' 'cmake' 'boost' 'python-mako' 'log4cpp' 'gcc' 'python' 'lapack' 'python-numpy' 'doxygen' 'mathjax' 'python-cheetah3' 'gtk3' 'fftw' 'zeromq' 'cppzmq' 'gsl' 'qt5-base' 'qwt' 'python-pyqt5' 'python-lxml' 'portaudio' 'thrift' 'spdlog' 'pybind11' 'python-matplotlib' 'python-yaml' 'python-gobject' 'python-cairo' 'libvolk' 'libuhdpv')
+optdepends=('python-lxml: Some GRC modules use lxml optionally for improved performance')
+#source=("file//gnuradio.tar.gz")
+#source=("git+https://github.com/gnuradio/gnuradio.git#branch=maint-3.10")
+source=("https://github.com/gnuradio/gnuradio/archive/refs/tags/v$pkgver.tar.gz")
+md5sums=('SKIP')
+conflicts=('gnuradio' 'gnuradio-companion')
+provides=('gnuradio' 'gnuradio-companion')
+#pkgver() {
+    #cd "$srcdir/$_gitname-$pkgver"
+    #version_major=$(grep -i 'set(version_major' CMakeLists.txt |sed 's/.*VERSION_MAJOR[[:space:]]*\([[:digit:]]*\))/\1/i')
+    #version_api=$(grep -i 'set(version_api' CMakeLists.txt     |sed 's/.*VERSION_API[[:space:]]*\([[:digit:]]*\))/\1/i')
+    #version_abi=$(grep -i 'set(version_abi' CMakeLists.txt     |sed 's/.*VERSION_ABI[[:space:]]*\([[:digit:]]*\))/\1/i')
+    ##version_patch=$(grep -i 'set(version_patch' CMakeLists.txt |sed 's/.*VERSION_PATCH[[:space:]]*\([[:digit:]]*\))/\1/i')
+    ##if [[ $version_patch == 'SET(VERSION_PATCH git)' ]]; then
+    ##    version_patch=0
+    ##fi
+    ##version="${version_major}.${version_api}.${version_abi}.${version_patch}"
+    #version="${version_major}.${version_api}.${version_abi}"
+    #echo "${version}"
+    #git describe --always | sed 's|-|.|g'
+    #git rev-parse --short HEAD > ~/grc_ver
+#}
+
+build() {
+echo export path
+    export PYTHON=python3
+    cd "$srcdir/$_gitname-$pkgver"
+
+    sed -i -e "s|GR_PKG_LIBEXEC_DIR|GR_RUNTIME_DIR|" grc/scripts/freedesktop/CMakeLists.txt
+    msg "Starting build."
+    mkdir -p build
+    cd "$srcdir/$_gitname-$pkgver/build"
+    pwd
+
+
+    cmake \
+          -DPYTHON_EXECUTABLE=/usr/bin/python3 \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DPYTHON_INCLUDE_DIR=$(echo /usr/include/python3*) \
+          -DPYTHON_LIBRARY=$(echo /usr/lib/libpython3.*.so) \
+          -DENABLE_GRC=ON \
+          -DGR_PYTHON_DIR=/usr/lib/python3.11/site-packages \
+          -DVolk_DIR=/usr/lib/cmake/volk \
+          -DENABLE_GR_WXGUI=ON \
+          -DENABLE_GR_QTGUI=ON \
+          -DENABLE_INTERNAL_VOLK=ON \
+          -DCMAKE_INSTALL_PREFIX=/usr \
+          -DENABLE_UHD_RFNOC=OFF \
+          -Wno-dev ../
+
+    make -j$(nproc)
+}
+
+check() {
+    cd "$srcdir/$_gitname-$pkgver/build"
+    export PYTHON=python3
+    #make test
+}
+
+
+package() {
+    depends=('codec2' 'gcc-libs' 'glibc' 'gmp' 'gsl' 'libad9361' 'libuhdpv' 'libunwind' \
+             'libvolk' 'python-click' 'python-click-plugins' 'python-mako' 'python-matplotlib' \
+             'python-numpy' 'python-yaml' 'python-pyzmq' 'python-scipy' 'python-thrift' \
+             'python-cairo' 'python-gobject' 'python-lxml' 'python-opengl' 'python-pyqt5' \
+             'python-pyqtgraph' 'sdl12-compat' 'soapysdr' 'spdlog' 'thrift' 'alsa-lib' \
+             'libasound.so' 'boost-libs' 'fftw' 'fmt' 'jack' 'libiio' 'libsndfile' 'portaudio' \
+             'spdlog' 'zeromq' 'qt5-base' 'qwt' 'gtk3')
+    cd "$srcdir/$_gitname-$pkgver/grc/scripts/freedesktop"
+    install -Dm644 gnuradio-grc.desktop "$pkgdir/usr/share/applications/$pkgbase.desktop"
+    cd "$srcdir/$_gitname-$pkgver/build"
+    make DESTDIR="$pkgdir" install
+    find "$pkgdir/" -name '*.pyc' -delete
+    find "$pkgdir/" -name '*.pyo' -delete
+}

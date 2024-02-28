@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<descriptor>
+
+<gcc_options>
+  -fPIC
+  -g
+  -O2
+  -fstack-protector-strong
+  -Wformat
+  -Werror=format-security
+  -Wdate-time
+  -D_FORTIFY_SOURCE=2
+  -fvisibility=hidden
+  -Wsign-compare
+  -Wall
+  -Wno-uninitialized
+</gcc_options>
+
+<headers>
+debian/gnuradio-dev/usr/include/
+</headers>
+
+<skip_including>
+debian/gnuradio-dev/usr/include/gnuradio/uhd
+</skip_including>
+
+<libs>
+debian/libgnuradio-analog/usr/lib/
+debian/libgnuradio-audio/usr/lib/
+debian/libgnuradio-blocks/usr/lib/
+debian/libgnuradio-channels/usr/lib/
+debian/libgnuradio-digital/usr/lib/
+debian/libgnuradio-dtv/usr/lib/
+debian/libgnuradio-fec/usr/lib/
+debian/libgnuradio-filter/usr/lib/
+debian/libgnuradio-fft/usr/lib/
+debian/libgnuradio-network/usr/lib/
+debian/libgnuradio-pmt/usr/lib/
+debian/libgnuradio-qtgui/usr/lib/
+debian/libgnuradio-runtime/usr/lib/
+debian/libgnuradio-trellis/usr/lib/
+debian/libgnuradio-uhd/usr/lib/
+debian/libgnuradio-video-sdl/usr/lib/
+debian/libgnuradio-vocoder/usr/lib/
+debian/libgnuradio-wavelet/usr/lib/
+debian/libgnuradio-zeromq/usr/lib/
+</libs>
+
+</descriptor>

@@ -1,0 +1,27 @@
+--- a/gr-audio/examples/c++/CMakeLists.txt
++++ b/gr-audio/examples/c++/CMakeLists.txt
+@@ -11,5 +11,5 @@
+ 
+ INSTALL(TARGETS
+     dial_tone
+-    DESTINATION ${GR_PKG_AUDIO_EXAMPLES_DIR}
++    DESTINATION ${GR_RUNTIME_DIR}
+ )
+--- a/gr-qtgui/examples/c++/CMakeLists.txt
++++ b/gr-qtgui/examples/c++/CMakeLists.txt
+@@ -33,5 +33,5 @@
+ 
+ INSTALL(TARGETS
+   display_qt
+-  DESTINATION ${GR_PKG_QTGUI_EXAMPLES_DIR}
++  DESTINATION ${GR_RUNTIME_DIR}
+ )
+--- a/gr-uhd/examples/c++/CMakeLists.txt
++++ b/gr-uhd/examples/c++/CMakeLists.txt
+@@ -13,5 +13,5 @@
+ 
+ INSTALL(TARGETS
+     tags_demo
+-    DESTINATION ${GR_PKG_UHD_EXAMPLES_DIR}
++    DESTINATION ${GR_RUNTIME_DIR}
+ )

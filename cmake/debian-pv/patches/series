@@ -1,0 +1,8 @@
+#usr-bin-examples
+#fix-pkg-config
+#look-for-x-terminal-emulator
+#build-on-hurd
+skip-long-tests
+#cppgen-Add-C-generation-support-to-gr-vocoder
+#avoid-fmt-trouble
+omit-build-path

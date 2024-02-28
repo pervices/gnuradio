@@ -1,0 +1,232 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: gnuradio
+Upstream-Contact: https://www.gnuradio.org/
+Source:
+ git archive --format=tar --prefix=gnuradio-3.10.7.0/ v3.10.7.0 | xz > ../gnuradio_3.10.7.0.orig.tar.xz
+Comment:
+ Packages of versions 3.4 and up by A. Maitland Bottoms <bottoms@debian.org>,
+ GNU Radio was re-packaged by Bdale Garbee <bdale@gag.com> to reflect
+ upstream restructuring on Wed, 6 Sep 2006 16:02:03 -0600.  Much was
+ learned and portions were taken from the previous Debian packages built
+ by Ramakrishnan Muthukrishnan and Steinar H. Gunderson.
+ .
+ GNU Radio was downloaded from https://www.gnuradio.org/
+ .
+ Upstream Authors:
+	Eric Blossom <eb@comsec.com>
+	Matt Ettus <matt@ettus.com>
+	Tom Rondeau <tom@trondeau.com>
+	Johnathan Corgan <jcorgan@corganenterprises.com>
+	Marcus Müller <marcus@hostalia.de>
+	Martin Braun <martin@gnuradio.org>
+	Ben Hilburn
+	Tim O'Shea
+	Jacob Gilbert
+	Jeff Long
+	Josh Morman
+	Derek Kozel
+	GNU Radio Contributors
+ .
+ See the CONTRIBUTING.md file for a more complete list of contributors.
+ The current upstream project leader is Derek Kozel.
+ The current release managers are Josh Morman and Jeff Long.
+Copyright: 2001-2021 Free Software Foundation, Inc.
+License: GPL-3+
+
+Files: CMakeLists.txt
+ cmake/* config.h.in docs/* dtools/* gnuradio-runtime/* gr-*/* grc/*
+ .clang-format .clang-tidy .gitattributes .gitignore .gitmodules
+ .github/* .conda-forge.yml .packaging/* .ci_support/* .scripts/*
+ README.md CHANGELOG.md tools/* CODE_OF_CONDUCT.md VERSIONING
+ CONTRIBUTING.md
+Copyright: 2010-2021 Free Software Foundation, Inc.
+License: GPL-3+
+
+Files: DCO.txt
+Copyright: Copyright (C) 2004, 2006 The Linux Foundation and its contributors.
+License: LF
+ Everyone is permitted to copy and distribute verbatim copies of this
+ license document, but changing it is not allowed.
+
+Files: grc/scripts/freedesktop/org.gnuradio.grc.metainfo.xml
+Copyright: 2020 Marcus Müller <mmueller@gnuradio.org>
+License: CC0-1.0
+
+Files: COPYING
+Copyright: 1989, 1991 Free Software Foundation, Inc.
+License: COPYING
+ Everyone is permitted to copy and distribute verbatim copies
+  of this license document, but changing it is not allowed.
+
+Files: gr-vocoder/lib/g7xx/*
+Copyright: 1992 Public Domain
+License: public-domain
+ This source code is released by Sun Microsystems, Inc. to the public
+ domain.  Please give your acknowledgement in product literature if
+ this code is used in your product implementation.
+ .
+ This source code is a product of Sun Microsystems, Inc. and is provided
+ for unrestricted use.  Users may copy or modify this source code without
+ charge.
+ .
+ SUN SOURCE CODE IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING
+ THE WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
+ PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
+ .
+ Sun source code is provided with no support and without any obligation on
+ the part of Sun Microsystems, Inc. to assist in its use, correction,
+ modification or enhancement.
+ .
+ SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
+ INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY THIS SOFTWARE
+ OR ANY PART THEREOF.
+ .
+ In no event will Sun Microsystems, Inc. be liable for any lost revenue
+ or profits or other special, indirect and consequential damages, even if
+ Sun has been advised of the possibility of such damages.
+ .
+ Sun Microsystems, Inc.
+ 2550 Garcia Avenue
+ Mountain View, California  94043
+ .
+ Copyright year based on timestamps of files retrieved from
+ http://web.archive.org/web/20060721140319/http://www.cwi.nl/ftp/audio/ccitt-adpcm.tar.gz
+
+Files: gr-fec/lib/reed-solomon/*
+Copyright: 2002, Phil Karn, KA9Q
+License: GPL-3+
+
+Files: gr-fec/lib/viterbi/*
+Copyright: 1995 Phil Karn, KA9Q
+ Copyright 2008 Free Software Foundation, Inc.
+License: GPL-3+
+
+Files: gnuradio-runtime/include/gnuradio/thread/thread_group.h gnuradio-runtime/lib/thread/thread_group.cc
+Copyright: (C) 2001-2003 William E. Kempf
+ Copyright (C) 2007 Anthony Williams
+ Copyright 2008 Free Software Foundation, Inc.
+License: GPL-3+
+Comment:
+ The original was distributed under the Boost Software License,
+ Version 1.0, but this derivative work is now covered by the overall
+ license assertion for GNU Radio.
+
+Files: gr-filter/lib/pm_remez.cc
+Copyright: (c) 1995,1998  Jake Janovetz (janovetz@uiuc.edu)
+ Copyright (c) 2004  Free Software Foundation, Inc.
+License: GPL-3+
+Comment:
+ The original was distributed under LGPL version 2 or later, this
+ derivative work is now covered by the overall license assertion
+ for GNU Radio.
+
+Files: gr-iio/*
+Copyright: 2014-2019, Analog Devices Inc.
+License: GPL-3+
+Comment:
+ Authors: Paul Cercueil <paul.cercueil@analog.com>
+          Travis Collins <travis.collins@analog.com>
+
+Files: gr-pdu/*
+Copyright: 2018-2021 National Technology & Engineering Solutions of Sandia, LLC
+License: GPL-3+
+Comment:
+ NTESS LLC.
+
+Files: gr-soapy/*
+Copyright: 2021 Jeff Long
+ Copyright 2018-2021 Libre Space Foundation <http://libre.space>
+ Copyright 2011-2021 Free Software Foundation, Inc.
+License: GPL-3+
+
+Files: debian/*
+Copyright: 2011-2013 A. Maitland Bottoms <bottoms@debian.org>
+ Copyright 2011-2013 Free Software Foundation, Inc.
+License: GPL-3+
+
+Files: cmake/Modules/FindJACK.cmake
+Copyright: 2008 Andreas Schneider <mail@cynapses.org>
+License: New-BSD
+Comment:
+ New BSD license from the COPYING-CMAKE-SCRIPTS file.
+
+License: New-BSD
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ .
+ 1. Redistributions of source code must retain the copyright
+ notice, this list of conditions and the following
+ disclaimer.
+ .
+ 2. Redistributions in binary form must reproduce the
+ copyright notice, this list of conditions and the following
+ disclaimer in the documentation and/or other materials provided with
+ the distribution.
+ .
+ 3. The name of the author may not be used to
+ endorse or promote products derived from this software without
+ specific prior written permission.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+License: CC0-1.0
+ To the extent possible under law, the author(s) have dedicated all
+ copyright and related and neighboring rights to this software to the public
+ domain worldwide. This software is distributed without any warranty.
+ .
+ On Debian systems, the complete text of the CC0 license, version 1.0,
+ can be found in /usr/share/common-licenses/CC0-1.0.
+
+License: LGPL-2.1+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU Lesser General Public License version 2.1, as
+ published by the Free Software Foundation.  This program is
+ distributed in the hope that it will be useful, but WITHOUT ANY
+ WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
+ License for more details.
+ .
+ On Debian systems, the complete text of the GNU Lesser General Public
+ License (LGPL) version 2.1 can be found in the file
+ '/usr/share/common-licenses/LGPL-2.1'.
+
+License: GPL-3+
+ GNU Radio is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 3, or (at your option)
+ any later version.
+ .
+ GNU Radio is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ On Debian systems, the complete text of the GNU General Public
+ License (GPL) version 3 can be found in the file
+ '/usr/share/common-licenses/LGPL-3'.
+
+License: GPL-3
+ GNU Radio is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 3, or (at your option)
+ any later version.
+ .
+ GNU Radio is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ On Debian systems, the complete text of the GNU General Public
+ License (GPL) version 3 can be found in the file
+ '/usr/share/common-licenses/LGPL-3'.

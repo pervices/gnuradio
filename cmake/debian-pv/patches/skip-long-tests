@@ -1,0 +1,28 @@
+From: "A. Maitland Bottoms" <bottoms@debian.org>
+Subject: skip long tests
+
+Debian packaging is known to fail by timing out on
+polar systematic tests.
+
+--- a/gr-fec/python/fec/CMakeLists.txt
++++ b/gr-fec/python/fec/CMakeLists.txt
+@@ -37,7 +37,9 @@
+     list(APPEND GR_TEST_TARGET_DEPS gnuradio-fec)
+ 
+     include(GrTest)
+-    file(GLOB py_qa_test_files "qa_*.py")
++    # file(GLOB py_qa_test_files "qa_*.py")
++    # skipping qa_polar_decoder_sc_systematic.py qa_polar_encoder_systematic.py 
++    set(py_qa_test_files qa_ber_bf.py qa_ecc_ccsds_27.py qa_fecapi_cc.py qa_fecapi_ldpc.py qa_polar_decoder_sc_list.py qa_depuncture.py qa_fecapi_cc_buffer_overflow.py qa_fecapi_dummy.py qa_fecapi_repetition.py qa_polar_decoder_sc.py qa_polar_encoder.py qa_puncture.py)
+ 
+     # Without GSL, we don't build some of the LDPC work, so we can't test
+     # it here.
+@@ -50,7 +52,7 @@
+         if(CMAKE_CROSSCOMPILING)
+             get_filename_component(py_qa_test_file ${py_qa_test_file} NAME)
+         endif(CMAKE_CROSSCOMPILING)
+-        gr_add_test(${py_qa_test_name} ${QA_PYTHON_EXECUTABLE} -B ${py_qa_test_file})
++        gr_add_test(${py_qa_test_name} ${QA_PYTHON_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/${py_qa_test_file})
+     endforeach(py_qa_test_file)
+ 
+ endif(ENABLE_TESTING)
