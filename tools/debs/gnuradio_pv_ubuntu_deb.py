@@ -144,7 +144,7 @@ def main(args):
             print("Uploading requires signing. Add --sign.")
             sys.exit(1)
         result = subprocess.run(shlex.split(
-            "dput -f ppa:sfen/uhdpv gnuradiopv_{}-0ubuntu1~{}1_source.changes".format(grc_version, args.release)), cwd=args.buildpath)
+            "dput -f ppa:pervices/develop gnuradiopv_{}-0ubuntu1~{}1_source.changes".format(grc_version, args.release)), cwd=args.buildpath)
         if result.returncode:
             print("PPA upload failed")
             sys.exit(result.returncode)
