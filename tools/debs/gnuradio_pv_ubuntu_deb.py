@@ -44,17 +44,17 @@ def main(args):
     print("Determining gnuradio version number...")
     grc_version = ""
     orig_release = ""
-    with open("cmake/debian-gnuradio-pv/changelog") as cl:
+    with open("cmake/debian-pv/changelog") as cl:
         first_line = cl.readline()
         grc_version = re.findall("[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*", first_line)
         if len(grc_version) != 1:
-            print("grc_version in changelog malformed. Check cmake/debian-gnuradio-pv/changelog")
+            print("grc_version in changelog malformed. Check cmake/debian-pv/changelog")
             sys.exit(1)
         grc_version = grc_version[0]
         orig_release = re.findall("[A-Za-z_]*;", first_line)
         if len(orig_release) != 1:
             print(
-                "orig_release in changelog malformed. Check cmake/debian-gnuradio-pv/changelog")
+                "orig_release in changelog malformed. Check cmake/debian-pv/changelog")
             sys.exit(1)
         orig_release = orig_release[0].replace(";", "")
 
@@ -88,7 +88,7 @@ def main(args):
 
     # Copy debian build files to build folder
     print("Copying debian build files to the build folder...")
-    shutil.copytree("cmake/debian-gnuradio-pv", grc_deb_build_path / "debian")
+    shutil.copytree("cmake/debian-pv", grc_deb_build_path / "debian")
     #shutil.copy2("host/utils/uhd-usrp.rules",
     #             grc_deb_build_path / "debian/uhd-host.udev")
     #with open(grc_deb_build_path / "debian/uhd-host.manpages", "w") as man_file:
