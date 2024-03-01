@@ -1,36 +1,5 @@
-gnuradiopv (1.0.0.5-0ubuntu1) ubuntu_release; urgency=medium
-
-  * Attempting to fix the x-terminal-emulator issue again
-
- -- PV Testing <shiqi.f@pervices.com>  Sun, 11 Feb 2024 19:05:13 -0400
-
-gnuradiopv (1.0.0.4-0ubuntu1) ubuntu_release; urgency=medium
-
-  * Attempting to fix the x-terminal-emulator issue despite its presence
-
- -- PV Testing <shiqi.f@pervices.com>  Sun, 11 Feb 2024 16:21:30 -0400
-
-gnuradiopv (1.0.0.3-0ubuntu1) ubuntu_release; urgency=medium
-
-  * Updating python script 
-
- -- PV Testing <shiqi.f@pervices.com>  Sat, 10 Feb 2024 21:14:39 -0400
-
-gnuradiopv (1.0.0.2-0ubuntu1) ubuntu_release; urgency=medium
-
-  * Optimizing packages based on upsteam 
-
- -- PV Testing <shiqi.f@pervices.com>  Fri, 09 Feb 2024 21:29:39 -0400
-
-gnuradiopv (1.0.0.1-0ubuntu1) ubuntu_release; urgency=medium
-
-  * Fixing an issue with packaging
-
- -- PV Testing <shiqi.f@pervices.com>  Thu, 08 Feb 2024 20:57:39 -0400
-
-
-gnuradiopv (1.0.0.0-0ubuntu1) ubuntu_release; urgency=medium
+gnuradiopv (3.10.7.0-0ubuntu1) ubuntu_release; urgency=medium
 
   * Initial release 
 
- -- PV Testing <shiqi.f@pervices.com>  Sun, 04 Feb 2024 14:47:39 -0400
+ -- Per Vices <packages@pervices.com>  Fri, 01 Mar 2024 13:11:39 -0500
