@@ -102,9 +102,6 @@ Depends: libcanberra-gtk-module,
          python3-yaml,
          python3-zmq [!hurd-i386],
          x-terminal-emulator|gnome-terminal,
-         uhdpv-host,
-         libuhdpv,
-         libuhdpv-dev,
          ${misc:Depends},
          ${python3:Depends},
          ${shlibs:Depends}
@@ -115,7 +112,7 @@ Recommends: gnuradiopv-dev,
             python3-pyqt5.qwt,
             python3-scipy,
             soapysdr-tools
-Suggests: gr-fosphor, gr-osmosdr, gqrx-sdr, rtl-sdr
+Suggests: gr-fosphor, gr-osmosdr, gqrx-sdr, rtl-sdr, uhdpv-host, libuhdpv
 Breaks: gr-soapy, gr-iio
 Conflicts: gnuradio
 Replaces: gr-soapy, gr-iio

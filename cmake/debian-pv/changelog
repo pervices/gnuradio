@@ -1,3 +1,9 @@
+gnuradiopv (3.10.7.1-0ubuntu1) ubuntu_release; urgency=medium
+
+  * Updating runtime dependencies
+
+ -- Per Vices <packages@pervices.com>  Mon, 11 Mar 2024 21:00:17 -0500
+
 gnuradiopv (3.10.7.0-0ubuntu1) ubuntu_release; urgency=medium
 
   * Initial release 
