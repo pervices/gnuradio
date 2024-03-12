@@ -31,25 +31,22 @@
 %global debug_package %{nil}
 #%%global alphatag rc1
 
-Name:		gnuradio
-Version:	3.10.9.2
+Name:		gnuradiopv
+%global real_name gnuradio
+Version:	3.10.7.0
 Release:	2%{?alphatag:.%{alphatag}}%{?dist}
 Summary:	Software defined radio framework
 
 License:	GPLv3
-URL:		https://www.gnuradio.org/
+URL:		https://www.github.com/pervices/gnuradio
 #Source0:	http://gnuradio.org/releases/gnuradio/gnuradio-%%{version}%%{?alphatag}.tar.xz
 #Source0:	http://gnuradio.org/releases/gnuradio/gnuradio-%%{version}.tar.gz
-Source0:	https://github.com/gnuradio/%{name}/archive/v%{version}/%{name}-%{version}.tar.gz
-# git clone git://gnuradio.org/gnuradio
-# cd gnuradio
-# git archive --format=tar --prefix=%%{name}-%%{version}/ %%{git_commit} | \
-# gzip > ../%%{name}-%%{version}.tar.gz
+#Source0:	https://github.com/gnuradio/%%{real_name}/archive/v%%{version}/%%{real_name}-%%{version}.tar.gz
+Source0:    gnuradiopv.tar.gz
 
 Requires(pre):	shadow-utils
 BuildRequires:	cmake
-# BuildRequires:	gcc-c++
-BuildRequires:	gcc-toolset-11
+BuildRequires:	gcc-toolset-13
 BuildRequires:	libtool
 BuildRequires:	alsa-lib-devel
 BuildRequires:	boost169-devel
@@ -98,7 +95,7 @@ BuildRequires:	spdlog-devel
 # for pygccxml
 #BuildRequires:	castxml
 
-Requires:	python%{python3_pkgversion}-%{name} = %{version}-%{release}
+Requires:	python%{python3_pkgversion}-%{real_name} = %{version}-%{release}
 Requires:	python%{python3_pkgversion}-numpy
 Requires:	python%{python3_pkgversion}-thrift
 %if ! 0%{?rhel}
@@ -152,15 +149,15 @@ Requires:	%{name} = %{version}-%{release}
 GNU Radio examples
 
 %prep
-%setup -q -n %{name}-%{version}%{?alphatag}
+%setup -q -n %{name}
 
 %build
-source /opt/rh/gcc-toolset-11/enable
+source /opt/rh/gcc-toolset-13/enable
 mkdir build
 cd build
 %cmake \
 -DSYSCONFDIR=%{_sysconfdir} \
--DGR_PKG_DOC_DIR=%{_docdir}/%{name} \
+-DGR_PKG_DOC_DIR=%{_docdir}/%{real_name} \
 -DGR_PYTHON_DIR=%{python3_sitearch} \
 -DPYTHON_EXECUTABLE=%{__python3} \
 -DENABLE_UHD_RFNOC=OFF \
@@ -205,12 +202,12 @@ done
 %{_mandir}/man1/*
 %config(noreplace) %{_sysconfdir}/gnuradio
 %exclude %{_datadir}/gnuradio/examples
-%exclude %{_docdir}/%{name}/html
-%exclude %{_docdir}/%{name}/xml
-%doc %{_docdir}/%{name}
+%exclude %{_docdir}/%{real_name}/html
+%exclude %{_docdir}/%{real_name}/xml
+%doc %{_docdir}/%{real_name}
 
 %files -n python%{python3_pkgversion}-%{name}
-%{python3_sitearch}/%{name}/
+%{python3_sitearch}/%{real_name}/
 %{python3_sitearch}/pmt/
 
 %files devel
@@ -220,8 +217,8 @@ done
 %{_libdir}/cmake/gnuradio
 
 %files doc
-%doc %{_docdir}/%{name}/html
-%doc %{_docdir}/%{name}/xml
+%doc %{_docdir}/%{real_name}/html
+%doc %{_docdir}/%{real_name}/xml
 
 %files examples
 %{_datadir}/gnuradio/examples
