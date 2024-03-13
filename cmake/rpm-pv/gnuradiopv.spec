@@ -81,7 +81,6 @@ BuildRequires:	qwt-qt5-devel
 BuildRequires:	tex(latex)
 BuildRequires:	SDL-devel
 BuildRequires:	thrift
-# BuildRequires:	uhd-devel
 BuildRequires:	uhdpv
 BuildRequires:	xdg-utils
 BuildRequires:	xmlto
