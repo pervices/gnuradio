@@ -72,13 +72,14 @@ check() {
 
 
 package() {
-    depends=('codec2' 'gcc-libs' 'glibc' 'gmp' 'gsl' 'libad9361' 'libuhdpv' 'libunwind' \
-             'libvolk' 'python-click' 'python-click-plugins' 'python-mako' 'python-matplotlib' \
+    depends=('codec2' 'gcc-libs' 'glibc' 'gmp' 'gsl' 'libad9361' 'libunwind' 'libvolk' \
+             'python-click' 'python-click-plugins' 'python-mako' 'python-matplotlib' \
              'python-numpy' 'python-yaml' 'python-pyzmq' 'python-scipy' 'python-thrift' \
              'python-cairo' 'python-gobject' 'python-lxml' 'python-opengl' 'python-pyqt5' \
              'python-pyqtgraph' 'sdl12-compat' 'soapysdr' 'spdlog' 'thrift' 'alsa-lib' \
-             'libasound.so' 'boost-libs' 'fftw' 'fmt' 'jack' 'libiio' 'libsndfile' 'portaudio' \
-             'spdlog' 'zeromq' 'qt5-base' 'qwt' 'gtk3')
+             'libasound.so' 'boost-libs' 'fftw' 'fmt' 'jack' 'libiio' 'libsndfile' \
+             'portaudio' 'spdlog' 'zeromq' 'qt5-base' 'qwt' 'gtk3')
+            # 'libuhdpv'
     cd "$srcdir/$_gitname/grc/scripts/freedesktop"
     install -Dm644 gnuradio-grc.desktop "$pkgdir/usr/share/applications/$pkgbase.desktop"
     cd "$srcdir/$_gitname/build"
