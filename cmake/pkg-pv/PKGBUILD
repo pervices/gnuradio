@@ -1,5 +1,5 @@
 
-pkgname=gnuradio-git
+pkgname=gnuradiopv
 _gitname=gnuradio
 pkgver=3.10.7.0
 pkgrel=1
