@@ -20,9 +20,7 @@ import subprocess
 import sys
 import tarfile
 
-supported_ubuntu_releases = ["bionic", "focal", "jammy"]
-#tar_command = "tar --exclude='.git*' --exclude='./debian' --exclude='*.swp' --exclude='fpga' --exclude='build' --exclude='./images/*.pyc' --exclude='./images/uhd-*' --exclude='tags' --exclude='.ci' --exclude='.clang*' -cJf {}/uhdpv_{}.orig.tar.xz ."
-#tar_command = "tar --exclude='.git*' --exclude='build' --exclude='.buildkite' --exclude='.ci' --exclude='.clang*' -cJf {}/gnuradiopv_{}.orig.tar.xz ."
+supported_ubuntu_releases = ["focal", "jammy"]
 tar_command = "tar --exclude='.git*' --exclude='build' --exclude='.buildkite' --exclude='.ci' -cJf {}/gnuradiopv_{}.orig.tar.xz ."
 debuild_command = "debuild -S -i -sa"
 debuild_nosign = " -uc -us"
@@ -42,15 +40,15 @@ def main(args):
 
     # Determine GRC version number
     print("Determining gnuradio version number...")
-    grc_version = ""
+    gnuradio_version = ""
     orig_release = ""
     with open("cmake/debian-pv/changelog") as cl:
         first_line = cl.readline()
-        grc_version = re.findall("[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*", first_line)
-        if len(grc_version) != 1:
-            print("grc_version in changelog malformed. Check cmake/debian-pv/changelog")
+        gnuradio_version = re.findall("[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*", first_line)
+        if len(gnuradio_version) != 1:
+            print("gnuradio_version in changelog malformed. Check cmake/debian-pv/changelog")
             sys.exit(1)
-        grc_version = grc_version[0]
+        gnuradio_version = gnuradio_version[0]
         orig_release = re.findall("[A-Za-z_]*;", first_line)
         if len(orig_release) != 1:
             print(
@@ -65,42 +63,34 @@ def main(args):
     if not args.tarfile:
         print("Compressing GRC Source...")
         result = subprocess.run(shlex.split(
-            tar_command.format(args.buildpath, grc_version)))
+            tar_command.format(args.buildpath, gnuradio_version)))
         if result.returncode:
             print("Compressing source failed")
             sys.exit(result.returncode)
     else:
         print("Retrieving existing GRC Source...")
         result = subprocess.run(shlex.split(
-            copy_command.format(args.tarfile, grc_version, args.buildpath)))
+            copy_command.format(args.tarfile, gnuradio_version, args.buildpath)))
         if result.returncode:
             print("Retrieving source failed")
             sys.exit(result.returncode)
 
     # Extract GRC source to build folder
     print("Extractubg GRC source to build folder...")
-    grc_deb_build_path = pathlib.Path(
-        args.buildpath, "gnuradiopv-{}".format(grc_version))
-    if grc_deb_build_path.exists():
-        shutil.rmtree(grc_deb_build_path)
-    with tarfile.open(args.buildpath + "/gnuradiopv_{}.orig.tar.xz".format(grc_version), "r:xz") as uhd_archive:
-        uhd_archive.extractall(path=grc_deb_build_path)
+    gnuradio_deb_build_path = pathlib.Path(
+        args.buildpath, "gnuradiopv-{}".format(gnuradio_version))
+    if gnuradio_deb_build_path.exists():
+        shutil.rmtree(gnuradio_deb_build_path)
+    with tarfile.open(args.buildpath + "/gnuradiopv_{}.orig.tar.xz".format(gnuradio_version), "r:xz") as gnuradio_archive:
+        gnuradio_archive.extractall(path=gnuradio_deb_build_path)
 
     # Copy debian build files to build folder
     print("Copying debian build files to the build folder...")
-    shutil.copytree("cmake/debian-pv", grc_deb_build_path / "debian")
-    #shutil.copy2("host/utils/uhd-usrp.rules",
-    #             grc_deb_build_path / "debian/uhd-host.udev")
-    #with open(grc_deb_build_path / "debian/uhd-host.manpages", "w") as man_file:
-    #    for file in grc_deb_build_path.glob("host/docs/*.1"):
-    #        man_file.write(os.path.relpath(file, grc_deb_build_path) + "\n")
-    #    man_file.write("\n")
-    #for file in grc_deb_build_path.glob("debian/*.in"):
-    #    os.remove(file)
+    shutil.copytree("cmake/debian-pv", gnuradio_deb_build_path / "debian")
 
     # Modify changelog for selected release
     print("Modifying changelog for the selected release...")
-    with open(grc_deb_build_path / "debian/changelog", 'r+') as cl:
+    with open(gnuradio_deb_build_path / "debian/changelog", 'r+') as cl:
         cl_text = cl.read()
         cl_text = re.sub(orig_release, args.release, cl_text)
         cl_text = re.sub(
@@ -111,19 +101,13 @@ def main(args):
 
     # Generate dsc file
     result = ""
-    # result1 = ""
     print("Running debuild / dsc generation")
-    # result1 = subprocess.run(shlex.split(
-    #         mk_build_command + mk_build_arg), cwd=grc_deb_build_path)
-    # if result1.returncode:
-    #     print("mk-build-deps failed")
-    #     sys.exit(result1.returncode)
     if args.sign:
         result = subprocess.run(shlex.split(
-            debuild_command), cwd=grc_deb_build_path)
+            debuild_command), cwd=gnuradio_deb_build_path)
     else:
         result = subprocess.run(shlex.split(
-            debuild_command + debuild_nosign), cwd=grc_deb_build_path)
+            debuild_command + debuild_nosign), cwd=gnuradio_deb_build_path)
     if result.returncode:
         print("debuild / dsc generation failed")
         sys.exit(result.returncode)
@@ -133,7 +117,7 @@ def main(args):
         print("Building deb with dsc using pbuilder for {}".format(args.release))
         os.mkdir(args.buildpath + "/result")
         result = subprocess.run(shlex.split(
-           "sudo pbuilder build --buildresult ./result gnuradiopv_{}-0ubuntu1~{}1.dsc".format(grc_version, args.release)), cwd=args.buildpath)
+           "sudo pbuilder build --buildresult ./result gnuradiopv_{}-0ubuntu1~{}1.dsc".format(gnuradio_version, args.release)), cwd=args.buildpath)
         if result.returncode:
            print("pbuilder failed")
            sys.exit(result.returncode)
@@ -144,7 +128,7 @@ def main(args):
             print("Uploading requires signing. Add --sign.")
             sys.exit(1)
         result = subprocess.run(shlex.split(
-            "dput -f ppa:pervices/develop gnuradiopv_{}-0ubuntu1~{}1_source.changes".format(grc_version, args.release)), cwd=args.buildpath)
+            "dput -f ppa:pervices/{} gnuradiopv_{}-0ubuntu1~{}1_source.changes".format(args.repo, gnuradio_version, args.release)), cwd=args.buildpath)
         if result.returncode:
             print("PPA upload failed")
             sys.exit(result.returncode)
@@ -154,6 +138,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--tarfile", type=str,
                         help="Specify existing tar file")
+    parser.add_argument("--repo", type=str, required=True,
+                        help="Specify ppa repository")
     parser.add_argument("--sign", action='store_true',
                         help="Signs files with GPG key. Not required for test builds")
     parser.add_argument("--upload", action='store_true',
