@@ -42,7 +42,7 @@ URL:		https://www.github.com/pervices/gnuradio
 #Source0:	http://gnuradio.org/releases/gnuradio/gnuradio-%%{version}%%{?alphatag}.tar.xz
 #Source0:	http://gnuradio.org/releases/gnuradio/gnuradio-%%{version}.tar.gz
 #Source0:	https://github.com/gnuradio/%%{real_name}/archive/v%%{version}/%%{real_name}-%%{version}.tar.gz
-Source0:    gnuradiopv.tar.gz
+Source0:    %{name}.tar.gz
 
 Requires(pre):	shadow-utils
 BuildRequires:	cmake
@@ -81,7 +81,8 @@ BuildRequires:	qwt-qt5-devel
 BuildRequires:	tex(latex)
 BuildRequires:	SDL-devel
 BuildRequires:	thrift
-BuildRequires:	uhdpv
+# BuildRequires:	uhd-devel
+BuildRequires:	libuhdpv
 BuildRequires:	xdg-utils
 BuildRequires:	xmlto
 BuildRequires:	zeromq-devel
@@ -94,7 +95,7 @@ BuildRequires:	spdlog-devel
 # for pygccxml
 #BuildRequires:	castxml
 
-Requires:	python%{python3_pkgversion}-%{real_name} = %{version}-%{release}
+Requires:	python%{python3_pkgversion}-%{name} = %{version}-%{release}
 Requires:	python%{python3_pkgversion}-numpy
 Requires:	python%{python3_pkgversion}-thrift
 %if ! 0%{?rhel}
