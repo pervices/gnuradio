@@ -149,7 +149,7 @@ Requires:	%{name} = %{version}-%{release}
 GNU Radio examples
 
 %prep
-%setup -q -n %{name}
+%setup -q -n %{real_name}
 
 %build
 source /opt/rh/gcc-toolset-13/enable
