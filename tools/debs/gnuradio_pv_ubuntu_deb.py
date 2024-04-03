@@ -44,11 +44,15 @@ def main(args):
     orig_release = ""
     with open("cmake/debian-pv/changelog") as cl:
         first_line = cl.readline()
-        gnuradio_version = re.findall("[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*", first_line)
-        if len(gnuradio_version) != 1:
-            print("gnuradio_version in changelog malformed. Check cmake/debian-pv/changelog")
-            sys.exit(1)
-        gnuradio_version = gnuradio_version[0]
+        if args.nightly:
+            gnuradio_version = re.search("\(([A-Za-z0-9+]+)", first_line)
+            gnuradio_version = gnuradio_version[1]
+        else:
+            gnuradio_version = re.findall("[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*", first_line)
+            if len(gnuradio_version) != 1:
+                print("gnuradio_version in changelog malformed. Check cmake/debian-pv/changelog")
+                sys.exit(1)
+            gnuradio_version = gnuradio_version[0]
         orig_release = re.findall("[A-Za-z_]*;", first_line)
         if len(orig_release) != 1:
             print(
@@ -124,6 +128,7 @@ def main(args):
 
     # Upload dsc to Launchpad
     if args.upload:
+        print("Uploading to ppa...")
         if not args.sign:
             print("Uploading requires signing. Add --sign.")
             sys.exit(1)
@@ -140,6 +145,8 @@ if __name__ == "__main__":
                         help="Specify existing tar file")
     parser.add_argument("--repo", type=str, required=True,
                         help="Specify ppa repository")
+    parser.add_argument("--nightly", action='store_true',
+                        help="Update changelog for nightly build")
     parser.add_argument("--sign", action='store_true',
                         help="Signs files with GPG key. Not required for test builds")
     parser.add_argument("--upload", action='store_true',
