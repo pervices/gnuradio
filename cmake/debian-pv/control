@@ -110,9 +110,7 @@ Recommends: gnuradiopv-dev,
             python3-matplotlib,
             python3-networkx,
             python3-pyqt5.qwt,
-            python3-scipy,
-            soapysdr-tools
-Suggests: gr-fosphor, gr-osmosdr, gqrx-sdr, rtl-sdr, uhdpv-host, libuhdpv
+            python3-scipy
 Breaks: gr-soapy, gr-iio
 Conflicts: gnuradio
 Replaces: gr-soapy, gr-iio
