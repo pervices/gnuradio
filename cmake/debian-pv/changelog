@@ -1,3 +1,9 @@
+gnuradiopv (3.10.7.3-0ubuntu1) ubuntu_release; urgency=medium
+
+  * Packaging: Adding alternative dependencies for noble
+
+ -- Per Vices <packages@pervices.com>  Fri, 12 Apr 2024 14:55:01 -0400
+ 
 gnuradiopv (3.10.7.2-0ubuntu1) ubuntu_release; urgency=medium
 
   * Packaging: Removing unnecessary suggests/recommendations from control
