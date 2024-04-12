@@ -20,7 +20,7 @@ import subprocess
 import sys
 import tarfile
 
-supported_ubuntu_releases = ["focal", "jammy"]
+supported_ubuntu_releases = ["focal", "jammy", "noble"]
 tar_command = "tar --exclude='.git*' --exclude='build' --exclude='.buildkite' --exclude='.ci' -cJf {}/gnuradiopv_{}.orig.tar.xz ."
 debuild_command = "debuild -S -i -sa"
 debuild_nosign = " -uc -us"
