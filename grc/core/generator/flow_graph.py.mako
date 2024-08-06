@@ -95,7 +95,7 @@ class ${class_name}(gr.top_block, Qt.QWidget):
         self.top_grid_layout = Qt.QGridLayout()
         self.top_layout.addLayout(self.top_grid_layout)
 
-        self.settings = Qt.QSettings("GNU Radio", "${class_name}")
+        self.settings = Qt.QSettings("gnuradio/flowgraphs", "${class_name}")
 
         try:
             geometry = self.settings.value("geometry")
@@ -160,6 +160,9 @@ gr.io_signature.makev(${len(io_sigs)}, ${len(io_sigs)}, [${', '.join(size_strs)}
 % if flow_graph.get_option('thread_safe_setters'):
 
         self._lock = threading.RLock()
+% endif
+% if not generate_options.startswith('hb'):
+        self.flowgraph_started = threading.Event()
 % endif
 ########################################################
 ##Create Parameters
@@ -227,7 +230,7 @@ gr.io_signature.makev(${len(io_sigs)}, ${len(io_sigs)}, [${', '.join(size_strs)}
 % if generate_options == 'qt_gui':
 
     def closeEvent(self, event):
-        self.settings = Qt.QSettings("GNU Radio", "${class_name}")
+        self.settings = Qt.QSettings("gnuradio/flowgraphs", "${class_name}")
         self.settings.setValue("geometry", self.saveGeometry())
         self.stop()
         self.wait()
@@ -335,6 +338,7 @@ def main(top_block_cls=${class_name}, options=None):
     ${'snippets_main_after_init(tb)' if snippets['main_after_init'] else ''}
     % if flow_graph.get_option('run'):
     tb.start(${flow_graph.get_option('max_nouts') or ''})
+    tb.flowgraph_started.set()
     % endif
     ${'snippets_main_after_start(tb)' if snippets['main_after_start'] else ''}
     % if flow_graph.get_option('qt_qss_theme'):
@@ -367,6 +371,7 @@ def main(top_block_cls=${class_name}, options=None):
     ${'snippets_main_after_init(tb)' if snippets['main_after_init'] else ''}
     try:
         tb.start()
+        tb.flowgraph_started.set()
         ${'snippets_main_after_start(tb)' if snippets['main_after_start'] else ''}
         bokehgui.utils.run_server(tb, sizing_mode = "${flow_graph.get_option('sizing_mode')}",  widget_placement =  ${flow_graph.get_option('placement')}, window_size =  ${flow_graph.get_option('window_size')})
     finally:
@@ -393,6 +398,7 @@ def main(top_block_cls=${class_name}, options=None):
 
     % if flow_graph.get_option('run_options') == 'prompt':
     tb.start(${ flow_graph.get_option('max_nouts') or '' })
+    tb.flowgraph_started.set()
     ${'snippets_main_after_start(tb)' if snippets['main_after_start'] else ''}
     % for m in monitors:
     % if m.params['en'].get_value() == 'True':
@@ -407,6 +413,7 @@ def main(top_block_cls=${class_name}, options=None):
     ## ${'snippets_main_after_stop(tb)' if snippets['main_after_stop'] else ''}
     % elif flow_graph.get_option('run_options') == 'run':
     tb.start(${flow_graph.get_option('max_nouts') or ''})
+    tb.flowgraph_started.set()
     ${'snippets_main_after_start(tb)' if snippets['main_after_start'] else ''}
     % for m in monitors:
     % if m.params['en'].get_value() == 'True':

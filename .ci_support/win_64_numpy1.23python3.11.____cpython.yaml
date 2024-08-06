@@ -1,11 +1,11 @@
 c_compiler:
-- vs2019
+- vs2022
 channel_sources:
 - conda-forge
 channel_targets:
 - gnuradio main
 cxx_compiler:
-- vs2019
+- vs2022
 fftw:
 - '3'
 gsl:
@@ -37,9 +37,9 @@ spdlog:
 target_platform:
 - win-64
 uhd:
-- 4.5.0
+- 4.6.0
 volk:
-- '3.0'
+- '3.1'
 zeromq:
 - 4.3.5
 zip_keys:

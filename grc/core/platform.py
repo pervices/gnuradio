@@ -48,6 +48,7 @@ class Platform(Element):
 
         self.blocks = self.block_classes
         self.domains = {}
+        self.examples_dict = {}
         self.connection_templates = {}
         self.cpp_connection_templates = {}
         self.connection_params = {}
@@ -115,6 +116,9 @@ class Platform(Element):
 
         return flow_graph, generator.file_path
 
+    def build_example_library(self, path=None):
+        self.examples = list(self._iter_files_in_example_path())
+
     def build_library(self, path=None):
         """load the blocks and block tree from the search paths
 
@@ -129,7 +133,12 @@ class Platform(Element):
         self.cpp_connection_templates.clear()
         self._block_categories.clear()
 
-        with Cache(Constants.CACHE_FILE, version=self.config.version) as cache:
+        try:
+            from gnuradio.gr import paths
+            cache_file = os.path.join(paths.cache(), Constants.GRC_SUBDIR, Constants.CACHE_FILE_NAME)
+        except ImportError:
+            cache_file = Constants.FALLBACK_CACHE_FILE
+        with Cache(cache_file, version=self.config.version) as cache:
             for file_path in self._iter_files_in_block_path(path):
 
                 if file_path.endswith('.block.yml'):
