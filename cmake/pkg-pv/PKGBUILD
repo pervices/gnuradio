@@ -30,7 +30,7 @@ pkgver() {
     #git rev-parse --short HEAD > ~/grc_ver
     cd ${srcdir}/${_gitname}
 #     git checkout main-pv -- cmake/pkg-pv
-    git checkout main-pv -- cmake/debian-pv
+    git checkout main-pv-3.10.11.0 -- cmake/debian-pv
     echo $(cat cmake/debian-pv/changelog | head -1 | cut -d ' ' -f2 | cut -d '-' -f1 | tr --delete ['('])
 }
 
