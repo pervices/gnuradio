@@ -101,6 +101,7 @@ Requires:	python%{python3_pkgversion}-thrift
 %if ! 0%{?rhel}
 Requires:	python%{python3_pkgversion}-pyopengl
 %endif
+Requires:	python%{python3_pkgversion}-packaging
 Requires:	python%{python3_pkgversion}-pyyaml
 Requires:	python%{python3_pkgversion}-gobject
 Requires:	python%{python3_pkgversion}-mako
