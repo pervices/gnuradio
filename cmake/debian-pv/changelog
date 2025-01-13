@@ -1,3 +1,9 @@
+gnuradiopv (3.10.7.5-0ubuntu1) ubuntu_release; urgency=medium
+
+  *  Packaging: Adding python-packaging dependency for rpm
+
+ -- Per Vices <packages@pervices.com>  Mon, 13 Jan 2025 15:30:57 -0500
+ 
 gnuradiopv (3.10.7.4-0ubuntu1) ubuntu_release; urgency=medium
 
   *  Packaging: Adding cppzmq dependencies for noble
