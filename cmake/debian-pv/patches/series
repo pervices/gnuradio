@@ -1,8 +1,7 @@
-#usr-bin-examples
-#fix-pkg-config
-#look-for-x-terminal-emulator
-#build-on-hurd
-skip-long-tests
-#cppgen-Add-C-generation-support-to-gr-vocoder
-#avoid-fmt-trouble
 omit-build-path
+usr-bin-examples
+example-documentation
+# update-codec2-mode-enums
+direct-freedesktop-install
+# gr-video-sdl2
+pdf-documentation

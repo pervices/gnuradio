@@ -2,7 +2,7 @@ Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: gnuradio
 Upstream-Contact: https://www.gnuradio.org/
 Source:
- git archive --format=tar --prefix=gnuradio-3.10.7.0/ v3.10.7.0 | xz > ../gnuradio_3.10.7.0.orig.tar.xz
+ git archive --format=tar --prefix=gnuradio-3.10.2.0~rc1/ v3.10.2.0-rc1 | xz > ../gnuradio_3.10.2.0~rc1.orig.tar.xz
 Comment:
  Packages of versions 3.4 and up by A. Maitland Bottoms <bottoms@debian.org>,
  GNU Radio was re-packaged by Bdale Garbee <bdale@gag.com> to reflect
@@ -13,19 +13,19 @@ Comment:
  GNU Radio was downloaded from https://www.gnuradio.org/
  .
  Upstream Authors:
-	Eric Blossom <eb@comsec.com>
-	Matt Ettus <matt@ettus.com>
-	Tom Rondeau <tom@trondeau.com>
-	Johnathan Corgan <jcorgan@corganenterprises.com>
-	Marcus Müller <marcus@hostalia.de>
-	Martin Braun <martin@gnuradio.org>
-	Ben Hilburn
-	Tim O'Shea
-	Jacob Gilbert
-	Jeff Long
-	Josh Morman
-	Derek Kozel
-	GNU Radio Contributors
+ 	Eric Blossom <eb@comsec.com>
+ 	Matt Ettus <matt@ettus.com>
+ 	Tom Rondeau <tom@trondeau.com>
+ 	Johnathan Corgan <jcorgan@corganenterprises.com>
+ 	Marcus Müller <marcus@hostalia.de>
+ 	Martin Braun <martin@gnuradio.org>
+ 	Ben Hilburn
+ 	Tim O'Shea
+ 	Jacob Gilbert
+ 	Jeff Long
+ 	Josh Morman
+ 	Derek Kozel
+ 	GNU Radio Contributors
  .
  See the CONTRIBUTING.md file for a more complete list of contributors.
  The current upstream project leader is Derek Kozel.
@@ -36,11 +36,15 @@ License: GPL-3+
 Files: CMakeLists.txt
  cmake/* config.h.in docs/* dtools/* gnuradio-runtime/* gr-*/* grc/*
  .clang-format .clang-tidy .gitattributes .gitignore .gitmodules
- .github/* .conda-forge.yml .packaging/* .ci_support/* .scripts/*
+ .github/* .conda/* .conda-forge.yml .ci_support/* .scripts/*
  README.md CHANGELOG.md tools/* CODE_OF_CONDUCT.md VERSIONING
- CONTRIBUTING.md
-Copyright: 2010-2021 Free Software Foundation, Inc.
+ CONTRIBUTING.md .readthedocs.yaml .zenodo.json
+Copyright: 2010-2022 Free Software Foundation, Inc.
 License: GPL-3+
+
+Files: .cmake-format.py tox.ini
+Copyright: 2021,2023 Marcus Müller
+License: LGPL-3.0+
 
 Files: DCO.txt
 Copyright: Copyright (C) 2004, 2006 The Linux Foundation and its contributors.
@@ -51,12 +55,6 @@ License: LF
 Files: grc/scripts/freedesktop/org.gnuradio.grc.metainfo.xml
 Copyright: 2020 Marcus Müller <mmueller@gnuradio.org>
 License: CC0-1.0
-
-Files: COPYING
-Copyright: 1989, 1991 Free Software Foundation, Inc.
-License: COPYING
- Everyone is permitted to copy and distribute verbatim copies
-  of this license document, but changing it is not allowed.
 
 Files: gr-vocoder/lib/g7xx/*
 Copyright: 1992 Public Domain
@@ -140,8 +138,8 @@ Copyright: 2021 Jeff Long
 License: GPL-3+
 
 Files: debian/*
-Copyright: 2011-2013 A. Maitland Bottoms <bottoms@debian.org>
- Copyright 2011-2013 Free Software Foundation, Inc.
+Copyright: 2011-2022 A. Maitland Bottoms <bottoms@debian.org>
+ Copyright 2011-2022 Free Software Foundation, Inc.
 License: GPL-3+
 
 Files: cmake/Modules/FindJACK.cmake
@@ -188,19 +186,6 @@ License: CC0-1.0
  On Debian systems, the complete text of the CC0 license, version 1.0,
  can be found in /usr/share/common-licenses/CC0-1.0.
 
-License: LGPL-2.1+
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU Lesser General Public License version 2.1, as
- published by the Free Software Foundation.  This program is
- distributed in the hope that it will be useful, but WITHOUT ANY
- WARRANTY; without even the implied warranty of MERCHANTABILITY or
- FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
- License for more details.
- .
- On Debian systems, the complete text of the GNU Lesser General Public
- License (LGPL) version 2.1 can be found in the file
- '/usr/share/common-licenses/LGPL-2.1'.
-
 License: GPL-3+
  GNU Radio is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -216,17 +201,20 @@ License: GPL-3+
  License (GPL) version 3 can be found in the file
  '/usr/share/common-licenses/LGPL-3'.
 
-License: GPL-3
- GNU Radio is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
+License: LGPL-3.0+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU Lesser General Public License as published by
  the Free Software Foundation; either version 3, or (at your option)
  any later version.
  .
- GNU Radio is distributed in the hope that it will be useful,
+ This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
+ GNU Lesser General Public License for more details.
  .
- On Debian systems, the complete text of the GNU General Public
- License (GPL) version 3 can be found in the file
- '/usr/share/common-licenses/LGPL-3'.
+ You should have received a copy of the GNU Lesser General Public License along
+ with this program; if not, write to the Free Software Foundation,
+ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ .
+ On Debian systems, the complete text of the GNU Lesser General Public
+ License version 2.1 can be found in ‘/usr/share/common-licenses/LGPL-3’.

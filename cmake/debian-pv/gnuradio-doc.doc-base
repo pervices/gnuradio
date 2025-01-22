@@ -1,8 +1,11 @@
 Document: gnuradio-doc
-Title: Programmer API for GNU Radio
-Author: Free Software Foundation
+Title: GNU Radio Manual and C++ API Reference
+Author: GNU Radio Project
 Section: Programming
 
 Format: HTML
 Index: /usr/share/doc/gnuradio-doc/html/index.html
 Files: /usr/share/doc/gnuradio-doc/html/*
+
+Format: PDF
+Files: /usr/share/doc/gnuradio-doc/refman.pdf.gz

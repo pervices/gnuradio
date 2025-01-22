@@ -1,27 +1,30 @@
+From: "A. Maitland Bottoms" <bottoms@debian.org>
+Subject: usr bin examples
+
+Install examples into /usr/bin rather than fail to follow the
+Filesystem Hierarchy Standard.
+
 --- a/gr-audio/examples/c++/CMakeLists.txt
 +++ b/gr-audio/examples/c++/CMakeLists.txt
-@@ -11,5 +11,5 @@
+@@ -8,4 +8,4 @@
+ add_executable(dial_tone dial_tone.cc)
+ target_link_libraries(dial_tone gnuradio-runtime gnuradio-audio gnuradio-analog)
  
- INSTALL(TARGETS
-     dial_tone
--    DESTINATION ${GR_PKG_AUDIO_EXAMPLES_DIR}
-+    DESTINATION ${GR_RUNTIME_DIR}
- )
---- a/gr-qtgui/examples/c++/CMakeLists.txt
-+++ b/gr-qtgui/examples/c++/CMakeLists.txt
-@@ -33,5 +33,5 @@
- 
- INSTALL(TARGETS
-   display_qt
--  DESTINATION ${GR_PKG_QTGUI_EXAMPLES_DIR}
-+  DESTINATION ${GR_RUNTIME_DIR}
- )
+-install(TARGETS dial_tone DESTINATION ${GR_PKG_AUDIO_EXAMPLES_DIR})
++install(TARGETS dial_tone DESTINATION ${GR_RUNTIME_DIR})
 --- a/gr-uhd/examples/c++/CMakeLists.txt
 +++ b/gr-uhd/examples/c++/CMakeLists.txt
-@@ -13,5 +13,5 @@
+@@ -11,4 +11,4 @@
+ add_executable(tags_demo tags_demo.cc)
+ target_link_libraries(tags_demo gnuradio-uhd Boost::program_options)
  
- INSTALL(TARGETS
-     tags_demo
--    DESTINATION ${GR_PKG_UHD_EXAMPLES_DIR}
-+    DESTINATION ${GR_RUNTIME_DIR}
- )
+-install(TARGETS tags_demo DESTINATION ${GR_PKG_UHD_EXAMPLES_DIR})
++install(TARGETS tags_demo DESTINATION ${GR_RUNTIME_DIR})
+--- a/gr-qtgui/examples/c++/CMakeLists.txt
++++ b/gr-qtgui/examples/c++/CMakeLists.txt
+@@ -30,4 +30,4 @@
+ add_executable(display_qt display_qt.cc ${qtgui_moc_sources})
+ target_link_libraries(display_qt ${QTGUI_LIBRARIES})
+ 
+-install(TARGETS display_qt DESTINATION ${GR_PKG_QTGUI_EXAMPLES_DIR})
++install(TARGETS display_qt DESTINATION ${GR_RUNTIME_DIR})
