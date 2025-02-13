@@ -1,0 +1,442 @@
+
+
+
+
+
+
+<!DOCTYPE html>
+<html class="gl-light ui-gray with-top-bar with-header " lang="en">
+<head prefix="og: http://ogp.me/ns#">
+<meta charset="utf-8">
+<meta content="IE=edge" http-equiv="X-UA-Compatible">
+<meta content="width=device-width, initial-scale=1" name="viewport">
+<title>21-fcd.rules · c2d1932e20c29ca684e100be92a6e861050dcf57 · Arch Linux / Packaging / Packages / gnuradio · GitLab</title>
+<script>
+//<![CDATA[
+window.gon={};gon.math_rendering_limits_enabled=true;gon.features={"inlineBlame":false,"blobOverflowMenu":false};gon.licensed_features={"fileLocks":true,"remoteDevelopment":true};
+//]]>
+</script>
+
+
+<script>
+//<![CDATA[
+var gl = window.gl || {};
+gl.startup_calls = null;
+gl.startup_graphql_calls = [{"query":"query getBlobInfo(\n  $projectPath: ID!\n  $filePath: [String!]!\n  $ref: String!\n  $refType: RefType\n  $shouldFetchRawText: Boolean!\n) {\n  project(fullPath: $projectPath) {\n    __typename\n    id\n    repository {\n      __typename\n      empty\n      blobs(paths: $filePath, ref: $ref, refType: $refType) {\n        __typename\n        nodes {\n          __typename\n          id\n          webPath\n          name\n          size\n          rawSize\n          rawTextBlob @include(if: $shouldFetchRawText)\n          fileType\n          language\n          path\n          blamePath\n          editBlobPath\n          gitpodBlobUrl\n          ideEditPath\n          forkAndEditPath\n          ideForkAndEditPath\n          codeNavigationPath\n          projectBlobPathRoot\n          forkAndViewPath\n          environmentFormattedExternalUrl\n          environmentExternalUrlForRouteMap\n          canModifyBlob\n          canModifyBlobWithWebIde\n          canCurrentUserPushToBranch\n          archived\n          storedExternally\n          externalStorage\n          externalStorageUrl\n          rawPath\n          replacePath\n          pipelineEditorPath\n          simpleViewer {\n            fileType\n            tooLarge\n            type\n            renderError\n          }\n          richViewer {\n            fileType\n            tooLarge\n            type\n            renderError\n          }\n        }\n      }\n    }\n  }\n}\n","variables":{"projectPath":"archlinux/packaging/packages/gnuradio","ref":"c2d1932e20c29ca684e100be92a6e861050dcf57","refType":null,"filePath":"21-fcd.rules","shouldFetchRawText":true}}];
+
+if (gl.startup_calls && window.fetch) {
+  Object.keys(gl.startup_calls).forEach(apiCall => {
+   gl.startup_calls[apiCall] = {
+      fetchCall: fetch(apiCall, {
+        // Emulate XHR for Rails AJAX request checks
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        // fetch won’t send cookies in older browsers, unless you set the credentials init option.
+        // We set to `same-origin` which is default value in modern browsers.
+        // See https://github.com/whatwg/fetch/pull/585 for more information.
+        credentials: 'same-origin'
+      })
+    };
+  });
+}
+if (gl.startup_graphql_calls && window.fetch) {
+  const headers = {"X-CSRF-Token":"lSUIrZTlnuW5U2vx0SjVE0Jgil3Y_XfwUX3klw_iRv6HI-8jbXawlKW2ddbVQKewi9u0dsxV8-A9wFOfqxztOQ","x-gitlab-feature-category":"source_code_management"};
+  const url = `https://gitlab.archlinux.org/api/graphql`
+
+  const opts = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...headers,
+    }
+  };
+
+  gl.startup_graphql_calls = gl.startup_graphql_calls.map(call => ({
+    ...call,
+    fetchCall: fetch(url, {
+      ...opts,
+      credentials: 'same-origin',
+      body: JSON.stringify(call)
+    })
+  }))
+}
+
+
+//]]>
+</script>
+
+<link rel="prefetch" href="/assets/webpack/monaco.ae5ee5d3.chunk.js">
+
+<link rel="stylesheet" href="/assets/application-af238855527850d779bd76de661da2beaa4cfb68e7aaf1ec9cbfc533532bf72c.css" />
+<link rel="stylesheet" href="/assets/page_bundles/tree-f95f64689d3a4eccbc4fddee3de02a3bd8a3b9c1eb74281404c45e35e63c5f31.css" /><link rel="stylesheet" href="/assets/page_bundles/projects-994676131d72c0841f4bbe81c8b22ffcf292532880c5e81d286cd0e4ebd5de82.css" /><link rel="stylesheet" href="/assets/page_bundles/commit_description-1e2cba4dda3c7b30dd84924809020c569f1308dea51520fe1dd5d4ce31403195.css" /><link rel="stylesheet" href="/assets/page_bundles/work_items-22a76cdd1fe2ae5431b7ff603f86212acaf81b49c4a932f19e3b3222dc1881ee.css" /><link rel="stylesheet" href="/assets/page_bundles/notes_shared-7e727ab1e91b421915feadeb04a1b9d57213cb1b2f8f56f4d894b34d6b42e9b3.css" />
+<link rel="stylesheet" href="/assets/application_utilities-58bec0f2dc46133fc9e8548af9854688398e9d7263cc0fd95ec5739f2a069dec.css" />
+<link rel="stylesheet" href="/assets/tailwind-70b8bab52dfd7aa6aed60c30df5810ad9f2fc8f45459913a04e921da7ee7f4c9.css" />
+
+
+<link rel="stylesheet" href="/assets/fonts-fae5d3f79948bd85f18b6513a025f863b19636e85b09a1492907eb4b1bb0557b.css" />
+<link rel="stylesheet" href="/assets/highlight/themes/white-e31d355458ead69f8798dbb62f54c60c4ccc7db35289cbbd2353ddfdf5109aac.css" />
+
+
+<link rel="preload" href="/assets/application_utilities-58bec0f2dc46133fc9e8548af9854688398e9d7263cc0fd95ec5739f2a069dec.css" as="style" type="text/css">
+<link rel="preload" href="/assets/application-af238855527850d779bd76de661da2beaa4cfb68e7aaf1ec9cbfc533532bf72c.css" as="style" type="text/css">
+<link rel="preload" href="/assets/highlight/themes/white-e31d355458ead69f8798dbb62f54c60c4ccc7db35289cbbd2353ddfdf5109aac.css" as="style" type="text/css">
+
+
+
+
+<script src="/assets/webpack/runtime.ef1d5f7d.bundle.js" defer="defer"></script>
+<script src="/assets/webpack/main.60ef53f4.chunk.js" defer="defer"></script>
+<script src="/assets/webpack/10.983bd1ac.chunk.js" defer="defer"></script>
+<script src="/assets/webpack/13.4882db81.chunk.js" defer="defer"></script>
+<script src="/assets/webpack/14.629d03c2.chunk.js" defer="defer"></script>
+<script src="/assets/webpack/commons-pages.groups.analytics.dashboards-pages.groups.harbor.repositories-pages.groups.iteration_ca-b07ae190.ec7189d6.chunk.js" defer="defer"></script>
+<script src="/assets/webpack/commons-pages.groups.new-pages.import.gitlab_projects.new-pages.import.manifest.new-pages.projects.n-44c6c18e.ddad2718.chunk.js" defer="defer"></script>
+<script src="/assets/webpack/commons-pages.search.show-super_sidebar.5f6b2b7e.chunk.js" defer="defer"></script>
+<script src="/assets/webpack/super_sidebar.151ba159.chunk.js" defer="defer"></script>
+<script src="/assets/webpack/commons-pages.projects-pages.projects.activity-pages.projects.alert_management.details-pages.project-68d77824.33350df1.chunk.js" defer="defer"></script>
+<script src="/assets/webpack/commons-pages.groups.packages-pages.groups.registry.repositories-pages.groups.security.policies.edit-429ebfda.04ef31a3.chunk.js" defer="defer"></script>
+<script src="/assets/webpack/105.c82720fa.chunk.js" defer="defer"></script>
+<script src="/assets/webpack/130.b84b9a43.chunk.js" defer="defer"></script>
+<script src="/assets/webpack/commons-pages.projects.blob.show-pages.projects.show-pages.projects.snippets.show-pages.projects.tre-c684fcf6.b9b3fe59.chunk.js" defer="defer"></script>
+<script src="/assets/webpack/144.95710b05.chunk.js" defer="defer"></script>
+<script src="/assets/webpack/commons-pages.projects.blob.edit-pages.projects.blob.new-pages.projects.blob.show-pages.projects.sho-ec79e51c.69aef509.chunk.js" defer="defer"></script>
+<script src="/assets/webpack/commons-pages.projects.blob.show-pages.projects.branches.index-pages.projects.show-pages.projects.ta-c9380b86.ec1d4bb3.chunk.js" defer="defer"></script>
+<script src="/assets/webpack/commons-pages.groups.show-pages.projects.blob.show-pages.projects.show-pages.projects.tree.show.2f630089.chunk.js" defer="defer"></script>
+<script src="/assets/webpack/commons-pages.projects.blob.show-pages.projects.show-pages.projects.tree.show.f148c8c5.chunk.js" defer="defer"></script>
+<script src="/assets/webpack/commons-pages.projects.blob.show-pages.projects.tree.show-treeList.3c117d30.chunk.js" defer="defer"></script>
+<script src="/assets/webpack/pages.projects.blob.show.75f08253.chunk.js" defer="defer"></script>
+
+<meta content="object" property="og:type">
+<meta content="GitLab" property="og:site_name">
+<meta content="21-fcd.rules · c2d1932e20c29ca684e100be92a6e861050dcf57 · Arch Linux / Packaging / Packages / gnuradio · GitLab" property="og:title">
+<meta content="Signal processing runtime and signal processing software development toolkit packages: gnuradio gnuradio-companion gnuradio-docs gnuradio-examples gnuradio-utils python-gnuradio" property="og:description">
+<meta content="https://gitlab.archlinux.org/assets/twitter_card-570ddb06edf56a2312253c5872489847a0f385112ddbcd71ccfa1570febab5d2.jpg" property="og:image">
+<meta content="64" property="og:image:width">
+<meta content="64" property="og:image:height">
+<meta content="https://gitlab.archlinux.org/archlinux/packaging/packages/gnuradio/-/blob/c2d1932e20c29ca684e100be92a6e861050dcf57/21-fcd.rules" property="og:url">
+<meta content="summary" property="twitter:card">
+<meta content="21-fcd.rules · c2d1932e20c29ca684e100be92a6e861050dcf57 · Arch Linux / Packaging / Packages / gnuradio · GitLab" property="twitter:title">
+<meta content="Signal processing runtime and signal processing software development toolkit packages: gnuradio gnuradio-companion gnuradio-docs gnuradio-examples gnuradio-utils python-gnuradio" property="twitter:description">
+<meta content="https://gitlab.archlinux.org/assets/twitter_card-570ddb06edf56a2312253c5872489847a0f385112ddbcd71ccfa1570febab5d2.jpg" property="twitter:image">
+
+<meta name="csrf-param" content="authenticity_token" />
+<meta name="csrf-token" content="cJd9uBSeikeV5eFxUHTVPmSMG85vTva8CtwLYkdsOz1ikZo27Q2kNokA_1ZUHKedrTcl5XvmcqxmYbxq45KQ-g" />
+<meta name="csp-nonce" />
+<meta name="action-cable-url" content="/-/cable" />
+<link href="/-/manifest.json" rel="manifest">
+<link rel="icon" type="image/png" href="/uploads/-/system/appearance/favicon/1/lol3.png" id="favicon" data-original-href="/uploads/-/system/appearance/favicon/1/lol3.png" />
+<link rel="apple-touch-icon" type="image/x-icon" href="/uploads/-/system/appearance/pwa_icon/1/apple-touch-icon-144x144.png?width=192" />
+<link rel="apple-touch-icon" type="image/x-icon" href="/uploads/-/system/appearance/pwa_icon/1/apple-touch-icon-144x144.png?width=192" sizes="192x192" />
+<link rel="apple-touch-icon" type="image/x-icon" href="/uploads/-/system/appearance/pwa_icon/1/apple-touch-icon-144x144.png?width=512" sizes="512x512" />
+<link href="/search/opensearch.xml" rel="search" title="Search GitLab" type="application/opensearchdescription+xml">
+
+
+
+
+<meta content="Signal processing runtime and signal processing software development toolkit packages: gnuradio gnuradio-companion gnuradio-docs gnuradio-examples gnuradio-utils python-gnuradio" name="description">
+<meta content="#28272d" name="theme-color">
+</head>
+
+<body class="tab-width-8 gl-browser-generic gl-platform-other" data-group="packages" data-group-full-path="archlinux/packaging/packages" data-namespace-id="11323" data-page="projects:blob:show" data-page-type-id="c2d1932e20c29ca684e100be92a6e861050dcf57/21-fcd.rules" data-project="gnuradio" data-project-full-path="archlinux/packaging/packages/gnuradio" data-project-id="34324">
+
+<script>
+//<![CDATA[
+gl = window.gl || {};
+gl.client = {"isGeneric":true,"isOther":true};
+
+
+//]]>
+</script>
+
+
+<header class="header-logged-out" data-testid="navbar">
+<a class="gl-sr-only gl-accessibility" href="#content-body">Skip to content</a>
+<div class="container-fluid">
+<nav aria-label="Explore GitLab" class="header-logged-out-nav gl-flex gl-gap-3 gl-justify-between">
+<div class="gl-flex gl-items-center gl-gap-1">
+<span class="gl-sr-only">GitLab</span>
+<a title="Homepage" id="logo" class="header-logged-out-logo has-tooltip" aria-label="Homepage" href="/"><img class="brand-header-logo lazy" alt="" data-src="/uploads/-/system/appearance/header_logo/1/lol3.png" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" />
+</a></div>
+<ul class="gl-list-none gl-p-0 gl-m-0 gl-flex gl-gap-3 gl-items-center gl-grow">
+<li class="header-logged-out-nav-item">
+<a class="" href="/explore">Explore</a>
+</li>
+</ul>
+<ul class="gl-list-none gl-p-0 gl-m-0 gl-flex gl-gap-3 gl-items-center gl-justify-end">
+<li class="header-logged-out-nav-item">
+<a href="/users/sign_in?redirect_to_referer=yes">Sign in</a>
+</li>
+</ul>
+</nav>
+</div>
+</header>
+
+<div class="layout-page page-with-super-sidebar">
+<aside class="js-super-sidebar super-sidebar super-sidebar-loading" data-command-palette="{&quot;project_files_url&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/files/c2d1932e20c29ca684e100be92a6e861050dcf57?format=json&quot;,&quot;project_blob_url&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/blob/c2d1932e20c29ca684e100be92a6e861050dcf57&quot;}" data-force-desktop-expanded-sidebar="" data-is-saas="false" data-root-path="/" data-sidebar="{&quot;is_logged_in&quot;:false,&quot;context_switcher_links&quot;:[{&quot;title&quot;:&quot;Explore&quot;,&quot;link&quot;:&quot;/explore&quot;,&quot;icon&quot;:&quot;compass&quot;}],&quot;current_menu_items&quot;:[{&quot;id&quot;:&quot;project_overview&quot;,&quot;title&quot;:&quot;gnuradio&quot;,&quot;entity_id&quot;:34324,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio&quot;,&quot;link_classes&quot;:&quot;shortcuts-project&quot;,&quot;is_active&quot;:false},{&quot;id&quot;:&quot;manage_menu&quot;,&quot;title&quot;:&quot;Manage&quot;,&quot;icon&quot;:&quot;users&quot;,&quot;avatar_shape&quot;:&quot;rect&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/activity&quot;,&quot;is_active&quot;:false,&quot;items&quot;:[{&quot;id&quot;:&quot;activity&quot;,&quot;title&quot;:&quot;Activity&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/activity&quot;,&quot;link_classes&quot;:&quot;shortcuts-project-activity&quot;,&quot;is_active&quot;:false},{&quot;id&quot;:&quot;members&quot;,&quot;title&quot;:&quot;Members&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/project_members&quot;,&quot;is_active&quot;:false},{&quot;id&quot;:&quot;labels&quot;,&quot;title&quot;:&quot;Labels&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/labels&quot;,&quot;is_active&quot;:false}],&quot;separated&quot;:false},{&quot;id&quot;:&quot;plan_menu&quot;,&quot;title&quot;:&quot;Plan&quot;,&quot;icon&quot;:&quot;planning&quot;,&quot;avatar_shape&quot;:&quot;rect&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/issues&quot;,&quot;is_active&quot;:false,&quot;items&quot;:[{&quot;id&quot;:&quot;project_issue_list&quot;,&quot;title&quot;:&quot;Issues&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/issues&quot;,&quot;pill_count_field&quot;:&quot;openIssuesCount&quot;,&quot;link_classes&quot;:&quot;shortcuts-issues has-sub-items&quot;,&quot;is_active&quot;:false},{&quot;id&quot;:&quot;boards&quot;,&quot;title&quot;:&quot;Issue boards&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/boards&quot;,&quot;link_classes&quot;:&quot;shortcuts-issue-boards&quot;,&quot;is_active&quot;:false},{&quot;id&quot;:&quot;milestones&quot;,&quot;title&quot;:&quot;Milestones&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/milestones&quot;,&quot;is_active&quot;:false},{&quot;id&quot;:&quot;iterations&quot;,&quot;title&quot;:&quot;Iterations&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/cadences&quot;,&quot;is_active&quot;:false},{&quot;id&quot;:&quot;project_wiki&quot;,&quot;title&quot;:&quot;Wiki&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/wikis/home&quot;,&quot;link_classes&quot;:&quot;shortcuts-wiki&quot;,&quot;is_active&quot;:false}],&quot;separated&quot;:false},{&quot;id&quot;:&quot;code_menu&quot;,&quot;title&quot;:&quot;Code&quot;,&quot;icon&quot;:&quot;code&quot;,&quot;avatar_shape&quot;:&quot;rect&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/merge_requests&quot;,&quot;is_active&quot;:true,&quot;items&quot;:[{&quot;id&quot;:&quot;project_merge_request_list&quot;,&quot;title&quot;:&quot;Merge requests&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/merge_requests&quot;,&quot;pill_count_field&quot;:&quot;openMergeRequestsCount&quot;,&quot;link_classes&quot;:&quot;shortcuts-merge_requests&quot;,&quot;is_active&quot;:false},{&quot;id&quot;:&quot;files&quot;,&quot;title&quot;:&quot;Repository&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/tree/c2d1932e20c29ca684e100be92a6e861050dcf57&quot;,&quot;link_classes&quot;:&quot;shortcuts-tree&quot;,&quot;is_active&quot;:true},{&quot;id&quot;:&quot;branches&quot;,&quot;title&quot;:&quot;Branches&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/branches&quot;,&quot;is_active&quot;:false},{&quot;id&quot;:&quot;commits&quot;,&quot;title&quot;:&quot;Commits&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/commits/c2d1932e20c29ca684e100be92a6e861050dcf57&quot;,&quot;link_classes&quot;:&quot;shortcuts-commits&quot;,&quot;is_active&quot;:false},{&quot;id&quot;:&quot;tags&quot;,&quot;title&quot;:&quot;Tags&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/tags&quot;,&quot;is_active&quot;:false},{&quot;id&quot;:&quot;graphs&quot;,&quot;title&quot;:&quot;Repository graph&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/network/c2d1932e20c29ca684e100be92a6e861050dcf57&quot;,&quot;link_classes&quot;:&quot;shortcuts-network&quot;,&quot;is_active&quot;:false},{&quot;id&quot;:&quot;compare&quot;,&quot;title&quot;:&quot;Compare revisions&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/compare?from=main\u0026to=c2d1932e20c29ca684e100be92a6e861050dcf57&quot;,&quot;is_active&quot;:false},{&quot;id&quot;:&quot;file_locks&quot;,&quot;title&quot;:&quot;Locked files&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/path_locks&quot;,&quot;is_active&quot;:false}],&quot;separated&quot;:false},{&quot;id&quot;:&quot;deploy_menu&quot;,&quot;title&quot;:&quot;Deploy&quot;,&quot;icon&quot;:&quot;deployments&quot;,&quot;avatar_shape&quot;:&quot;rect&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/ml/models&quot;,&quot;is_active&quot;:false,&quot;items&quot;:[{&quot;id&quot;:&quot;model_registry&quot;,&quot;title&quot;:&quot;Model registry&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/ml/models&quot;,&quot;is_active&quot;:false}],&quot;separated&quot;:false},{&quot;id&quot;:&quot;analyze_menu&quot;,&quot;title&quot;:&quot;Analyze&quot;,&quot;icon&quot;:&quot;chart&quot;,&quot;avatar_shape&quot;:&quot;rect&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/value_stream_analytics&quot;,&quot;is_active&quot;:false,&quot;items&quot;:[{&quot;id&quot;:&quot;cycle_analytics&quot;,&quot;title&quot;:&quot;Value stream analytics&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/value_stream_analytics&quot;,&quot;link_classes&quot;:&quot;shortcuts-project-cycle-analytics&quot;,&quot;is_active&quot;:false},{&quot;id&quot;:&quot;contributors&quot;,&quot;title&quot;:&quot;Contributor analytics&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/graphs/c2d1932e20c29ca684e100be92a6e861050dcf57&quot;,&quot;is_active&quot;:false},{&quot;id&quot;:&quot;repository_analytics&quot;,&quot;title&quot;:&quot;Repository analytics&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/graphs/c2d1932e20c29ca684e100be92a6e861050dcf57/charts&quot;,&quot;link_classes&quot;:&quot;shortcuts-repository-charts&quot;,&quot;is_active&quot;:false},{&quot;id&quot;:&quot;code_review&quot;,&quot;title&quot;:&quot;Code review analytics&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/analytics/code_reviews&quot;,&quot;is_active&quot;:false},{&quot;id&quot;:&quot;issues&quot;,&quot;title&quot;:&quot;Issue analytics&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/analytics/issues_analytics&quot;,&quot;is_active&quot;:false},{&quot;id&quot;:&quot;insights&quot;,&quot;title&quot;:&quot;Insights&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/insights/&quot;,&quot;link_classes&quot;:&quot;shortcuts-project-insights&quot;,&quot;is_active&quot;:false},{&quot;id&quot;:&quot;model_experiments&quot;,&quot;title&quot;:&quot;Model experiments&quot;,&quot;link&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/ml/experiments&quot;,&quot;is_active&quot;:false}],&quot;separated&quot;:false}],&quot;current_context_header&quot;:&quot;Project&quot;,&quot;support_path&quot;:&quot;https://about.gitlab.com/get-help/&quot;,&quot;docs_path&quot;:&quot;/help/docs&quot;,&quot;display_whats_new&quot;:false,&quot;show_version_check&quot;:null,&quot;search&quot;:{&quot;search_path&quot;:&quot;/search&quot;,&quot;issues_path&quot;:&quot;/dashboard/issues&quot;,&quot;mr_path&quot;:&quot;/dashboard/merge_requests&quot;,&quot;autocomplete_path&quot;:&quot;/search/autocomplete&quot;,&quot;settings_path&quot;:&quot;/search/settings&quot;,&quot;search_context&quot;:{&quot;group&quot;:{&quot;id&quot;:11323,&quot;name&quot;:&quot;Packages&quot;,&quot;full_name&quot;:&quot;Arch Linux / Packaging / Packages&quot;},&quot;group_metadata&quot;:{&quot;issues_path&quot;:&quot;/groups/archlinux/packaging/packages/-/issues&quot;,&quot;mr_path&quot;:&quot;/groups/archlinux/packaging/packages/-/merge_requests&quot;},&quot;project&quot;:{&quot;id&quot;:34324,&quot;name&quot;:&quot;gnuradio&quot;},&quot;project_metadata&quot;:{&quot;mr_path&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/merge_requests&quot;,&quot;issues_path&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/issues&quot;},&quot;code_search&quot;:true,&quot;ref&quot;:&quot;c2d1932e20c29ca684e100be92a6e861050dcf57&quot;,&quot;scope&quot;:null,&quot;for_snippets&quot;:null}},&quot;panel_type&quot;:&quot;project&quot;,&quot;shortcut_links&quot;:[{&quot;title&quot;:&quot;Snippets&quot;,&quot;href&quot;:&quot;/explore/snippets&quot;,&quot;css_class&quot;:&quot;dashboard-shortcuts-snippets&quot;},{&quot;title&quot;:&quot;Groups&quot;,&quot;href&quot;:&quot;/explore/groups&quot;,&quot;css_class&quot;:&quot;dashboard-shortcuts-groups&quot;},{&quot;title&quot;:&quot;Projects&quot;,&quot;href&quot;:&quot;/explore/projects/starred&quot;,&quot;css_class&quot;:&quot;dashboard-shortcuts-projects&quot;}],&quot;terms&quot;:null}"></aside>
+
+<div class="content-wrapper">
+<div class="broadcast-wrapper">
+
+<div class="gl-broadcast-message banner js-broadcast-notification-1 light-red" data-broadcast-banner data-testid="banner-broadcast-message" role="alert">
+<div class="gl-broadcast-message-content">
+<div class="gl-broadcast-message-icon">
+<svg class="s16" data-testid="bullhorn-icon"><use href="/assets/icons-8791a66659d025e0a4c801978c79a1fbd82db1d27d85f044a35728ea7cf0ae80.svg#bullhorn"></use></svg>
+</div>
+<div class="gl-broadcast-message-text">
+<h2 class="gl-sr-only">Admin message</h2>
+<p>Due to an influx of spam, we have had to temporarily disable account registrations. Please write an email to <a href="mailto:accountsupport@archlinux.org">accountsupport@archlinux.org</a>, with your desired username, if you want to get access. Sorry for the inconvenience.</p>
+</div>
+</div>
+<button class="gl-button btn btn-icon btn-sm btn-default btn-default-tertiary gl-broadcast-message-dismiss js-dismiss-current-broadcast-notification" aria-label="Close" data-id="1" data-expire-date="2025-08-28T17:11:54Z" data-cookie-key="hide_broadcast_message_1" type="button"><svg class="s16 gl-icon gl-button-icon " data-testid="close-icon"><use href="/assets/icons-8791a66659d025e0a4c801978c79a1fbd82db1d27d85f044a35728ea7cf0ae80.svg#close"></use></svg>
+
+</button>
+</div>
+
+
+
+
+
+</div>
+<div class="alert-wrapper alert-wrapper-top-space gl-flex gl-flex-col gl-gap-3 container-fluid container-limited">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+<div class="top-bar-fixed container-fluid" data-testid="top-bar">
+<div class="top-bar-container gl-flex gl-items-center gl-gap-2">
+<div class="gl-grow gl-basis-0 gl-flex gl-items-center gl-justify-start">
+<button class="gl-button btn btn-icon btn-md btn-default btn-default-tertiary js-super-sidebar-toggle-expand super-sidebar-toggle -gl-ml-3" aria-controls="super-sidebar" aria-expanded="false" aria-label="Primary navigation sidebar" type="button"><svg class="s16 gl-icon gl-button-icon " data-testid="sidebar-icon"><use href="/assets/icons-8791a66659d025e0a4c801978c79a1fbd82db1d27d85f044a35728ea7cf0ae80.svg#sidebar"></use></svg>
+
+</button>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Arch Linux","item":"https://gitlab.archlinux.org/archlinux"},{"@type":"ListItem","position":2,"name":"Packaging","item":"https://gitlab.archlinux.org/archlinux/packaging"},{"@type":"ListItem","position":3,"name":"Packages","item":"https://gitlab.archlinux.org/archlinux/packaging/packages"},{"@type":"ListItem","position":4,"name":"gnuradio","item":"https://gitlab.archlinux.org/archlinux/packaging/packages/gnuradio"},{"@type":"ListItem","position":5,"name":"Repository","item":"https://gitlab.archlinux.org/archlinux/packaging/packages/gnuradio/-/blob/c2d1932e20c29ca684e100be92a6e861050dcf57/21-fcd.rules"}]}
+
+
+</script>
+<div data-testid="breadcrumb-links" id="js-vue-page-breadcrumbs-wrapper">
+<div data-breadcrumbs-json="[{&quot;text&quot;:&quot;Arch Linux&quot;,&quot;href&quot;:&quot;/archlinux&quot;,&quot;avatarPath&quot;:&quot;/uploads/-/system/group/avatar/23/iconfinder_archlinux_386451.png&quot;},{&quot;text&quot;:&quot;Packaging&quot;,&quot;href&quot;:&quot;/archlinux/packaging&quot;,&quot;avatarPath&quot;:null},{&quot;text&quot;:&quot;Packages&quot;,&quot;href&quot;:&quot;/archlinux/packaging/packages&quot;,&quot;avatarPath&quot;:null},{&quot;text&quot;:&quot;gnuradio&quot;,&quot;href&quot;:&quot;/archlinux/packaging/packages/gnuradio&quot;,&quot;avatarPath&quot;:null},{&quot;text&quot;:&quot;Repository&quot;,&quot;href&quot;:&quot;/archlinux/packaging/packages/gnuradio/-/blob/c2d1932e20c29ca684e100be92a6e861050dcf57/21-fcd.rules&quot;,&quot;avatarPath&quot;:null}]" id="js-vue-page-breadcrumbs"></div>
+<div id="js-injected-page-breadcrumbs"></div>
+</div>
+
+
+</div>
+<div class="gl-flex-none gl-flex gl-items-center gl-justify-center">
+<div id="js-advanced-search-modal"></div>
+
+</div>
+<div class="gl-grow gl-basis-0 gl-flex gl-items-center gl-justify-end">
+<div id="js-work-item-feedback"></div>
+
+
+</div>
+</div>
+</div>
+
+<div class="container-fluid container-limited project-highlight-puc">
+<main class="content" id="content-body" itemscope itemtype="http://schema.org/SoftwareSourceCode">
+<div class="flash-container flash-container-page sticky" data-testid="flash-container">
+<div id="js-global-alerts"></div>
+</div>
+
+
+
+
+
+
+<div class="js-signature-container" data-signatures-path="/archlinux/packaging/packages/gnuradio/-/commits/74ebf6f0b3365cad72d83003ef2c43b75dcab360/signatures?limit=1"></div>
+
+<div class="tree-holder gl-pt-4" id="tree-holder">
+<div class="nav-block">
+<div class="tree-ref-container">
+<div class="tree-ref-holder gl-max-w-26">
+<div data-project-id="34324" data-project-root-path="/archlinux/packaging/packages/gnuradio" data-ref="c2d1932e20c29ca684e100be92a6e861050dcf57" data-ref-type="" id="js-tree-ref-switcher"></div>
+</div>
+<ul class="breadcrumb repo-breadcrumb">
+<li class="breadcrumb-item">
+<a href="/archlinux/packaging/packages/gnuradio/-/tree/c2d1932e20c29ca684e100be92a6e861050dcf57">gnuradio
+</a></li>
+<li class="breadcrumb-item">
+<a href="/archlinux/packaging/packages/gnuradio/-/blob/c2d1932e20c29ca684e100be92a6e861050dcf57/21-fcd.rules"><strong>21-fcd.rules</strong>
+</a></li>
+</ul>
+</div>
+<div class="tree-controls gl-flex gl-flex-wrap sm:gl-flex-nowrap gl-items-baseline gl-gap-3">
+<button class="gl-button btn btn-md btn-default has-tooltip shortcuts-find-file" title="Go to file, press &lt;kbd class=&#39;flat ml-1&#39; aria-hidden=true&gt;/~&lt;/kbd&gt; or &lt;kbd class=&#39;flat ml-1&#39; aria-hidden=true&gt;t&lt;/kbd&gt;" aria-keyshortcuts="/+~ t" data-html="true" data-event-tracking="click_find_file_button_on_repository_pages" type="button"><span class="gl-button-text">
+Find file
+
+</span>
+
+</button>
+<a data-event-tracking="click_blame_control_on_blob_page" class="gl-button btn btn-md btn-default js-blob-blame-link" href="/archlinux/packaging/packages/gnuradio/-/blame/c2d1932e20c29ca684e100be92a6e861050dcf57/21-fcd.rules"><span class="gl-button-text">
+Blame
+</span>
+
+</a>
+<a aria-keyshortcuts="y" class="gl-button btn btn-md btn-default has-tooltip js-data-file-blob-permalink-url" data-html="true" title="Go to permalink &lt;kbd class=&#39;flat ml-1&#39; aria-hidden=true&gt;y&lt;/kbd&gt;" href="/archlinux/packaging/packages/gnuradio/-/blob/c2d1932e20c29ca684e100be92a6e861050dcf57/21-fcd.rules"><span class="gl-button-text">
+Permalink
+</span>
+
+</a>
+</div>
+</div>
+
+<div class="info-well">
+<div class="well-segment">
+<ul class="blob-commit-info">
+<li class="commit flex-row js-toggle-container" id="commit-74ebf6f0">
+<div class="gl-self-start gl-block">
+<a href="/kkeen"><img alt="Kyle Keen&#39;s avatar" src="https://secure.gravatar.com/avatar/eb39b7dbbe2e1c72c7e7763e344770b89323c2eac903ef9952b6d240d5bc40db?s=128&amp;d=identicon" class="avatar s32 gl-inline-block" title="Kyle Keen"></a>
+</div>
+<div class="commit-detail flex-list gl-flex gl-justify-between gl-items-start gl-grow gl-min-w-0 gl-mb-3">
+<div class="commit-content gl-self-center" data-testid="commit-content">
+<div class="gl-flex sm:gl-hidden gl-gap-3 gl-items-center">
+<div class="committer gl-text-sm">
+<time class="js-timeago" title="Oct 26, 2013 4:19pm" datetime="2013-10-26T16:19:59Z" data-toggle="tooltip" data-placement="bottom" data-container="body">Oct 26, 2013</time>
+</div>
+<a class="gl-button btn btn-md btn-link commit-row-message js-onboarding-commit-item" href="/archlinux/packaging/packages/gnuradio/-/commit/74ebf6f0b3365cad72d83003ef2c43b75dcab360"><svg class="s16 gl-icon gl-button-icon " data-testid="commit-icon"><use href="/assets/icons-8791a66659d025e0a4c801978c79a1fbd82db1d27d85f044a35728ea7cf0ae80.svg#commit"></use></svg>
+<span class="gl-button-text">
+74ebf6f0
+
+</span>
+
+</a></div>
+<div class="gl-hidden sm:gl-block">
+<a class="commit-row-message item-title js-onboarding-commit-item " href="/archlinux/packaging/packages/gnuradio/-/commit/74ebf6f0b3365cad72d83003ef2c43b75dcab360">addpkg: gnradio 3.7.1</a>
+<span class="commit-row-message d-inline d-sm-none">
+&middot;
+74ebf6f0
+</span>
+<div class="committer gl-text-sm">
+<a class="commit-author-link js-user-link" data-user-id="1281" href="/kkeen">Kyle Keen</a> authored <time class="js-timeago" title="Oct 26, 2013 4:19pm" datetime="2013-10-26T16:19:59Z" data-toggle="tooltip" data-placement="bottom" data-container="body">Oct 26, 2013</time>
+</div>
+
+
+</div>
+</div>
+<div class="commit-actions gl-flex gl-items-center gl-gap-3">
+<div class="gl-hidden sm:gl-flex gl-items-center gl-gap-3">
+
+<div class="js-commit-pipeline-status" data-endpoint="/archlinux/packaging/packages/gnuradio/-/commit/74ebf6f0b3365cad72d83003ef2c43b75dcab360/pipelines?ref=c2d1932e20c29ca684e100be92a6e861050dcf57"></div>
+<div class="commit-sha-group btn-group gl-hidden sm:gl-flex">
+<div class="label label-monospace monospace">
+74ebf6f0
+</div>
+<button class="gl-button btn btn-icon btn-md btn-default " title="Copy commit SHA" aria-label="Copy commit SHA" aria-live="polite" data-toggle="tooltip" data-placement="bottom" data-container="body" data-html="true" data-category="primary" data-size="medium" data-clipboard-text="74ebf6f0b3365cad72d83003ef2c43b75dcab360" type="button"><svg class="s16 gl-icon gl-button-icon " data-testid="copy-to-clipboard-icon"><use href="/assets/icons-8791a66659d025e0a4c801978c79a1fbd82db1d27d85f044a35728ea7cf0ae80.svg#copy-to-clipboard"></use></svg>
+
+</button>
+
+</div>
+</div>
+<div class="gl-block sm:gl-hidden">
+<button class="gl-button btn btn-icon btn-md btn-default button-ellipsis-horizontal text-expander js-toggle-button" data-toggle="tooltip" data-container="body" data-collapse-title="Toggle commit description" data-expand-title="Toggle commit description" title="Toggle commit description" aria-label="Toggle commit description" type="button"><svg class="s16 gl-icon gl-button-icon " data-testid="ellipsis_h-icon"><use href="/assets/icons-8791a66659d025e0a4c801978c79a1fbd82db1d27d85f044a35728ea7cf0ae80.svg#ellipsis_h"></use></svg>
+
+</button>
+</div>
+<div data-event-tracking="click_history_control_on_blob_page" data-history-link="/archlinux/packaging/packages/gnuradio/-/commits/c2d1932e20c29ca684e100be92a6e861050dcf57/21-fcd.rules" id="js-commit-history-link"></div>
+</div>
+</div>
+<div class="gl-block sm:gl-hidden">
+<div class="gl-hidden js-toggle-content gl-mt-6">
+<a class="commit-row-message item-title js-onboarding-commit-item " href="/archlinux/packaging/packages/gnuradio/-/commit/74ebf6f0b3365cad72d83003ef2c43b75dcab360">addpkg: gnradio 3.7.1</a>
+<div class="committer gl-text-sm">
+<a class="commit-author-link js-user-link" data-user-id="1281" href="/kkeen">Kyle Keen</a> authored <time class="js-timeago" title="Oct 26, 2013 4:19pm" datetime="2013-10-26T16:19:59Z" data-toggle="tooltip" data-placement="bottom" data-container="body">Oct 26, 2013</time>
+</div>
+
+</div>
+</div>
+</li>
+
+</ul>
+</div>
+<div class="gl-hidden sm:gl-block">
+<div data-blob-path="21-fcd.rules" data-branch="c2d1932e20c29ca684e100be92a6e861050dcf57" data-branch-rules-path="/archlinux/packaging/packages/gnuradio/-/settings/repository#js-branch-rules" data-project-path="archlinux/packaging/packages/gnuradio" id="js-code-owners"></div>
+
+</div>
+</div>
+<div class="blob-content-holder js-per-page" data-blame-per-page="1000" id="blob-content-holder">
+<div data-blob-path="21-fcd.rules" data-can-download-code="true" data-explain-code-available="false" data-new-workspace-path="/-/remote_development/workspaces/new" data-original-branch="c2d1932e20c29ca684e100be92a6e861050dcf57" data-project-path="archlinux/packaging/packages/gnuradio" data-ref-type="" data-resource-id="gid://gitlab/Project/34324" data-user-id="" id="js-view-blob-app">
+<div class="gl-spinner-container" role="status"><span aria-hidden class="gl-spinner gl-spinner-md gl-spinner-dark !gl-align-text-bottom"></span><span class="gl-sr-only !gl-absolute">Loading</span>
+</div>
+</div>
+</div>
+
+</div>
+<script>
+//<![CDATA[
+  window.gl = window.gl || {};
+  window.gl.webIDEPath = '/-/ide/project/archlinux/packaging/packages/gnuradio/edit/c2d1932e20c29ca684e100be92a6e861050dcf57/-/21-fcd.rules'
+
+
+//]]>
+</script>
+<div data-ambiguous="false" data-ref="c2d1932e20c29ca684e100be92a6e861050dcf57" id="js-ambiguous-ref-modal"></div>
+
+</main>
+</div>
+
+
+</div>
+</div>
+
+
+<script>
+//<![CDATA[
+if ('loading' in HTMLImageElement.prototype) {
+  document.querySelectorAll('img.lazy').forEach(img => {
+    img.loading = 'lazy';
+    let imgUrl = img.dataset.src;
+    // Only adding width + height for avatars for now
+    if (imgUrl.indexOf('/avatar/') > -1 && imgUrl.indexOf('?') === -1) {
+      const targetWidth = img.getAttribute('width') || img.width;
+      imgUrl += `?width=${targetWidth}`;
+    }
+    img.src = imgUrl;
+    img.removeAttribute('data-src');
+    img.classList.remove('lazy');
+    img.classList.add('js-lazy-loaded');
+    img.dataset.testid = 'js-lazy-loaded-content';
+  });
+}
+
+//]]>
+</script>
+<script>
+//<![CDATA[
+gl = window.gl || {};
+gl.experiments = {};
+
+
+//]]>
+</script>
+
+</body>
+</html>
+
