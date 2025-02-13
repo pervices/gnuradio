@@ -1,88 +1,193 @@
+# Maintainer: Per Vices <packages@pervices.com>
 
 pkgname=gnuradiopv
 _gitname=gnuradio
-pkgver=3.10.7.0
-pkgrel=1
-pkgdesc="General purpose DSP and SDR toolkit, with drivers for usrp and fcd."
-arch=('i686' 'x86_64')
-url="https://github.com/gnuradio/gnuradio"
-license=('GPL')
-makedepends=('git' 'cmake' 'boost' 'python-mako' 'log4cpp' 'gcc' 'python' 'lapack' 'python-numpy' 'doxygen' 'mathjax' 'python-cheetah3' 'gtk3' 'fftw' 'zeromq' 'cppzmq' 'gsl' 'qt5-base' 'qwt' 'python-pyqt5' 'python-lxml' 'portaudio' 'thrift' 'spdlog' 'pybind11' 'python-matplotlib' 'python-yaml' 'python-gobject' 'python-cairo' 'libvolk' 'libuhdpv')
-optdepends=('python-lxml: Some GRC modules use lxml optionally for improved performance')
+pkgver=3.10.11.0
+pkgrel=6
+pkgdesc="Per Vices Signal processing runtime and signal processing software development toolkit"
+arch=(x86_64)
+url="https://github.com/pervices/gnuradio"
+license=(GPL-3.0-or-later)
+depends=(
+    codec2
+    gcc-libs
+    glibc
+    gmp
+    gsl
+    libad9361
+    libuhdpv
+    libunwind
+    libvolk
+    python-click
+    python-mako
+    python-matplotlib
+    python-numpy
+    python-pygccxml
+    python-pyyaml
+    python-pyzmq
+    python-scipy
+    python-thrift
+    sdl12-compat
+    soapysdr
+    spdlog
+    thrift
+)
+makedepends=(
+    alsa-lib
+    boost
+    cmake
+    cppzmq
+    doxygen
+    fftw
+    fmt
+    git
+    gtk3
+    jack
+    libiio
+    libsndfile
+    mathjax2
+    portaudio
+    pybind11
+    python-cairo
+    python-gobject
+    python-jsonschema
+    python-lxml
+    python-packaging
+    python-pyqt5
+    python-pyqtgraph
+    python-pytest
+    qt5-base
+    qwt
+    xdg-utils
+    zeromq
+    libvolk 
+    libuhdpv
+)
+checkdepends=(
+    python-jsonschema
+    python-pytest
+    python-setuptools
+    xorg-server-xvfb
+)
+_usurl=https://github.com/gnuradio/gnuradio
 #pkgsrc=("file//gnuradio.tar.gz")
-source=("git+https://github.com/pervices/gnuradio.git#tag=v3.10.7.0")
+source=(
+    "git+https://github.com/pervices/gnuradio.git#tag=v3.10.11.0"
+    "$_gitname-numpy-2.0.patch::$_usurl/commit/8fbc5eb4b7214a4cb029ccae97205a85d49bdd48.patch"
+    "$_gitname-boost-1.87.patch::$_usurl/commit/111a4ff8b868791dae74d8cdf8c1e0684840f51a.patch"
+    "21-fcd.rules"
+)
 md5sums=('SKIP')
+
 conflicts=('gnuradio' 'gnuradio-companion')
 provides=('gnuradio' 'gnuradio-companion')
+
 pkgver() {
-    #cd "$srcdir/$_gitname"
-    #version_major=$(grep -i 'set(version_major' CMakeLists.txt |sed 's/.*VERSION_MAJOR[[:space:]]*\([[:digit:]]*\))/\1/i')
-    #version_api=$(grep -i 'set(version_api' CMakeLists.txt     |sed 's/.*VERSION_API[[:space:]]*\([[:digit:]]*\))/\1/i')
-    #version_abi=$(grep -i 'set(version_abi' CMakeLists.txt     |sed 's/.*VERSION_ABI[[:space:]]*\([[:digit:]]*\))/\1/i')
-    ##version_patch=$(grep -i 'set(version_patch' CMakeLists.txt |sed 's/.*VERSION_PATCH[[:space:]]*\([[:digit:]]*\))/\1/i')
-    ##if [[ $version_patch == 'SET(VERSION_PATCH git)' ]]; then
-    ##    version_patch=0
-    ##fi
-    ##version="${version_major}.${version_api}.${version_abi}.${version_patch}"
-    #version="${version_major}.${version_api}.${version_abi}"
-    #echo "${version}"
-    #git describe --always | sed 's|-|.|g'
-    #git rev-parse --short HEAD > ~/grc_ver
-    cd ${srcdir}/${_gitname}
-#     git checkout main-pv -- cmake/pkg-pv
+    cd $srcdir/$_gitname
     git checkout main-pv-3.10.11.0 -- cmake/debian-pv
     echo $(cat cmake/debian-pv/changelog | head -1 | cut -d ' ' -f2 | cut -d '-' -f1 | tr --delete ['('])
 }
 
+prepare() {
+  cd $srcdir/$_gitname
+  patch -Np1 -i ../gnuradio-numpy-2.0.patch
+  patch -Np1 -i ../gnuradio-boost-1.87.patch
+
+  # shellcheck disable=SC2016
+  sed -i 's/-${DOCVER}//' CMakeLists.txt
+
+  # Strip build path from docs
+  sed -i 's/^STRIP_FROM_PATH.*/STRIP_FROM_PATH = @PROJECT_SOURCE_DIR@ @PROJECT_BINARY_DIR@/' \
+    docs/doxygen/Doxyfile.in
+}
+
 build() {
-echo export path
-    export PYTHON=python3
-    cd "$srcdir/$_gitname"
-
-    sed -i -e "s|GR_PKG_LIBEXEC_DIR|GR_RUNTIME_DIR|" grc/scripts/freedesktop/CMakeLists.txt
-    msg "Starting build."
-    mkdir -p build
-    cd "$srcdir/$_gitname/build"
-    pwd
-
-
+    cd $srcdir/$_gitname
     cmake \
-          -DPYTHON_EXECUTABLE=/usr/bin/python3 \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DPYTHON_INCLUDE_DIR=$(echo /usr/include/python3*) \
-          -DPYTHON_LIBRARY=$(echo /usr/lib/libpython3.*.so) \
-          -DENABLE_GRC=ON \
-          -DVolk_DIR=/usr/lib/cmake/volk \
-          -DENABLE_GR_WXGUI=ON \
-          -DENABLE_GR_QTGUI=ON \
-          -DENABLE_INTERNAL_VOLK=ON \
-          -DCMAKE_INSTALL_PREFIX=/usr \
-          -DENABLE_UHD_RFNOC=OFF \
-          -Wno-dev ../
-
-    make -j$(nproc)
+          -S . -B build \
+          -D CMAKE_INSTALL_PREFIX=/usr \
+          -D CMAKE_BUILD_TYPE=Release \
+          -W no-dev \
+          -D ENABLE_POSTINSTALL=OFF \
+          -D ENABLE_UHD_RFNOC=OFF 
+    cmake --build build
 }
 
 check() {
-    cd "$srcdir/$_gitname/build"
-    export PYTHON=python3
-    #make test
+    cd $srcdir/$_gitname
+    xvfb-run ctest --test-dir build --output-on-failure
 }
 
 
 package() {
-    depends=('codec2' 'gcc-libs' 'glibc' 'gmp' 'gsl' 'libad9361' 'libunwind' 'libvolk' \
-             'python-click' 'python-click-plugins' 'python-mako' 'python-matplotlib' \
-             'python-numpy' 'python-yaml' 'python-pyzmq' 'python-scipy' 'python-thrift' \
-             'python-cairo' 'python-gobject' 'python-lxml' 'python-opengl' 'python-pyqt5' \
-             'python-pyqtgraph' 'sdl12-compat' 'soapysdr' 'spdlog' 'thrift' 'alsa-lib' \
-             'libasound.so' 'boost-libs' 'fftw' 'fmt' 'jack' 'libiio' 'libsndfile' \
-             'portaudio' 'spdlog' 'zeromq' 'qt5-base' 'qwt' 'gtk3')
-            # 'libuhdpv'
-    cd "$srcdir/$_gitname/grc/scripts/freedesktop"
-    install -Dm644 gnuradio-grc.desktop "$pkgdir/usr/share/applications/$pkgbase.desktop"
-    cd "$srcdir/$_gitname/build"
-    make DESTDIR="$pkgdir" install
-    find "$pkgdir/" -name '*.pyc' -delete
-    find "$pkgdir/" -name '*.pyo' -delete
+    depends+=(
+        alsa-lib
+        boost-libs
+        fftw
+        fmt
+        jack
+        libiio
+        libsndfile
+        portaudio
+        python-cairo
+        python-gobject
+        python-lxml
+        python-opengl
+        python-pyqt5
+        python-pyqtgraph
+        qt5-base
+        qwt
+        spdlog
+        zeromq
+    )
+    optdepends=(
+        'python-setuptools: for gr_modtool'
+    )
+    provides=(
+        libgnuradio-analog.so
+        libgnuradio-audio.so
+        libgnuradio-blocks.so
+        libgnuradio-channels.so
+        libgnuradio-digital.so
+        libgnuradio-dtv.so
+        libgnuradio-fec.so
+        libgnuradio-fft.so
+        libgnuradio-filter.so
+        libgnuradio-iio.so
+        libgnuradio-network.so
+        libgnuradio-pmt.so
+        libgnuradio-qtgui.so
+        libgnuradio-runtime.so
+        libgnuradio-soapy.so
+        libgnuradio-trellis.so
+        libgnuradio-uhd.so
+        libgnuradio-video-sdl.so
+        libgnuradio-vocoder.so
+        libgnuradio-wavelet.so
+        libgnuradio-zeromq.so
+    )
+    backup=(
+        etc/gnuradio/conf.d/00-grc-docs.conf
+        etc/gnuradio/conf.d/gnuradio-runtime.conf
+        etc/gnuradio/conf.d/gr-audio-alsa.conf
+        etc/gnuradio/conf.d/gr-audio-jack.conf
+        etc/gnuradio/conf.d/gr-audio-oss.conf
+        etc/gnuradio/conf.d/gr-audio-portaudio.conf
+        etc/gnuradio/conf.d/gr-audio.conf
+        etc/gnuradio/conf.d/gr-qtgui.conf
+        etc/gnuradio/conf.d/grc.conf
+        etc/gnuradio/conf.d/modtool.conf
+    )
+    cd $srcdir/$_gitname
+    DESTDIR="$pkgdir" cmake --install build
+
+    install -vDm644 -t "$pkgdir/usr/lib/udev/rules.d/" "$srcdir/21-fcd.rules"
+
+    install -vDm644 -t "$pkgdir/usr/share/applications" grc/scripts/freedesktop/gnuradio-grc.desktop
+    install -vDm644 -t "$pkgdir/usr/share/mime/packages" grc/scripts/freedesktop/gnuradio-grc.xml
+    install -vDm644 -t "$pkgdir/usr/share/metainfo" grc/scripts/freedesktop/org.gnuradio.grc.metainfo.xml
+    for size in 16 24 32 48 64 128 256; do
+        install -vDm644 "grc/scripts/freedesktop/grc-icon-$size.png" \
+            "$pkgdir/usr/share/icons/hicolor/${size}x${size}/apps/gnuradio-grc.png"
+    done
 }
