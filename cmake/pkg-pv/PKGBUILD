@@ -32,6 +32,11 @@ depends=(
     spdlog
     thrift
 )
+depends+=(
+    blas
+    cblas
+    lapack
+)
 makedepends=(
     alsa-lib
     boost
