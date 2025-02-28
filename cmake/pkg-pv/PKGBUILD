@@ -3,7 +3,7 @@
 pkgname=gnuradiopv
 _gitname=gnuradio
 pkgver=3.10.11.0
-pkgrel=6
+pkgrel=10
 pkgdesc="Per Vices Signal processing runtime and signal processing software development toolkit"
 arch=(x86_64)
 url="https://github.com/pervices/gnuradio"
@@ -50,6 +50,8 @@ makedepends=(
     jack
     libiio
     libsndfile
+    libuhdpv
+    libvolk
     mathjax2
     portaudio
     pybind11
@@ -65,8 +67,6 @@ makedepends=(
     qwt
     xdg-utils
     zeromq
-    libvolk 
-    libuhdpv
 )
 checkdepends=(
     python-jsonschema
@@ -87,7 +87,7 @@ source=(
 md5sums=('SKIP'
          '016631083d8b8a40f422bc1ad310b380'
          '4a6dcdb9185ff8d7aa2e5bddbb398763'
-         'b14fb3b6e4ce47833101973bfe132c6a'
+         '465e12c454c6a22ebec9849181af7bdc'
 )
 
 conflicts=('gnuradio' 'gnuradio-companion')
