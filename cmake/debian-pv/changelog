@@ -1,3 +1,9 @@
+gnuradiopv (3.10.11.1-0ubuntu1) ubuntu_release; urgency=medium
+
+  *  Packaging: Re-packaging against UHD 4.8
+
+ -- Per Vices <packages@pervices.com>  Wed, 09 Apr 2025 13:17:49 -0400
+
 gnuradiopv (3.10.11.0-0ubuntu1) ubuntu_release; urgency=medium
 
   *  Packaging: Syncing with upstream
