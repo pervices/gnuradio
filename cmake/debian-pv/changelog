@@ -1,3 +1,9 @@
+gnuradiopv (3.10.7.6-0ubuntu1) ubuntu_release; urgency=medium
+
+  *  Packaging: Re-compile agaist libuhdpv 4.8
+
+ -- Per Vices <packages@pervices.com>  Thu, 10 Apr 2025 16:32:58 -0400
+
 gnuradiopv (3.10.7.5-0ubuntu1) ubuntu_release; urgency=medium
 
   *  Packaging: Adding python-packaging dependency for rpm
