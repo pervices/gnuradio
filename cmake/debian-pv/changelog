@@ -1,5 +1,11 @@
 gnuradiopv (3.10.11.0-0ubuntu1) ubuntu_release; urgency=medium
 
+  *  Packaging: Re-compile agaist libuhdpv 4.8
+
+ -- Per Vices <packages@pervices.com>  Fri, 11 Apr 2025 09:38:10 -0400
+
+gnuradiopv (3.10.11.0-0ubuntu1) ubuntu_release; urgency=medium
+
   *  Packaging: Syncing with upstream with version 3.10.11.0
 
  -- Per Vices <packages@pervices.com>  Wed, 22 Jan 2025 17:21:19 -0500
