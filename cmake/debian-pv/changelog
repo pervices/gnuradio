@@ -1,4 +1,4 @@
-gnuradiopv (3.10.11.0-0ubuntu1) ubuntu_release; urgency=medium
+gnuradiopv (3.10.11.1-0ubuntu1) ubuntu_release; urgency=medium
 
   *  Packaging: Re-compile agaist libuhdpv 4.8
 
