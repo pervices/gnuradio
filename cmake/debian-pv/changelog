@@ -1,3 +1,9 @@
+gnuradiopv (3.10.11.3-0ubuntu1) ubuntu_release; urgency=medium
+
+  *  Packaging: Re-packaging due to the split of bubblewrap and bubblewrap-suid on Arch Linux
+
+ -- Per Vices <packages@pervices.com>  Thu, 09 Oct 2025 16:10:58 -0400
+
 gnuradiopv (3.10.11.2-0ubuntu1) ubuntu_release; urgency=medium
 
   *  Packaging: Re-packaging against boost-libs 1.88 on Arch Linux

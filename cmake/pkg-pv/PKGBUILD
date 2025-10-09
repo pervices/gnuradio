@@ -9,6 +9,7 @@ arch=(x86_64)
 url="https://github.com/pervices/gnuradio"
 license=(GPL-3.0-or-later)
 depends=(
+    bubblewrap
     codec2
     gcc-libs
     glibc
