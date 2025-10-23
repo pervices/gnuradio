@@ -89,6 +89,7 @@ source=(
 md5sums=('SKIP'
          '016631083d8b8a40f422bc1ad310b380'
          '4a6dcdb9185ff8d7aa2e5bddbb398763'
+         '7a3f565d174299fbd4f1ad5cfc9b7fe6'
          '465e12c454c6a22ebec9849181af7bdc'
 )
 
