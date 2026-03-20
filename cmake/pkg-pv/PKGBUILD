@@ -38,6 +38,8 @@ depends+=(
     cblas
     lapack
 )
+
+#TODO: add back pybind11 and remove pip from makedepends once https://github.com/pybind/pybind11/issues/5989 is fixed
 makedepends=(
     alsa-lib
     boost
@@ -55,12 +57,12 @@ makedepends=(
     libvolk
     mathjax2
     portaudio
-    pybind11
     python-cairo
     python-gobject
     python-jsonschema
     python-lxml
     python-packaging
+    python-pip
     python-pyqt5
     python-pyqtgraph
     python-pytest
@@ -68,6 +70,7 @@ makedepends=(
     qwt
     xdg-utils
     zeromq
+
 )
 checkdepends=(
     python-jsonschema
@@ -76,6 +79,7 @@ checkdepends=(
     xorg-server-xvfb
 )
 _usurl=https://github.com/gnuradio/gnuradio
+# TODO: remove pybind11_global-3.0.1-py3-none-any.whl once https://github.com/pybind/pybind11/issues/5989 is fixed
 source=(
 #     "git+https://github.com/pervices/gnuradio.git#tag=v3.10.11.0"
     "$_gitname.tar.gz"
@@ -85,12 +89,14 @@ source=(
     "$_gitname-boost-1.87.patch"
     "$_gitname-boost-1.89.patch"
     "21-fcd.rules"
+    "pybind11_global-3.0.1-py3-none-any.whl"
 )
 md5sums=('SKIP'
          '016631083d8b8a40f422bc1ad310b380'
          '4a6dcdb9185ff8d7aa2e5bddbb398763'
          '7a3f565d174299fbd4f1ad5cfc9b7fe6'
          '465e12c454c6a22ebec9849181af7bdc'
+	 '3ff530fad3c565c24169758313f16819'
 )
 
 conflicts=('gnuradio' 'gnuradio-companion')
@@ -104,6 +110,14 @@ pkgver() {
 
 prepare() {
   cd $srcdir/$_gitname
+
+  # TODO:remove pip usage once https://github.com/pybind/pybind11/issues/5989 is fixed
+  # pybind11 3.0.2 breaks gnuradio
+  # Since the official Arch repos only have the most recent, install through pip
+  # NOTE: it is okay here because we don't install anything to chroot later, do not do this outside of chroot or docker
+  # --user because the build user can't install globally
+  pip install --break-system-packages --user ../pybind11_global-3.0.1-py3-none-any.whl
+
   patch -Np1 -i ../gnuradio-numpy-2.0.patch
   patch -Np1 -i ../gnuradio-boost-1.87.patch
   patch -Np1 -i ../gnuradio-boost-1.89.patch
@@ -118,13 +132,16 @@ prepare() {
 
 build() {
     cd $srcdir/$_gitname
+
+    # TODO: remove pybind11_DIR once https://github.com/pybind/pybind11/issues/5989 is fixed
     cmake \
           -S . -B build \
           -D CMAKE_INSTALL_PREFIX=/usr \
           -D CMAKE_BUILD_TYPE=Release \
           -W no-dev \
           -D ENABLE_POSTINSTALL=OFF \
-          -D ENABLE_UHD_RFNOC=OFF 
+          -D ENABLE_UHD_RFNOC=OFF \
+          -D pybind11_DIR=/usr/src/packages/BUILD/gnuradiopv/src/pybind11_global-3.0.1.data/data/share/cmake/pybind11/
     cmake --build build
 }
 
