@@ -1,3 +1,9 @@
+gnuradiopv (3.10.11.6-0ubuntu1) ubuntu_release; urgency=medium
+
+  *  Packaging: Re-packaging against boost-libs 1.90 on Arch Linux
+
+ -- Per Vices <packages@pervices.com>  Tue, 31 Mar 2026 16:11:03 -0400
+
 gnuradiopv (3.10.11.5-0ubuntu1) ubuntu_release; urgency=medium
 
   *  Packaging: Temporarily mitigating an issue with Pybind11 3.0.2 
