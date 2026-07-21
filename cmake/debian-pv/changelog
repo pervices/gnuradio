@@ -1,3 +1,9 @@
+gnuradiopv (3.10.7.7-0ubuntu1) ubuntu_release; urgency=medium
+
+  *  Packaging: Re-compile agaist libuhdpv 4.10
+
+ -- Per Vices <packages@pervices.com>  Tue, 21 Jul 2026 11:28:33 -0400
+
 gnuradiopv (3.10.7.6-0ubuntu1) ubuntu_release; urgency=medium
 
   *  Packaging: Re-compile agaist libuhdpv 4.8
