@@ -43,6 +43,8 @@ URL:		https://www.github.com/pervices/gnuradio
 #Source0:	http://gnuradio.org/releases/gnuradio/gnuradio-%%{version}.tar.gz
 #Source0:	https://github.com/gnuradio/%%{real_name}/archive/v%%{version}/%%{real_name}-%%{version}.tar.gz
 Source0:    %{name}.tar.gz
+# Patch to remove Boost system component for Boost >= 1.69
+Patch0:     a166bdf73d3e3bfd362c239bbd58852faaad39c4.patch
 
 Requires(pre):	shadow-utils
 BuildRequires:	cmake
@@ -151,6 +153,7 @@ GNU Radio examples
 
 %prep
 %setup -q -n %{real_name}
+%patch0 -p1
 
 %build
 source /opt/rh/gcc-toolset-13/enable
