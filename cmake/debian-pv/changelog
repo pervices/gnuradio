@@ -1,3 +1,9 @@
+gnuradiopv (3.10.7.9-0ubuntu1) ubuntu_release; urgency=medium
+
+  *  Packaging: Apply upstream patch to remove Boost system component for Ubuntu
+
+ -- Per Vices <packages@pervices.com>  Tue, 22 Jul 2026 18:03:48 -0400
+
 gnuradiopv (3.10.7.8-0ubuntu1) ubuntu_release; urgency=medium
 
   *  Packaging: Apply upstream patch to remove Boost system component for Oracle
