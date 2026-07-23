@@ -221,6 +221,7 @@ class FlowgraphScene(QtWidgets.QGraphicsScene, base.Component):
         g_block.moveToTop()
         self.update()
         self.newElement.emit(c_block)
+        return id
 
     def selected_blocks(self) -> list[GUIBlock]:
         blocks = []
@@ -340,6 +341,7 @@ class FlowgraphScene(QtWidgets.QGraphicsScene, base.Component):
                 self.start_port = None
                 self.end_port = None
         self.mousePressed = False
+        self.moving_blocks = False
         super(FlowgraphScene, self).mouseReleaseEvent(event)
 
     def createActions(self, actions):

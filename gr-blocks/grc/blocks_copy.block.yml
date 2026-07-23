@@ -58,7 +58,7 @@ cpp_templates:
     declarations: 'blocks::copy::sptr ${id};'
     make: |-
         this->${id} = blocks::copy::make(${type.size}*${vlen});
-        this->${id}->set_enabled(${enabled});
+        self->${id}.set_enabled(${enabled});
     callbacks:
     - set_enabled(${enabled})
 

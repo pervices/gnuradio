@@ -11,8 +11,7 @@
 #define INCLUDED_PMT_INT_H
 
 #include <pmt/pmt.h>
-#include <string_view>
-#include <any>
+#include <boost/any.hpp>
 
 /*
  * EVERYTHING IN THIS FILE IS PRIVATE TO THE IMPLEMENTATION!
@@ -39,7 +38,7 @@ class pmt_symbol : public pmt_base
     pmt_t d_next;
 
 public:
-    pmt_symbol(std::string_view name);
+    pmt_symbol(const std::string& name);
     //~pmt_symbol(){}
 
     bool is_symbol() const override { return true; }
@@ -171,15 +170,15 @@ public:
 
 class pmt_any : public pmt_base
 {
-    std::any d_any;
+    boost::any d_any;
 
 public:
-    pmt_any(const std::any& any);
+    pmt_any(const boost::any& any);
     //~pmt_any();
 
     bool is_any() const override { return true; }
-    const std::any& ref() const { return d_any; }
-    void set(const std::any& any) { d_any = any; }
+    const boost::any& ref() const { return d_any; }
+    void set(const boost::any& any) { d_any = any; }
 };
 
 

@@ -96,6 +96,14 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
 
         self.setCorner(Qt.BottomLeftCorner, Qt.LeftDockWidgetArea)
 
+        # Get max length of recently opened files list to be displayed in the menu
+        self.max_recent_files = self.app.qsettings.value('appearance/max_recent_files', 10, type=int)
+        recent_files = list(self.app.qsettings.value('window/files_recent', []))
+        for file in recent_files:
+            if not os.path.exists(file):
+                recent_files.remove(file)
+        self.recent_files = recent_files[:self.max_recent_files]
+
         self.menuBar().setNativeMenuBar(self.settings.window.NATIVE_MENUBAR)
 
         # TODO: Not sure about document mode
@@ -200,9 +208,6 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
         self.show()
     """
 
-    def handle_all_actions(self, var_edit):
-        var_edit.all_editor_actions.connect(self.handle_editor_action)
-
     @QtCore.Slot(VariableEditorAction)
     def handle_editor_action(self, key):
         # Calculate the position to insert a new block
@@ -218,6 +223,8 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
             self.currentFlowgraphScene.add_block('variable', pos)
         elif key == VariableEditorAction.ADD_IMPORT:
             self.currentFlowgraphScene.add_block('import', pos)
+        elif key == VariableEditorAction.OPEN_PROPERTIES:
+            self.currentFlowgraphScene.selected_blocks()[0].open_properties()
         else:
             log.debug(f"{key} not implemented yet")
         self.currentFlowgraphScene.clearSelection()
@@ -292,6 +299,14 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
             shortcut=Keys.Open,
             statusTip=_("open-tooltip"),
         )
+
+        actions["open_recent"] = Action(
+            Icons("document-open"),
+            _("open_recent"),
+            self,
+            statusTip=_("open-recent-file"),
+        )
+        actions["open_recent"].setText("Open recent file")
 
         actions["example_browser"] = Action(
             _("example_browser"),
@@ -470,8 +485,8 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
         actions["toggle_source_bus"] = Action(_("toggle_source_bus"), self)
         actions["toggle_sink_bus"] = Action(_("toggle_sink_bus"), self)
 
-        actions["create_hier"].setEnabled(False)
-        actions["open_hier"].setEnabled(False)
+        actions["create_hier"].setEnabled(True)
+        actions["open_hier"].setEnabled(True)
         actions["toggle_source_bus"].setEnabled(False)
         actions["toggle_sink_bus"].setEnabled(False)
 
@@ -638,7 +653,6 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
         self.actions["disable"].setEnabled(False)
         self.actions["bypass"].setEnabled(False)
         self.actions["properties"].setEnabled(False)
-        self.actions["create_hier"].setEnabled(False)
         self.actions["toggle_source_bus"].setEnabled(False)
         self.actions["toggle_sink_bus"].setEnabled(False)
 
@@ -670,9 +684,6 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
 
             if len(blocks) == 1:
                 self.actions["properties"].setEnabled(True)
-                self.actions["create_hier"].setEnabled(
-                    True
-                )  # TODO: Other requirements for enabling this?
 
             if len(blocks) > 1:
                 self.actions["vertical_align_top"].setEnabled(True)
@@ -695,15 +706,26 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
         # Global menu options
         self.menuBar().setNativeMenuBar(True)
 
-        open_recent = Menu("Open recent")
+        open_recent = Menu("Open recent file")
         menus["open_recent"] = open_recent
-        recent_files = None
-        if recent_files:
-            pass
+
+        act_recent_len = len(self.recent_files)
+        if act_recent_len > self.max_recent_files:
+            act_recent_len = self.max_recent_files
+
+        # Populate recent file list
+        if act_recent_len == 0:
+            for i in range(self.max_recent_files):
+                # Setup invisible dummy entries, that can be filled later, if recently opened files are available
+                action = open_recent.addAction("Dummy", self.open_recent_triggered)
+                action.setVisible(False)
         else:
-            open_recent.setEnabled(False)
-        # open_recent.addAction(actions["open"])
-        # TODO: populate recent files
+            for i in range(act_recent_len):
+                open_recent.addAction(self.recent_files[i], self.open_recent_triggered)
+            if act_recent_len < self.max_recent_files:
+                for i in range(self.max_recent_files - act_recent_len):
+                    action = open_recent.addAction("Dummy", self.open_recent_triggered)
+                    action.setVisible(False)
 
         # Setup the file menu
         file = Menu("&File")
@@ -863,10 +885,15 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
         self.statusBar().showMessage(_("ready-message"))
 
     def open(self):
+        if self.currentFlowgraphScene.filename:
+            dirname = os.path.dirname(self.currentFlowgraphScene.filename)
+        else:
+            dirname = os.getcwd()
         Open = QtWidgets.QFileDialog.getOpenFileName
         filename, filtr = Open(
             self,
             self.actions["open"].statusTip(),
+            dir=dirname,
             filter="Flow Graph Files (*.grc);;All files (*.*)",
         )
         return filename
@@ -957,6 +984,7 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
         if filename:
             open_fgs = self.get_open_flowgraphs()
             if filename not in open_fgs:
+                self.add_recent_file(filename)
                 log.info("Opening flowgraph ({0})".format(filename))
                 new_flowgraph = FlowgraphView(self, self.platform)
                 initial_state = self.platform.parse_flow_graph(filename)
@@ -993,6 +1021,8 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
         if filename:
             try:
                 self.platform.save_flow_graph(filename, self.currentFlowgraph)
+                self.currentFlowgraph.grc_file_path = filename
+                self.add_recent_file(filename)
             except IOError:
                 log.error("Save failed")
                 return
@@ -1012,6 +1042,11 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
         file_dialog.setNameFilter('Flow Graph Files (*.grc)')
         file_dialog.setDefaultSuffix('grc')
         file_dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
+        if self.currentFlowgraphScene.filename:
+            dirname = os.path.dirname(self.currentFlowgraphScene.filename)
+        else:
+            dirname = os.getcwd()
+        file_dialog.setDirectory(dirname)
         filename = None
         if file_dialog.exec_() == QtWidgets.QFileDialog.Accepted:
             filename = file_dialog.selectedFiles()[0]
@@ -1028,6 +1063,7 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
             self.tabWidget.tabBar().setTabTextColor(self.tabWidget.currentIndex(), self.palette().color(self.palette().WindowText))
             self.currentFlowgraphScene.set_saved(True)
             self.tabWidget.setTabText(self.tabWidget.currentIndex(), os.path.basename(filename))
+            self.add_recent_file(filename)
         else:
             log.debug("Cancelled Save As action")
         self.updateActions()
@@ -1138,10 +1174,15 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
         # TODO: Should be user-set somehow
         background_transparent = True
 
+        if self.currentFlowgraphScene.filename:
+            filename = self.currentFlowgraphScene.filename.split('.')[0] + '.pdf'
+        else:
+            filename = 'Untitled.pdf'
         Save = QtWidgets.QFileDialog.getSaveFileName
         file_path, filtr = Save(
             self,
-            self.actions["save"].statusTip(),
+            self.actions["screen_capture"].statusTip(),
+            filename,
             filter="PDF files (*.pdf);;PNG files (*.png);;SVG files (*.svg)",
         )
         if file_path is not None:
@@ -1172,7 +1213,7 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
     def cut_triggered(self):
         log.debug("cut")
         self.copy_triggered()
-        self.currentFlowgraphScene.delete_selected()
+        self.delete_triggered()
         self.updateActions()
 
     def copy_triggered(self):
@@ -1365,6 +1406,7 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
             return
 
         filename = self.currentFlowgraphScene.filename
+        self.currentFlowgraph.grc_file_path = filename
         generator = self.platform.Generator(
             self.currentFlowgraph, os.path.dirname(filename)
         )
@@ -1394,6 +1436,135 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
 
     def kill_triggered(self):
         log.debug("kill")
+
+    def reload_triggered(self):
+        log.debug("Reload hier blocks")
+        self.app.BlockLibrary.reload_blocks()
+
+        range_ = self.tabWidget.count()
+        for idx in range(range_):
+            self.rebuild_tab(idx)
+
+        self.updateActions()
+
+    def create_hier_triggered(self):
+
+        selected_blocks = []
+
+        source_fg = self.currentFlowgraphScene
+        for block in source_fg.selected_blocks():
+            selected_blocks.append(block.core)
+
+        # Generate new page
+        self.new_triggered()
+        sink_fg = self.currentFlowgraphScene
+
+        # Set flow graph to heir block type
+        top_block = sink_fg.core.get_block(Constants.DEFAULT_FLOW_GRAPH_ID)
+        # Check if hb or hb_qt is required
+        gen_opts = 'hb'
+        for block in selected_blocks:
+            if block.label.upper().startswith('QT GUI'):
+                gen_opts = 'hb_qt_gui'
+                break
+        top_block.params['generate_options'].set_value(gen_opts)
+
+        # this needs to be a unique name
+        top_block.params['id'].set_value('new_hier')
+        # Remove default samp_rate
+        remove_me = sink_fg.core.get_block("samp_rate")
+        sink_fg.remove_element(remove_me.gui)
+
+        self.clipboard = source_fg.copy_to_clipboard()
+        self.paste_triggered()
+
+        # For each variable generate a possible parameter block
+        # The user has to decide if the hier block should use a variable or a paramter
+
+        for variable in sink_fg.core.get_variables():
+            id = sink_fg.add_block(
+                'parameter', (variable.states['coordinate'][0] + variable.gui.width + 50, variable.states['coordinate'][1] + 50))
+            param_block = sink_fg.core.get_block(id)
+            param_block.params['id'].set_value(variable.name)
+
+        for connection in source_fg.core.connections:
+            # Get id of connected blocks
+            source = connection.source_block
+            sink = connection.sink_block
+            if source not in selected_blocks and sink in selected_blocks:
+                # Create pad source and add to canvas
+                pad_source_key = int(connection.sink_port.key)
+                pad_id = sink_fg.add_block(
+                    'pad_source', (source.states['coordinate'][0], source.states['coordinate'][1] + pad_source_key * 50))
+                pad_block = sink_fg.core.get_block(pad_id)
+                pad_source = pad_block.sources[0]
+                sink_block = sink_fg.core.get_block(sink_fg.core.blocks[selected_blocks.index(sink) + 1].name)
+                sink = sink_block.sinks[pad_source_key]
+                # ensure the port types match
+                if pad_source.dtype != sink.dtype:
+                    if pad_source.dtype == 'complex' and sink.dtype == 'fc32':
+                        pass
+                    else:
+                        pad_block.params['type'].value = sink.dtype
+                        pad_source.dtype = sink.dtype
+                new_connection = sink_fg.core.connect(pad_source, sink)
+                sink_fg.addItem(new_connection.gui)
+
+            elif sink not in selected_blocks and source in selected_blocks:
+                # Create Pad Sink and add to canvas
+                pad_sink_key = int(connection.source_port.key)
+                pad_id = sink_fg.add_block(
+                    'pad_sink', (sink.states['coordinate'][0], sink.states['coordinate'][1] + pad_sink_key * 50))
+                pad_block = sink_fg.core.get_block(pad_id)
+                pad_sink = pad_block.sinks[0]
+                source_block = sink_fg.core.get_block(sink_fg.core.blocks[selected_blocks.index(source) + 1].name)
+                source = source_block.sources[pad_sink_key]
+                # ensure the port types match
+                if pad_sink.dtype != source.dtype:
+                    if pad_sink.dtype == 'complex' and source.dtype == 'fc32':
+                        pass
+                    else:
+                        pad_block.params['type'].value = source.dtype
+                        pad_sink.dtype = source.dtype
+                new_connection = sink_fg.core.connect(source, pad_sink)
+                sink_fg.addItem(new_connection.gui)
+
+        sink_fg.clearSelection()
+        sink_fg.update()
+        self.updateActions()
+
+    def open_hier_triggered(self):
+        log.debug("Open hier block triggered")
+        for block in self.currentFlowgraphScene.selected_blocks():
+            grc_source = block.core.extra_data.get('grc_source', '')
+            if grc_source:
+                self.open_triggered(grc_source)
+
+    def rebuild_tab(self, idx):
+        fgscene = self.tabWidget.widget(idx).scene()
+        log.info("Rebuilding flowgraph ({0})".format(fgscene.filename))
+        data = fgscene.core.export_data()
+        fgblocks = fgscene.core.blocks
+        for block in fgblocks:
+            fgscene.removeItem(block.gui)
+        for conn in fgscene.core.connections:
+            fgscene.removeItem(conn.gui)
+        fgscene.import_data(data)
+
+    def add_recent_file(self, file_name):
+        # double check file_name
+        if os.path.exists(file_name):
+            recent_files = self.recent_files
+            if file_name in recent_files:
+                recent_files.remove(file_name)  # Attempt removal
+            recent_files.insert(0, file_name)  # Insert at start
+            self.recent_files = recent_files[:self.max_recent_files]
+
+            # Now add files to menu entries
+            actions_list = self.menus["open_recent"].actions()
+            for i in range(len(self.recent_files)):
+                actions_list[i].setText(self.recent_files[i])
+                actions_list[i].setVisible(True)
 
     def show_help(parent):
         """Display basic usage tips."""
@@ -1487,6 +1658,10 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
         if prefs_dialog.exec_():  # User pressed Save
             prefs_dialog.save_all()
             self.currentFlowgraphScene.update()
+
+    def open_recent_triggered(self):
+        log.debug("open_recent")
+        self.open_triggered(self.sender().text())
 
     def example_browser_triggered(self, key_filter: Union[str, None] = None):
         log.debug("example-browser")

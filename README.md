@@ -1,12 +1,13 @@
 <p align="center">
-<img src="https://github.com/gnuradio/gnuradio/blob/main/docs/gnuradio.png" width="75%" />
+<img src="https://github.com/gnuradio/gnuradio/blob/master/docs/gnuradio.png" width="75%" />
 </p>
 
-[![Make Test](https://github.com/gnuradio/gnuradio/actions/workflows/make-test.yml/badge.svg?branch=main)](https://github.com/gnuradio/gnuradio/actions/workflows/make-test.yml)
+[![Make Test](https://github.com/gnuradio/gnuradio/actions/workflows/make-test.yml/badge.svg?branch=master)](https://github.com/gnuradio/gnuradio/actions/workflows/make-test.yml)
 ![Version](https://img.shields.io/github/tag/gnuradio/gnuradio.svg)
-[![AUR](https://img.shields.io/github/license/gnuradio/gnuradio)](https://github.com/gnuradio/gnuradio/blob/main/COPYING)
+[![AUR](https://img.shields.io/github/license/gnuradio/gnuradio)](https://github.com/gnuradio/gnuradio/blob/master/COPYING)
 [![Docs](https://img.shields.io/badge/docs-doxygen-orange.svg)](https://www.gnuradio.org/doc/doxygen/)
 [![Packaging status](https://repology.org/badge/tiny-repos/gnuradio.svg)](https://repology.org/project/gnuradio/badges)
+[![Donate](https://img.shields.io/badge/donate-donorbox-green)](https://donorbox.org/gnuradio)
 
 # GNU Radio
 
@@ -56,8 +57,7 @@ energy particle physics, astrophysics, radio astronomy and more!
 
 ## GNU Radio 4.0
 
-The next major release of GNU Radio, GNU Radio 4.0, is currently under active development. The effort is being spearheaded by FAIR (The Facility for Anti-Proton and Ion Research), part of GSI in Germany. Development of that version is currently taking place under their GitHub organization, [here](https://github.com/fair-acc/graph-prototype).
-
+The next major release of GNU Radio, GNU Radio 4.0, is currently under active development. The effort is being spearheaded by FAIR (The Facility for Anti-Proton and Ion Research), part of GSI in Germany. Development of that version is currently taking place under their GitHub organization, [here](https://github.com/fair-acc/gnuradio4).
 
 ## How to Install GNU Radio
 
@@ -77,7 +77,6 @@ For other operating systems and versions, see [Quick Start](https://wiki.gnuradi
 
 For Ubuntu, the latest builds (both released and pulled from master branch) are maintained as PPAs (Personal Package Archives) on [launchpad.net](https://launchpad.net/~gnuradio). **Be sure to uninstall any previously installed versions of gnuradio first.** See [UnInstall GR](https://wiki.gnuradio.org/index.php?title=UnInstallGR#From_Distribution_package_manager_or_PPA).
 
-
 ### Other Installation Methods
 
 Platform-specific guides and Cross-platform guides are described in [Other Installation Methods](https://wiki.gnuradio.org/index.php/InstallingGR#Other_Installation_Methods).
@@ -90,6 +89,10 @@ Complete instructions for building GNU Radio from source code are detailed in
 ### PyBOMBS
 
 **We are no longer recommending** [PyBOMBS](https://github.com/gnuradio/pybombs#pybombs) **to install modern versions of GNU Radio.**
+
+## Supporting GNU Radio
+
+If you find GNU Radio useful and would like to support its development, you can make a [donation](https://donorbox.org/gnuradio). Your contributions help ensure ongoing improvements and maintenance. Thank you for your support!
 
 ## Legal Matters
 

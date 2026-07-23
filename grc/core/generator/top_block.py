@@ -154,7 +154,40 @@ class TopBlockGenerator(object):
             output.insert(0, textwrap.dedent("""\
                 import os
                 import sys
-                sys.path.append(os.environ.get('GRC_HIER_PATH', os.path.expanduser('~/.grc_gnuradio')))
+                import logging as log
+
+                def get_state_directory() -> str:
+                    oldpath = os.path.expanduser("~/.grc_gnuradio")
+                    try:
+                        from gnuradio.gr import paths
+                        newpath = paths.persistent()
+                        if os.path.exists(newpath):
+                            return newpath
+                        if os.path.exists(oldpath):
+                            log.warning(f"Found persistent state path '{newpath}', but file does not exist. " +
+                                     f"Old default persistent state path '{oldpath}' exists; using that. " +
+                                     "Please consider moving state to new location.")
+                            return oldpath
+                        # Default to the correct path if both are configured.
+                        # neither old, nor new path exist: create new path, return that
+                        os.makedirs(newpath, exist_ok=True)
+                        return newpath
+                    except (ImportError, NameError):
+                        log.warning("Could not retrieve GNU Radio persistent state directory from GNU Radio. " +
+                                 "Trying defaults.")
+                        xdgstate = os.getenv("XDG_STATE_HOME", os.path.expanduser("~/.local/state"))
+                        xdgcand = os.path.join(xdgstate, "gnuradio")
+                        if os.path.exists(xdgcand):
+                            return xdgcand
+                        if os.path.exists(oldpath):
+                            log.warning(f"Using legacy state path '{oldpath}'. Please consider moving state " +
+                                     f"files to '{xdgcand}'.")
+                            return oldpath
+                        # neither old, nor new path exist: create new path, return that
+                        os.makedirs(xdgcand, exist_ok=True)
+                        return xdgcand
+
+                sys.path.append(os.environ.get('GRC_HIER_PATH', get_state_directory()))
             """))
             seen.add('import os')
             seen.add('import sys')

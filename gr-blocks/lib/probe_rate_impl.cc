@@ -53,7 +53,16 @@ void probe_rate_impl::set_name(std::string_view name)
     if (name.empty()) {
         d_data_dict.erase(pmt::mp("name"));
     } else {
-        d_data_dict[pmt::mp("name")] = pmt::mp(name);
+        /* To avoid having different public API in GR 3.10 and later, we're converting the
+         * string_view into a string, which *does* involve copying the data. This is not
+         * really optimal, but on a "keep the API clean" and "incurr minor performance
+         * penalties when someone sets the name of the block a couple thousand times a
+         * second", this would seem to be the right choice.
+         *
+         * The GNU Radio 3.11 code is indentical, but omits the `std::string()`, as
+         * pmt::mp then directly accepts std::string_view.
+         */
+        d_data_dict[pmt::mp("name")] = pmt::mp(std::string(name));
     }
 }
 

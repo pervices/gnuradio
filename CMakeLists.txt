@@ -45,9 +45,9 @@ include(GrComponent)
 # Set the version information here
 # cmake-format: off
 SET(VERSION_MAJOR 3)
-SET(VERSION_API   11)
-SET(VERSION_ABI   0)
-SET(VERSION_PATCH git)
+SET(VERSION_API   10)
+SET(VERSION_ABI   12)
+SET(VERSION_PATCH 0)
 include(GrVersion) #setup version info
 # cmake-format: on
 
@@ -189,6 +189,51 @@ else(ENABLE_PERFORMANCE_COUNTERS)
     set(GR_PERFORMANCE_COUNTERS False)
     message(STATUS "NO PERF COUNTERS")
 endif(ENABLE_PERFORMANCE_COUNTERS)
+
+string(COMPARE EQUAL "${CMAKE_INSTALL_PREFIX}" "/usr/local" isusrlocal)
+string(COMPARE EQUAL "${CMAKE_INSTALL_PREFIX}" "$ENV{HOME}/.local" ishomelocal)
+
+option(ENABLE_BASH_COMPLETIONS "Enable shell completions for bash" ON)
+if(ENABLE_BASH_COMPLETIONS)
+    if(NOT DEFINED GR_BASH_COMPLETIONS_DIR)
+        if(isusr OR isusrlocal OR ishomelocal)
+            set(GR_BASH_COMPLETIONS_DIR
+                share/bash-completion/completions
+                CACHE PATH "Path to install bash completions")
+        else(isusr OR isusrlocal OR ishomelocal)
+            message(WARNING "GR_BASH_COMPLETIONS_DIR is not defined")
+            set(ENABLE_BASH_COMPLETIONS OFF)
+        endif(isusr OR isusrlocal OR ishomelocal)
+    endif(NOT DEFINED GR_BASH_COMPLETIONS_DIR)
+endif(ENABLE_BASH_COMPLETIONS)
+
+option(ENABLE_ZSH_COMPLETIONS "Enable shell completions for zsh" ON)
+if(ENABLE_ZSH_COMPLETIONS)
+    if(NOT DEFINED GR_ZSH_COMPLETIONS_DIR)
+        if(isusr OR isusrlocal)
+            set(GR_ZSH_COMPLETIONS_DIR
+                share/zsh/site-functions
+                CACHE PATH "Path to install zsh completions")
+        else(isusr OR isusrlocal)
+            message(WARNING "GR_ZSH_COMPLETIONS_DIR is not defined")
+            set(ENABLE_ZSH_COMPLETIONS OFF)
+        endif(isusr OR isusrlocal)
+    endif(NOT DEFINED GR_ZSH_COMPLETIONS_DIR)
+endif(ENABLE_ZSH_COMPLETIONS)
+
+option(ENABLE_FISH_COMPLETIONS "Enable shell completions for fish" ON)
+if(ENABLE_FISH_COMPLETIONS)
+    if(NOT DEFINED GR_FISH_COMPLETIONS_DIR)
+        if(isusr OR ishomelocal)
+            set(GR_FISH_COMPLETIONS_DIR
+                share/fish/vendor_completions.d
+                CACHE PATH "Path to install fish completions")
+        else(isusr OR ishomelocal)
+            message(WARNING "GR_FISH_COMPLETIONS_DIR is not defined")
+            set(ENABLE_FISH_COMPLETIONS OFF)
+        endif(isusr OR ishomelocal)
+    endif(NOT DEFINED GR_FISH_COMPLETIONS_DIR)
+endif(ENABLE_FISH_COMPLETIONS)
 
 ########################################################################
 # Variables replaced when configuring the package config files
@@ -341,6 +386,11 @@ endif(UNIX)
 check_cxx_compiler_flag(-fcx-limited-range HAVE_CX_LIMITED_RANGE)
 if(HAVE_CX_LIMITED_RANGE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcx-limited-range")
+    check_cxx_compiler_flag(-Wno-unused-command-line-argument
+                            HAVE_WNO_UNUSED_CMD_LINE_ARG)
+    if(HAVE_WNO_UNUSED_CMD_LINE_ARG)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-command-line-argument")
+    endif(HAVE_WNO_UNUSED_CMD_LINE_ARG)
 endif(HAVE_CX_LIMITED_RANGE)
 
 ########################################################################

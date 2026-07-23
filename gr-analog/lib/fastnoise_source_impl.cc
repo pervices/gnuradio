@@ -16,7 +16,6 @@
 #include "fastnoise_source_impl.h"
 #include <gnuradio/io_signature.h>
 #include <gnuradio/xoroshiro128p.h>
-#include <type_traits>
 #include <stdexcept>
 #include <vector>
 
@@ -83,10 +82,6 @@ fastnoise_source_impl<T>::fastnoise_source_impl(noise_type_t type,
     }
     d_samples.resize(samples);
     xoroshiro128p_seed(d_state, seed);
-    this->d_logger->debug("Initializing {:s} pool of size {:d} with seed {:x}",
-                          std::is_arithmetic_v<T> ? "arithmetic" : "unknown",
-                          samples,
-                          seed);
     generate();
 }
 
@@ -111,9 +106,7 @@ fastnoise_source_impl<gr_complex>::fastnoise_source_impl(noise_type_t type,
             samples);
     }
     d_samples.resize(samples);
-    xoroshiro128p_seed(d_state, seed);
-    this->d_logger->debug(
-        "Initializing {:s} pool of size {:d} with seed {:x}", "complex", samples, seed);
+    xoroshiro128p_seed(d_state, (uint64_t)seed);
     generate();
 }
 

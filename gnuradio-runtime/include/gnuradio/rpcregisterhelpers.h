@@ -802,8 +802,8 @@ struct rpcbasic_register_set : public rpcbasic_base {
      * \param display_     The display mask
      */
     rpcbasic_register_set(const std::string& block_alias,
-                          [[maybe_unused]] const char* functionbase,
-                          [[maybe_unused]] void (T::*function)(Tto),
+                          const char* functionbase,
+                          void (T::*function)(Tto),
                           const pmt::pmt_t& min,
                           const pmt::pmt_t& max,
                           const pmt::pmt_t& def,
@@ -862,10 +862,10 @@ struct rpcbasic_register_set : public rpcbasic_base {
      * \param minpriv_     The required minimum privilege level
      * \param display_     The display mask
      */
-    rpcbasic_register_set([[maybe_unused]] const std::string& name,
-                          [[maybe_unused]] const char* functionbase,
+    rpcbasic_register_set(const std::string& name,
+                          const char* functionbase,
                           T* obj,
-                          [[maybe_unused]] void (T::*function)(Tto),
+                          void (T::*function)(Tto),
                           const pmt::pmt_t& min,
                           const pmt::pmt_t& max,
                           const pmt::pmt_t& def,
@@ -982,8 +982,8 @@ struct rpcbasic_register_trigger : public rpcbasic_base {
      * \param minpriv_     The required minimum privilege level
      */
     rpcbasic_register_trigger(const std::string& block_alias,
-                              [[maybe_unused]] const char* functionbase,
-                              [[maybe_unused]] void (T::*function)(),
+                              const char* functionbase,
+                              void (T::*function)(),
                               const char* desc_ = "",
                               priv_lvl_t minpriv_ = RPC_PRIVLVL_MIN)
     {
@@ -1022,10 +1022,10 @@ struct rpcbasic_register_trigger : public rpcbasic_base {
      * \param desc_        A string to describing the variable.
      * \param minpriv_     The required minimum privilege level
      */
-    rpcbasic_register_trigger([[maybe_unused]] const std::string& name,
-                              [[maybe_unused]] const char* functionbase,
+    rpcbasic_register_trigger(const std::string& name,
+                              const char* functionbase,
                               T* obj,
-                              [[maybe_unused]] void (T::*function)(),
+                              void (T::*function)(),
                               const char* desc_ = "",
                               priv_lvl_t minpriv_ = RPC_PRIVLVL_MIN)
     {
@@ -1133,8 +1133,8 @@ public:
      * \param display_     The display mask
      */
     rpcbasic_register_get(const std::string& block_alias,
-                          [[maybe_unused]] const char* functionbase,
-                          [[maybe_unused]] Tfrom (T::*function)(),
+                          const char* functionbase,
+                          Tfrom (T::*function)(),
                           const pmt::pmt_t& min,
                           const pmt::pmt_t& max,
                           const pmt::pmt_t& def,
@@ -1176,8 +1176,8 @@ public:
      * '[variable]() const' getter functions.
      */
     rpcbasic_register_get(const std::string& block_alias,
-                          [[maybe_unused]] const char* functionbase,
-                          [[maybe_unused]] Tfrom (T::*function)() const,
+                          const char* functionbase,
+                          Tfrom (T::*function)() const,
                           const pmt::pmt_t& min,
                           const pmt::pmt_t& max,
                           const pmt::pmt_t& def,
@@ -1238,10 +1238,10 @@ public:
      * \param minpriv_     The required minimum privilege level
      * \param display_     The display mask
      */
-    rpcbasic_register_get([[maybe_unused]] const std::string& name,
-                          [[maybe_unused]] const char* functionbase,
+    rpcbasic_register_get(const std::string& name,
+                          const char* functionbase,
                           T* obj,
-                          [[maybe_unused]] Tfrom (T::*function)(),
+                          Tfrom (T::*function)(),
                           const pmt::pmt_t& min,
                           const pmt::pmt_t& max,
                           const pmt::pmt_t& def,
@@ -1281,10 +1281,10 @@ public:
      * \brief Same as above that allows using '[variable]() const'
      * getter functions.
      */
-    rpcbasic_register_get([[maybe_unused]] const std::string& name,
-                          [[maybe_unused]] const char* functionbase,
+    rpcbasic_register_get(const std::string& name,
+                          const char* functionbase,
                           T* obj,
-                          [[maybe_unused]] Tfrom (T::*function)() const,
+                          Tfrom (T::*function)() const,
                           const pmt::pmt_t& min,
                           const pmt::pmt_t& max,
                           const pmt::pmt_t& def,
@@ -1612,7 +1612,7 @@ public:
      * \param display_     The display mask
      */
     rpcbasic_register_handler(const std::string& block_alias,
-                              [[maybe_unused]] const char* handler,
+                              const char* handler,
                               const char* units_ = "",
                               const char* desc_ = "",
                               priv_lvl_t minpriv_ = RPC_PRIVLVL_MIN,

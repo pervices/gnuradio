@@ -31,11 +31,11 @@ from .base import common_params, block_name, run, cli_input
 @click.option('--addl_includes', default=None,
               help='Comma separated list of additional include directories (default None)')
 @click.option('-D', '--define_symbols', multiple=True, default=None,
-              help='Set precompiler defines')
+              help='Set preprocessor defines')
 @click.option('-u', '--update-hash-only', is_flag=True,
               help='If given, only the hash in the binding will be updated')
 @common_params
-@block_name
+@block_name(skip_grc=True, skip_lib=True, skip_python=True)
 def cli(**kwargs):
     """
     \b

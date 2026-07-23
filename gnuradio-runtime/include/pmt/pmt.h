@@ -12,9 +12,7 @@
 #define INCLUDED_PMT_H
 
 #include <pmt/api.h>
-
-#include <string_view>
-#include <any>
+#include <boost/any.hpp>
 #include <complex>
 #include <cstdint>
 #include <iosfwd>
@@ -161,10 +159,10 @@ PMT_API bool to_bool(pmt_t val);
 PMT_API bool is_symbol(const pmt_t& obj);
 
 //! Return the symbol whose name is \p s.
-PMT_API pmt_t string_to_symbol(std::string_view s);
+PMT_API pmt_t string_to_symbol(const std::string& s);
 
 //! Alias for pmt_string_to_symbol
-PMT_API pmt_t intern(std::string_view s);
+PMT_API pmt_t intern(const std::string& s);
 
 
 /*!
@@ -684,7 +682,7 @@ PMT_API pmt_t dict_values(pmt_t dict);
 
 /*
  * ------------------------------------------------------------------------
- *   Any (wraps std::any -- can be used to wrap pretty much anything)
+ *   Any (wraps boost::any -- can be used to wrap pretty much anything)
  *
  * Cannot be serialized or used across process boundaries.
  * See http://www.boost.org/doc/html/any.html
@@ -695,13 +693,13 @@ PMT_API pmt_t dict_values(pmt_t dict);
 PMT_API bool is_any(pmt_t obj);
 
 //! make an any
-PMT_API pmt_t make_any(const std::any& any);
+PMT_API pmt_t make_any(const boost::any& any);
 
-//! Return underlying std::any
-PMT_API std::any any_ref(pmt_t obj);
+//! Return underlying boost::any
+PMT_API boost::any any_ref(pmt_t obj);
 
 //! Store \p any in \p obj
-PMT_API void any_set(pmt_t obj, const std::any& any);
+PMT_API void any_set(pmt_t obj, const boost::any& any);
 
 
 /*
