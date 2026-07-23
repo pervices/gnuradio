@@ -166,6 +166,7 @@ cd build
 -DPYTHON_EXECUTABLE=%{__python3} \
 -DENABLE_UHD_RFNOC=OFF \
 -DENABLE_GR_ZEROMQ=OFF \
+-DENABLE_GR_UHD=ON \
 -Dspdlog_DIR=/usr/lib64 \
 %{?mfpu_neon} \
 ..
