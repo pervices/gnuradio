@@ -52,6 +52,7 @@ BuildRequires:	gcc-toolset-13
 BuildRequires:	libtool
 BuildRequires:	alsa-lib-devel
 BuildRequires:	boost1.78-devel
+BuildRequires:  boost169-devel
 BuildRequires:	codec2-devel
 BuildRequires:	cppzmq-devel
 BuildRequires:	desktop-file-utils
