@@ -14,7 +14,7 @@ set(__INCLUDED_GR_BOOST_CMAKE TRUE)
 # Setup Boost and handle some system specific things
 ########################################################################
 
-set(BOOST_REQUIRED_COMPONENTS date_time program_options system regex thread)
+set(BOOST_REQUIRED_COMPONENTS date_time program_options regex thread)
 
 if(UNIX
    AND NOT BOOST_ROOT
@@ -93,7 +93,43 @@ set(Boost_ADDITIONAL_VERSIONS
     "1.69.0"
     "1.69"
     "1.71.0"
-    "1.71")
+    "1.71"
+    "1.72.0"
+    "1.72"
+    "1.73.0"
+    "1.73"
+    "1.74.0"
+    "1.74"
+    "1.75.0"
+    "1.75"
+    "1.76.0"
+    "1.76"
+    "1.77.0"
+    "1.77"
+    "1.78.0"
+    "1.78"
+    "1.79.0"
+    "1.79"
+    "1.80.0"
+    "1.80"
+    "1.81.0"
+    "1.81"
+    "1.82.0"
+    "1.82"
+    "1.83.0"
+    "1.83"
+    "1.84.0"
+    "1.84"
+    "1.85.0"
+    "1.85"
+    "1.86.0"
+    "1.86"
+    "1.87.0"
+    "1.87"
+    "1.88.0"
+    "1.88"
+    "1.89.0"
+    "1.89")
 
 # check whether to set REQUIRED or not
 # if not set, default is to require Boost
