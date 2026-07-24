@@ -51,7 +51,7 @@ BuildRequires:	cmake
 BuildRequires:	gcc-toolset-13
 BuildRequires:	libtool
 BuildRequires:	alsa-lib-devel
-BuildRequires:	boost169-devel
+BuildRequires:	boost1.78-devel
 BuildRequires:	codec2-devel
 BuildRequires:	cppzmq-devel
 BuildRequires:	desktop-file-utils
@@ -132,7 +132,7 @@ GNU Radio Python 3 module
 Summary:	GNU Radio
 Requires:	%{name}%{?_isa} = %{version}-%{release}
 Requires:	cmake
-Requires:	boost169-devel%{?_isa}
+Requires:	boost1.78-devel%{?_isa}
 
 %description devel
 GNU Radio Headers
@@ -166,6 +166,7 @@ cd build
 -DPYTHON_EXECUTABLE=%{__python3} \
 -DENABLE_UHD_RFNOC=OFF \
 -DENABLE_GR_ZEROMQ=OFF \
+-DENABLE_COMMON_PCH=OFF \
 -Dspdlog_DIR=/usr/lib64 \
 %{?mfpu_neon} \
 ..
