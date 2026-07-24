@@ -27,7 +27,7 @@ gr_register_component(
     "gr-uhd"
     ENABLE_GR_UHD
     Boost_FOUND
-    # UHD_FOUND
+    UHD_FOUND
     ENABLE_GNURADIO_RUNTIME
     ENABLE_GR_FILTER
     ENABLE_GR_BLOCKS
