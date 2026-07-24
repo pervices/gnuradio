@@ -51,8 +51,7 @@ BuildRequires:	cmake
 BuildRequires:	gcc-toolset-13
 BuildRequires:	libtool
 BuildRequires:	alsa-lib-devel
-BuildRequires:	boost169-devel
-BuildRequires:  boost1.78-python3-devel
+BuildRequires:	boost1.78-devel
 BuildRequires:	codec2-devel
 BuildRequires:	cppzmq-devel
 BuildRequires:	desktop-file-utils
@@ -167,6 +166,7 @@ cd build
 -DPYTHON_EXECUTABLE=%{__python3} \
 -DENABLE_UHD_RFNOC=OFF \
 -DENABLE_GR_ZEROMQ=OFF \
+-DENABLE_COMMON_PCH=OFF \
 -Dspdlog_DIR=/usr/lib64 \
 %{?mfpu_neon} \
 ..
