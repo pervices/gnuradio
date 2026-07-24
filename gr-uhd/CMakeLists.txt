@@ -10,12 +10,12 @@
 ########################################################################
 include(GrBoost)
 
-find_package(UHD "4.10")
-if("${UHD_VERSION}" VERSION_GREATER_EQUAL "4")
-    set(UHD_FOUR_POINT_OH_RFNOC TRUE)
-else()
-    set(UHD_FOUR_POINT_OH_RFNOC FALSE)
-endif()
+# find_package(UHD "4.10")
+# if("${UHD_VERSION}" VERSION_GREATER_EQUAL "4")
+#     set(UHD_FOUR_POINT_OH_RFNOC TRUE)
+# else()
+#     set(UHD_FOUR_POINT_OH_RFNOC FALSE)
+# endif()
 
 # gr_python_check_module("PyQt5" PyQt5 True PYQT5_FOUND)
 
