@@ -1,3 +1,9 @@
+gnuradiopv (3.10.7.11-0ubuntu1) ubuntu_release; urgency=medium
+
+  *  Packaging/Ubuntu: Make source tar checksum determinstic so it is not rejected by Launchpad
+
+ -- Per Vices <packages@pervices.com>  Mon, 27 Jul 2026 15:23:36 -0400
+
 gnuradiopv (3.10.7.10-0ubuntu1) ubuntu_release; urgency=medium
 
   *  Packaging/Ubuntu: Apply Boost system patch to Ubuntu
