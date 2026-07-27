@@ -2,7 +2,7 @@ Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: gnuradio
 Upstream-Contact: https://www.gnuradio.org/
 Source:
- git archive --format=tar --prefix=gnuradio-3.10.7.0/ v3.10.7.0 | xz > ../gnuradio_3.10.7.0.orig.tar.xz
+ git archive --format=tar --prefix=gnuradio-3.10.11.0/ v3.10.11.0 | xz > ../gnuradio_3.10.11.0.orig.tar.xz
 Comment:
  Packages of versions 3.4 and up by A. Maitland Bottoms <bottoms@debian.org>,
  GNU Radio was re-packaged by Bdale Garbee <bdale@gag.com> to reflect
