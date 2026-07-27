@@ -1,3 +1,9 @@
+gnuradiopv (3.10.7.10-0ubuntu1) ubuntu_release; urgency=medium
+
+  *  Packaging/Ubuntu: Apply Boost system patch to Ubuntu
+
+ -- Per Vices <packages@pervices.com>  Tue, 22 Jul 2026 12:21:41 -0400
+
 gnuradiopv (3.10.7.9-0ubuntu1) ubuntu_release; urgency=medium
 
   *  Packaging/CMake: Add acceptable Boost versions
