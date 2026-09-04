@@ -45,10 +45,10 @@ def main(args):
     with open("cmake/debian-pv/changelog") as cl:
         first_line = cl.readline()
         if args.nightly:
-            gnuradio_version = re.search("\(([A-Za-z0-9+]+)", first_line)
+            gnuradio_version = re.search(r"\(([A-Za-z0-9+]+)", first_line)
             gnuradio_version = gnuradio_version[1]
         else:
-            gnuradio_version = re.findall("[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*", first_line)
+            gnuradio_version = re.findall(r"[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*", first_line)
             if len(gnuradio_version) != 1:
                 print("gnuradio_version in changelog malformed. Check cmake/debian-pv/changelog")
                 sys.exit(1)
