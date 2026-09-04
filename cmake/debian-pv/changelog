@@ -1,3 +1,9 @@
+gnuradiopv (3.10.11.8-0ubuntu1) ubuntu_release; urgency=medium
+
+  *  Packaging: enable Ubuntu 26
+
+ -- Per Vices <packages@pervices.com>  Fri, 04 Sep 2026 15:31:20 -0400
+
 gnuradiopv (3.10.11.7-0ubuntu1) ubuntu_release; urgency=medium
 
   *  Packaging: Apply boost system patch and upgrade gnuradio libs to 3.10.11 on Ubuntu
