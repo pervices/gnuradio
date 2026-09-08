@@ -1,0 +1,37 @@
+#!/usr/bin/make -f
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+export DEB_HOST_MULTIARCH
+
+%:
+	dh $@ --with python3 --with numpy3 --buildsystem=cmake+ninja
+
+override_dh_auto_configure:
+	dh_auto_configure -- -DCMAKE_BUILD_TYPE=Release -DLIB_SUFFIX="/$(DEB_HOST_MULTIARCH)" -DENABLE_UHD_RFNOC=OFF
+#	dh_auto_configure -- -DCMAKE_BUILD_TYPE=Release -DLIB_SUFFIX="/$(DEB_HOST_MULTIARCH)" -DENABLE_UHD_RFNOC=OFF -DCMAKE_INSTALL_PREFIX=/usr
+#	dh_auto_configure -- -DENABLE_INTERNAL_VOLK=OFF -DPYTHON_EXECUTABLE="/usr/bin/python3" -DCMAKE_BUILD_TYPE=Release
+
+override_dh_python3:
+	dh_python3 --no-ext-rename
+
+override_dh_auto_install:
+	rm -rf debian/tmp/usr/share/doc/gnuradio-doc/xml/License.xml.gz
+	dh_auto_install
+	rm -f  debian/gnuradiopv/usr/share/doc/gnuradio/html/*md5
+	rm -f  debian/gnuradio-doc/usr/share/doc/gnuradio-doc/html/*md5
+
+override_dh_auto_test:
+	mkdir debian/test
+	mkdir debian/test/.gnuradio
+	- if case "$(DEB_BUILD_ARCH)" in *"i386"*) false;; *) true;; esac; then ARGS='--timeout 10' HOME=$(CURDIR)/debian/test dh_auto_test ; fi
+	rm -rf debian/test
+
+override_dh_acc:
+	- dh_acc $@
+	- cat logs/gnuradiopv-dev/*/log.txt
+
+override_dh_installmime:
+	dh_installmime
+	rm -f debian/gnuradiopv/usr/share/mime/packages/gnuradio.xml
+
+override_dh_gencontrol:
+	dh_gencontrol -- -Vboost-version=`dpkg-query -W -f='$${Depends}' libboost-date-time-dev| cut -b19- |cut -b-4`

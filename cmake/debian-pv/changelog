@@ -1,0 +1,77 @@
+gnuradiopv (3.10.11.7-0ubuntu1) ubuntu_release; urgency=medium
+
+  *  Packaging: Apply boost system patch and upgrade gnuradio libs to 3.10.11 on Ubuntu
+
+ -- Per Vices <packages@pervices.com>  Mon, 27 Jul 2026 12:26:02 -0400
+
+gnuradiopv (3.10.11.6-0ubuntu1) ubuntu_release; urgency=medium
+
+  *  Packaging: Re-packaging against boost-libs 1.90 on Arch Linux
+
+ -- Per Vices <packages@pervices.com>  Tue, 31 Mar 2026 16:11:03 -0400
+
+gnuradiopv (3.10.11.5-0ubuntu1) ubuntu_release; urgency=medium
+
+  *  Packaging: Temporarily mitigating an issue with Pybind11 3.0.2 
+
+ -- Per Vices <packages@pervices.com>  Fri, 20 Mar 2026 12:57:35 -0400
+
+gnuradiopv (3.10.11.4-0ubuntu1) ubuntu_release; urgency=medium
+
+  *  Packaging: Re-packaging against boost-libs 1.89 on Arch Linux
+  
+ -- Per Vices <packages@pervices.com>  Thu, 23 Oct 2025 14:59:38 -0400
+
+gnuradiopv (3.10.11.3-0ubuntu1) ubuntu_release; urgency=medium
+
+  *  Packaging: Re-packaging due to the split of bubblewrap and bubblewrap-suid on Arch Linux
+
+ -- Per Vices <packages@pervices.com>  Thu, 09 Oct 2025 16:10:58 -0400
+
+gnuradiopv (3.10.11.2-0ubuntu1) ubuntu_release; urgency=medium
+
+  *  Packaging: Re-packaging against boost-libs 1.88 on Arch Linux
+
+ -- Per Vices <packages@pervices.com>  Mon, 05 May 2025 15:19:01 -0400
+
+gnuradiopv (3.10.11.1-0ubuntu1) ubuntu_release; urgency=medium
+
+  *  Packaging: Re-packaging against UHD 4.8
+
+ -- Per Vices <packages@pervices.com>  Wed, 09 Apr 2025 13:17:49 -0400
+
+gnuradiopv (3.10.11.0-0ubuntu1) ubuntu_release; urgency=medium
+
+  *  Packaging: Syncing with upstream
+
+ -- Per Vices <packages@pervices.com>  Tue, 06 Aug 2024 17:15:13 -0400
+
+gnuradiopv (3.10.7.4-0ubuntu1) ubuntu_release; urgency=medium
+
+  *  Packaging: Adding cppzmq dependencies for noble
+
+ -- Per Vices <packages@pervices.com>  Fri, 12 Apr 2024 20:09:09 -0400
+
+gnuradiopv (3.10.7.3-0ubuntu1) ubuntu_release; urgency=medium
+
+  * Packaging: Adding alternative dependencies for noble
+
+ -- Per Vices <packages@pervices.com>  Fri, 12 Apr 2024 14:55:01 -0400
+ 
+gnuradiopv (3.10.7.2-0ubuntu1) ubuntu_release; urgency=medium
+
+  * Packaging: Removing unnecessary suggests/recommendations from control
+
+ -- Per Vices <packages@pervices.com>  Wed, 03 Apr 2024 13:10:03 -0400
+
+gnuradiopv (3.10.7.1-0ubuntu1) ubuntu_release; urgency=medium
+
+  * Updating runtime dependencies
+
+ -- Per Vices <packages@pervices.com>  Mon, 11 Mar 2024 21:00:17 -0500
+
+gnuradiopv (3.10.7.0-0ubuntu1) ubuntu_release; urgency=medium
+
+  * Initial release 
+
+ -- Per Vices <packages@pervices.com>  Fri, 01 Mar 2024 13:11:39 -0500

@@ -17,4 +17,5 @@ documentation: |-
   RFNoC FFT (FPGA Implementation).
   Instantiates an FFT block in the FPGA bitfile.
 
+doc_url: UHD_FPGA_FFT
 file_format: 1

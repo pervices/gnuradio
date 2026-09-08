@@ -1,0 +1,225 @@
+# Maintainer: Per Vices <packages@pervices.com>
+
+pkgname=gnuradiopv
+_gitname=gnuradio
+pkgver=3.10.11.0
+pkgrel=10
+pkgdesc="Per Vices Signal processing runtime and signal processing software development toolkit"
+arch=(x86_64)
+url="https://github.com/pervices/gnuradio"
+license=(GPL-3.0-or-later)
+depends=(
+    bubblewrap
+    codec2
+    gcc-libs
+    glibc
+    gmp
+    gsl
+    libad9361
+    libuhdpv
+    libunwind
+    libvolk
+    python-click
+    python-mako
+    python-matplotlib
+    python-numpy
+    python-pygccxml
+    python-pyyaml
+    python-pyzmq
+    python-scipy
+    python-thrift
+    sdl12-compat
+    soapysdr
+    spdlog
+    thrift
+)
+depends+=(
+    blas
+    cblas
+    lapack
+)
+
+#TODO: add back pybind11 and remove pip from makedepends once https://github.com/pybind/pybind11/issues/5989 is fixed
+makedepends=(
+    alsa-lib
+    boost
+    cmake
+    cppzmq
+    doxygen
+    fftw
+    fmt
+    git
+    gtk3
+    jack
+    libiio
+    libsndfile
+    libuhdpv
+    libvolk
+    mathjax2
+    portaudio
+    python-cairo
+    python-gobject
+    python-jsonschema
+    python-lxml
+    python-packaging
+    python-pip
+    python-pyqt5
+    python-pyqtgraph
+    python-pytest
+    qt5-base
+    qwt
+    xdg-utils
+    zeromq
+
+)
+checkdepends=(
+    python-jsonschema
+    python-pytest
+    python-setuptools
+    xorg-server-xvfb
+)
+_usurl=https://github.com/gnuradio/gnuradio
+# TODO: remove pybind11_global-3.0.1-py3-none-any.whl once https://github.com/pybind/pybind11/issues/5989 is fixed
+source=(
+#     "git+https://github.com/pervices/gnuradio.git#tag=v3.10.11.0"
+    "$_gitname.tar.gz"
+#     "$_gitname-numpy-2.0.patch::$_usurl/commit/8fbc5eb4b7214a4cb029ccae97205a85d49bdd48.patch"
+#     "$_gitname-boost-1.87.patch::$_usurl/commit/111a4ff8b868791dae74d8cdf8c1e0684840f51a.patch"
+    "$_gitname-numpy-2.0.patch"
+    "$_gitname-boost-1.87.patch"
+    "$_gitname-boost-1.89.patch"
+    "21-fcd.rules"
+    "pybind11_global-3.0.1-py3-none-any.whl"
+)
+md5sums=('SKIP'
+         '016631083d8b8a40f422bc1ad310b380'
+         '4a6dcdb9185ff8d7aa2e5bddbb398763'
+         '7a3f565d174299fbd4f1ad5cfc9b7fe6'
+         '465e12c454c6a22ebec9849181af7bdc'
+	 '3ff530fad3c565c24169758313f16819'
+)
+
+conflicts=('gnuradio' 'gnuradio-companion')
+provides=('gnuradio' 'gnuradio-companion')
+
+pkgver() {
+    cd $srcdir/$_gitname
+    git checkout main-pv-3.10.11.0 -- cmake/debian-pv
+    echo $(cat cmake/debian-pv/changelog | head -1 | cut -d ' ' -f2 | cut -d '-' -f1 | tr --delete ['('])
+}
+
+prepare() {
+  cd $srcdir/$_gitname
+
+  # TODO:remove pip usage once https://github.com/pybind/pybind11/issues/5989 is fixed
+  # pybind11 3.0.2 breaks gnuradio
+  # Since the official Arch repos only have the most recent, install through pip
+  # NOTE: it is okay here because we don't install anything to chroot later, do not do this outside of chroot or docker
+  # --user because the build user can't install globally
+  pip install --break-system-packages --user ../pybind11_global-3.0.1-py3-none-any.whl
+
+  patch -Np1 -i ../gnuradio-numpy-2.0.patch
+  patch -Np1 -i ../gnuradio-boost-1.87.patch
+  patch -Np1 -i ../gnuradio-boost-1.89.patch
+
+  # shellcheck disable=SC2016
+  sed -i 's/-${DOCVER}//' CMakeLists.txt
+
+  # Strip build path from docs
+  sed -i 's/^STRIP_FROM_PATH.*/STRIP_FROM_PATH = @PROJECT_SOURCE_DIR@ @PROJECT_BINARY_DIR@/' \
+    docs/doxygen/Doxyfile.in
+}
+
+build() {
+    cd $srcdir/$_gitname
+
+    # TODO: remove pybind11_DIR once https://github.com/pybind/pybind11/issues/5989 is fixed
+    cmake \
+          -S . -B build \
+          -D CMAKE_INSTALL_PREFIX=/usr \
+          -D CMAKE_BUILD_TYPE=Release \
+          -W no-dev \
+          -D ENABLE_POSTINSTALL=OFF \
+          -D ENABLE_UHD_RFNOC=OFF \
+          -D pybind11_DIR=/usr/src/packages/BUILD/gnuradiopv/src/pybind11_global-3.0.1.data/data/share/cmake/pybind11/
+    cmake --build build
+}
+
+check() {
+    cd $srcdir/$_gitname
+    xvfb-run ctest --test-dir build --output-on-failure
+}
+
+
+package() {
+    depends+=(
+        alsa-lib
+        boost-libs
+        fftw
+        fmt
+        jack
+        libiio
+        libsndfile
+        portaudio
+        python-cairo
+        python-gobject
+        python-lxml
+        python-opengl
+        python-pyqt5
+        python-pyqtgraph
+        qt5-base
+        qwt
+        spdlog
+        zeromq
+    )
+    optdepends=(
+        'python-setuptools: for gr_modtool'
+    )
+    provides=(
+        libgnuradio-analog.so
+        libgnuradio-audio.so
+        libgnuradio-blocks.so
+        libgnuradio-channels.so
+        libgnuradio-digital.so
+        libgnuradio-dtv.so
+        libgnuradio-fec.so
+        libgnuradio-fft.so
+        libgnuradio-filter.so
+        libgnuradio-iio.so
+        libgnuradio-network.so
+        libgnuradio-pmt.so
+        libgnuradio-qtgui.so
+        libgnuradio-runtime.so
+        libgnuradio-soapy.so
+        libgnuradio-trellis.so
+        libgnuradio-uhd.so
+        libgnuradio-video-sdl.so
+        libgnuradio-vocoder.so
+        libgnuradio-wavelet.so
+        libgnuradio-zeromq.so
+    )
+    backup=(
+        etc/gnuradio/conf.d/00-grc-docs.conf
+        etc/gnuradio/conf.d/gnuradio-runtime.conf
+        etc/gnuradio/conf.d/gr-audio-alsa.conf
+        etc/gnuradio/conf.d/gr-audio-jack.conf
+        etc/gnuradio/conf.d/gr-audio-oss.conf
+        etc/gnuradio/conf.d/gr-audio-portaudio.conf
+        etc/gnuradio/conf.d/gr-audio.conf
+        etc/gnuradio/conf.d/gr-qtgui.conf
+        etc/gnuradio/conf.d/grc.conf
+        etc/gnuradio/conf.d/modtool.conf
+    )
+    cd $srcdir/$_gitname
+    DESTDIR="$pkgdir" cmake --install build
+
+    install -vDm644 -t "$pkgdir/usr/lib/udev/rules.d/" "$srcdir/21-fcd.rules"
+
+    install -vDm644 -t "$pkgdir/usr/share/applications" grc/scripts/freedesktop/gnuradio-grc.desktop
+    install -vDm644 -t "$pkgdir/usr/share/mime/packages" grc/scripts/freedesktop/gnuradio-grc.xml
+    install -vDm644 -t "$pkgdir/usr/share/metainfo" grc/scripts/freedesktop/org.gnuradio.grc.metainfo.xml
+    for size in 16 24 32 48 64 128 256; do
+        install -vDm644 "grc/scripts/freedesktop/grc-icon-$size.png" \
+            "$pkgdir/usr/share/icons/hicolor/${size}x${size}/apps/gnuradio-grc.png"
+    done
+}
