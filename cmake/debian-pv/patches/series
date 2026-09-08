@@ -6,4 +6,3 @@ skip-long-tests
 #cppgen-Add-C-generation-support-to-gr-vocoder
 #avoid-fmt-trouble
 omit-build-path
-boost169-system
