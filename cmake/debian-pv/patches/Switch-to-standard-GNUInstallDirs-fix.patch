@@ -1,0 +1,29 @@
+From 7c363c6ef74f4dc8272af1f2220e6aafdb743a85 Mon Sep 17 00:00:00 2001
+From: "A. Maitland Bottoms" <bottoms@debian.org>
+Date: Fri, 19 Sep 2025 17:33:31 -0400
+Subject: [PATCH] Switch to standard `GNUInstallDirs`
+
+fixup earlier commit f3ae8d597
+with working and tested if expression logic.
+
+Signed-off-by: A. Maitland Bottoms <bottoms@debian.org>
+---
+ cmake/Modules/GrPlatform.cmake | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/cmake/Modules/GrPlatform.cmake b/cmake/Modules/GrPlatform.cmake
+index 8878cc6b2..fa235a5c4 100644
+--- a/cmake/Modules/GrPlatform.cmake
++++ b/cmake/Modules/GrPlatform.cmake
+@@ -41,7 +41,7 @@ endif()
+ # Try to compute LIB_SUFFIX as best as possible
+ ########################################################################
+ get_property(enabled_languages GLOBAL PROPERTY ENABLED_LANGUAGES)
+-if(C NOT IN_LIST enabled_languages OR CXX NOT IN_LIST enabled_languages)
++if(NOT (C IN_LIST enabled_languages OR CXX IN_LIST enabled_languages))
+     message(WARNING "GrPlatform should be included after a project is defined")
+ 
+     # Try best guess of LIB_SUFFIX
+-- 
+2.47.3
+

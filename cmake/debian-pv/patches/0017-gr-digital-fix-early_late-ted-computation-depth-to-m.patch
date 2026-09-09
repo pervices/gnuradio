@@ -1,0 +1,29 @@
+From 3a4a6046b8598c0683c5d82ddf1106d967f02601 Mon Sep 17 00:00:00 2001
+From: Nathan West <nathan@quadrature.dev>
+Date: Sun, 2 Mar 2025 20:34:44 -0900
+Subject: [PATCH 17/80] gr-digital: fix early_late ted computation depth to
+ match actual depth
+
+Fixes Github #7752
+
+Signed-off-by: Nathan West <nathan@quadrature.dev>
+---
+ gr-digital/lib/timing_error_detector.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gr-digital/lib/timing_error_detector.h b/gr-digital/lib/timing_error_detector.h
+index a8fc0d84c4..eae3d05165 100644
+--- a/gr-digital/lib/timing_error_detector.h
++++ b/gr-digital/lib/timing_error_detector.h
+@@ -348,7 +348,7 @@ public:
+      * \brief Create a Early-Late timing error detector
+      */
+     ted_early_late()
+-        : timing_error_detector(TED_EARLY_LATE, 2, 2, true, false, constellation_sptr())
++        : timing_error_detector(TED_EARLY_LATE, 2, 3, true, false, constellation_sptr())
+     {
+     }
+     ~ted_early_late() override{};
+-- 
+2.47.3
+

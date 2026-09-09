@@ -1,0 +1,94 @@
+From 3a16cfe89d75d5a51c99f0fc14fde7f9a41743c9 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Sat, 7 Jun 2025 21:46:09 +0200
+Subject: [PATCH 19/80] whole-tree: use container.empty() instead of .length()
+ < 1 (maint-3.10)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ gr-qtgui/lib/EyeDisplayPlot.cc        | 2 +-
+ gr-qtgui/lib/FrequencyDisplayPlot.cc  | 2 +-
+ gr-qtgui/lib/TimeDomainDisplayPlot.cc | 2 +-
+ gr-qtgui/lib/TimeRasterDisplayPlot.cc | 4 ++--
+ gr-qtgui/lib/numberdisplayform.cc     | 2 +-
+ 5 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/gr-qtgui/lib/EyeDisplayPlot.cc b/gr-qtgui/lib/EyeDisplayPlot.cc
+index 8b7fc1bb77..f39ff18dca 100644
+--- a/gr-qtgui/lib/EyeDisplayPlot.cc
++++ b/gr-qtgui/lib/EyeDisplayPlot.cc
+@@ -474,7 +474,7 @@ void EyeDisplayPlot::setTagBackgroundStyle(Qt::BrushStyle b)
+ void EyeDisplayPlot::setYLabel(const std::string& label, const std::string& unit)
+ {
+     std::string l = label;
+-    if (unit.length() > 0)
++    if (!unit.empty())
+         l += " (" + unit + ")";
+     QwtText yAxisTitle(QString(l.c_str()));
+     setAxisTitle(QwtPlot::yLeft, yAxisTitle);
+diff --git a/gr-qtgui/lib/FrequencyDisplayPlot.cc b/gr-qtgui/lib/FrequencyDisplayPlot.cc
+index d07896d28a..16dcf99f55 100644
+--- a/gr-qtgui/lib/FrequencyDisplayPlot.cc
++++ b/gr-qtgui/lib/FrequencyDisplayPlot.cc
+@@ -481,7 +481,7 @@ void FrequencyDisplayPlot::onPickerPointSelected(const QPointF& p)
+ void FrequencyDisplayPlot::setYLabel(const std::string& label, const std::string& unit)
+ {
+     std::string l = label;
+-    if (unit.length() > 0)
++    if (!unit.empty())
+         l += " (" + unit + ")";
+     setAxisTitle(QwtPlot::yLeft, QString(l.c_str()));
+     static_cast<FreqDisplayZoomer*>(d_zoomer)->setYUnit(unit);
+diff --git a/gr-qtgui/lib/TimeDomainDisplayPlot.cc b/gr-qtgui/lib/TimeDomainDisplayPlot.cc
+index 5d5e0cabe9..3b656df55d 100644
+--- a/gr-qtgui/lib/TimeDomainDisplayPlot.cc
++++ b/gr-qtgui/lib/TimeDomainDisplayPlot.cc
+@@ -516,7 +516,7 @@ void TimeDomainDisplayPlot::setTagBackgroundStyle(Qt::BrushStyle b)
+ void TimeDomainDisplayPlot::setYLabel(const std::string& label, const std::string& unit)
+ {
+     std::string l = label;
+-    if (unit.length() > 0)
++    if (!unit.empty())
+         l += " (" + unit + ")";
+     setAxisTitle(QwtPlot::yLeft, QString(l.c_str()));
+     ((TimeDomainDisplayZoomer*)d_zoomer)->setYUnitType(unit);
+diff --git a/gr-qtgui/lib/TimeRasterDisplayPlot.cc b/gr-qtgui/lib/TimeRasterDisplayPlot.cc
+index cecd0af1d0..8e09281078 100644
+--- a/gr-qtgui/lib/TimeRasterDisplayPlot.cc
++++ b/gr-qtgui/lib/TimeRasterDisplayPlot.cc
+@@ -440,14 +440,14 @@ void TimeRasterDisplayPlot::reset()
+ 
+     QwtXScaleDraw* xScale = (QwtXScaleDraw*)axisScaleDraw(QwtPlot::xBottom);
+     xScale->setSecondsPerLine(sec_per_samp);
+-    if (d_x_label.length() > 0) {
++    if (!d_x_label.empty()) {
+         setAxisTitle(QwtPlot::xBottom, QString(d_x_label.c_str()));
+     } else {
+         setAxisTitle(QwtPlot::xBottom, QString("Time (%1)").arg(strunits[iunit].c_str()));
+     }
+     xScale->initiateUpdate();
+ 
+-    if (d_y_label.length() > 0) {
++    if (!d_y_label.empty()) {
+         setAxisTitle(QwtPlot::yLeft, d_y_label.c_str());
+     }
+ 
+diff --git a/gr-qtgui/lib/numberdisplayform.cc b/gr-qtgui/lib/numberdisplayform.cc
+index afa291e4ab..30b050adce 100644
+--- a/gr-qtgui/lib/numberdisplayform.cc
++++ b/gr-qtgui/lib/numberdisplayform.cc
+@@ -379,7 +379,7 @@ std::string NumberDisplayForm::title() const { return d_title->text().toStdStrin
+ void NumberDisplayForm::setTitle(const std::string& title)
+ {
+     std::string t = title;
+-    if (t.length() > 0)
++    if (!t.empty())
+         t = "<b><FONT SIZE=4>" + title + "</b>";
+     d_title->setText(QString(t.c_str()));
+     setGraphType(d_graph_type);
+-- 
+2.47.3
+

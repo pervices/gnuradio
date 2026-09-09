@@ -1,0 +1,36 @@
+From 8f7f8aa059290b3d7c77db5d9181062caf4f9839 Mon Sep 17 00:00:00 2001
+From: helloziyi <hellocaoziyi@gmail.com>
+Date: Mon, 21 Apr 2025 13:49:41 +0800
+Subject: [PATCH 63/80] gr-analog: Fix PSD computation errors: cast noverlap to
+ int
+
+Signed-off-by: helloziyi <hellocaoziyi@gmail.com>
+---
+ gr-analog/examples/fmtest.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/gr-analog/examples/fmtest.py b/gr-analog/examples/fmtest.py
+index a93b3ff250..5110a1f84e 100644
+--- a/gr-analog/examples/fmtest.py
++++ b/gr-analog/examples/fmtest.py
+@@ -142,7 +142,7 @@ def main():
+         d = fm.snk_tx.data()[Ns:Ns + Ne]
+         sp1_f = fig1.add_subplot(2, 1, 1)
+ 
+-        X, freq = sp1_f.psd(d, NFFT=fftlen, noverlap=fftlen / 4, Fs=fs,
++        X, freq = sp1_f.psd(d, NFFT=fftlen, noverlap=fftlen // 4, Fs=fs,
+                             window=lambda d: d * winfunc(fftlen),
+                             visible=False)
+         X_in = 10.0 * numpy.log10(abs(numpy.fft.fftshift(X)))
+@@ -181,7 +181,7 @@ def main():
+             d = fm.snks[i].data()[Ns:Ne]
+ 
+             sp2_f = fig2.add_subplot(Nrows, Ncols, 1 + i)
+-            X, freq = sp2_f.psd(d, NFFT=fftlen, noverlap=fftlen / 4, Fs=fs_o,
++            X, freq = sp2_f.psd(d, NFFT=fftlen, noverlap=fftlen // 4, Fs=fs_o,
+                                 window=lambda d: d * winfunc(fftlen),
+                                 visible=False)
+             #X_o = 10.0*numpy.log10(abs(numpy.fft.fftshift(X)))
+-- 
+2.47.3
+

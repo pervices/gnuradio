@@ -1,0 +1,428 @@
+From d44884fe803361afca82662cf7f0f1e0572e3b74 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Sat, 7 Jun 2025 21:26:09 +0200
+Subject: [PATCH 18/80] Modernize code: use override
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ .../include/gnuradio/buffer_reader_sm.h       |  8 ++++----
+ .../gnuradio/rpcserver_booter_thrift.h        |  6 +++---
+ .../include/gnuradio/rpcserver_thrift.h       | 16 +++++++++-------
+ .../include/gnuradio/thrift_server_template.h |  6 +++---
+ gr-blocks/lib/ctrlport_probe2_b_impl.h        |  2 +-
+ gr-blocks/lib/ctrlport_probe2_c_impl.h        |  2 +-
+ gr-blocks/lib/ctrlport_probe2_f_impl.h        |  2 +-
+ gr-blocks/lib/ctrlport_probe2_i_impl.h        |  2 +-
+ gr-blocks/lib/ctrlport_probe2_s_impl.h        |  2 +-
+ gr-blocks/lib/ctrlport_probe_c_impl.h         |  2 +-
+ gr-digital/lib/crc_append_impl.h              |  6 +++---
+ gr-digital/lib/crc_check_impl.h               |  6 +++---
+ gr-digital/lib/descrambler_bb_impl.h          |  2 +-
+ gr-digital/lib/glfsr_source_b_impl.h          |  2 +-
+ gr-digital/lib/glfsr_source_f_impl.h          |  2 +-
+ gr-digital/lib/scrambler_bb_impl.h            |  2 +-
+ gr-fft/lib/ctrlport_probe_psd_impl.h          |  2 +-
+ .../gnuradio/qtgui/timeRasterGlobalData.h     |  2 +-
+ .../gnuradio/qtgui/waterfallGlobalData.h      |  2 +-
+ gr-qtgui/lib/matrix_display.h                 |  2 +-
+ gr-qtgui/lib/matrix_display_signal.h          |  2 +-
+ gr-qtgui/lib/matrix_sink_impl.h               |  2 +-
+ gr-soapy/lib/block_impl.h                     | 19 +++++++++----------
+ 23 files changed, 50 insertions(+), 49 deletions(-)
+
+diff --git a/gnuradio-runtime/include/gnuradio/buffer_reader_sm.h b/gnuradio-runtime/include/gnuradio/buffer_reader_sm.h
+index 1d673508ba..3b253dbf5d 100644
+--- a/gnuradio-runtime/include/gnuradio/buffer_reader_sm.h
++++ b/gnuradio-runtime/include/gnuradio/buffer_reader_sm.h
+@@ -21,25 +21,25 @@ namespace gr {
+ class GR_RUNTIME_API buffer_reader_sm : public buffer_reader
+ {
+ public:
+-    ~buffer_reader_sm();
++    ~buffer_reader_sm() override;
+ 
+     /*!
+      * \brief Return number of items available for reading.
+      */
+-    virtual int items_available() const;
++    int items_available() const override;
+ 
+     /*!
+      * \brief Return true if thread is ready to call input_blocked_callback,
+      * false otherwise; delegate calls to buffer class's input_blkd_cb_ready()
+      */
+-    virtual bool input_blkd_cb_ready(int items_required) const;
++    bool input_blkd_cb_ready(int items_required) const override;
+ 
+     /*!
+      * \brief Callback function that the scheduler will call when it determines
+      * that the input is blocked; delegate calls to buffer class's
+      * input_blocked_callback()
+      */
+-    virtual bool input_blocked_callback(int items_required, int items_avail);
++    bool input_blocked_callback(int items_required, int items_avail) override;
+ 
+ private:
+     friend class buffer;
+diff --git a/gnuradio-runtime/include/gnuradio/rpcserver_booter_thrift.h b/gnuradio-runtime/include/gnuradio/rpcserver_booter_thrift.h
+index 62a45f798f..d2a71f910a 100644
+--- a/gnuradio-runtime/include/gnuradio/rpcserver_booter_thrift.h
++++ b/gnuradio-runtime/include/gnuradio/rpcserver_booter_thrift.h
+@@ -26,10 +26,10 @@ class rpcserver_booter_thrift
+ {
+ public:
+     rpcserver_booter_thrift();
+-    ~rpcserver_booter_thrift();
++    ~rpcserver_booter_thrift() override;
+ 
+-    rpcserver_base* i();
+-    const std::string& type() { return d_type; }
++    rpcserver_base* i() override;
++    const std::string& type() override { return d_type; }
+     const std::vector<std::string> endpoints();
+ 
+ private:
+diff --git a/gnuradio-runtime/include/gnuradio/rpcserver_thrift.h b/gnuradio-runtime/include/gnuradio/rpcserver_thrift.h
+index 67fc8370f3..11ce9e88ff 100644
+--- a/gnuradio-runtime/include/gnuradio/rpcserver_thrift.h
++++ b/gnuradio-runtime/include/gnuradio/rpcserver_thrift.h
+@@ -29,17 +29,19 @@ class rpcserver_thrift : public virtual rpcserver_base, public GNURadio::Control
+ {
+ public:
+     rpcserver_thrift();
+-    virtual ~rpcserver_thrift();
++    ~rpcserver_thrift() override;
+ 
+     void registerConfigureCallback(const std::string& id,
+-                                   const configureCallback_t callback);
+-    void unregisterConfigureCallback(const std::string& id);
++                                   const configureCallback_t callback) override;
++    void unregisterConfigureCallback(const std::string& id) override;
+ 
+-    void registerQueryCallback(const std::string& id, const queryCallback_t callback);
+-    void unregisterQueryCallback(const std::string& id);
++    void registerQueryCallback(const std::string& id,
++                               const queryCallback_t callback) override;
++    void unregisterQueryCallback(const std::string& id) override;
+ 
+-    void registerHandlerCallback(const std::string& id, const handlerCallback_t callback);
+-    void unregisterHandlerCallback(const std::string& id);
++    void registerHandlerCallback(const std::string& id,
++                                 const handlerCallback_t callback) override;
++    void unregisterHandlerCallback(const std::string& id) override;
+ 
+     void setKnobs(const GNURadio::KnobMap&);
+     void getKnobs(GNURadio::KnobMap&, const GNURadio::KnobIDList&);
+diff --git a/gnuradio-runtime/include/gnuradio/thrift_server_template.h b/gnuradio-runtime/include/gnuradio/thrift_server_template.h
+index 6cd8f63d15..8e3975eaf4 100644
+--- a/gnuradio-runtime/include/gnuradio/thrift_server_template.h
++++ b/gnuradio-runtime/include/gnuradio/thrift_server_template.h
+@@ -62,10 +62,10 @@ private:
+             ;
+         }
+ 
+-        virtual ~TBufferedTransportFactory() {}
++        ~TBufferedTransportFactory() override {}
+ 
+-        virtual std::shared_ptr<thrift::transport::TTransport>
+-        getTransport(std::shared_ptr<thrift::transport::TTransport> trans)
++        std::shared_ptr<thrift::transport::TTransport>
++        getTransport(std::shared_ptr<thrift::transport::TTransport> trans) override
+         {
+             return std::shared_ptr<thrift::transport::TTransport>(
+                 new thrift::transport::TBufferedTransport(trans, bufferSize));
+diff --git a/gr-blocks/lib/ctrlport_probe2_b_impl.h b/gr-blocks/lib/ctrlport_probe2_b_impl.h
+index ee8abda41a..6641d0dfc1 100644
+--- a/gr-blocks/lib/ctrlport_probe2_b_impl.h
++++ b/gr-blocks/lib/ctrlport_probe2_b_impl.h
+@@ -35,7 +35,7 @@ public:
+                            const std::string& desc,
+                            int len,
+                            unsigned int disp_mask);
+-    ~ctrlport_probe2_b_impl();
++    ~ctrlport_probe2_b_impl() override;
+ 
+     void setup_rpc() override;
+ 
+diff --git a/gr-blocks/lib/ctrlport_probe2_c_impl.h b/gr-blocks/lib/ctrlport_probe2_c_impl.h
+index 48b6affbe0..8b59cb2021 100644
+--- a/gr-blocks/lib/ctrlport_probe2_c_impl.h
++++ b/gr-blocks/lib/ctrlport_probe2_c_impl.h
+@@ -35,7 +35,7 @@ public:
+                            const std::string& desc,
+                            int len,
+                            unsigned int disp_mask);
+-    ~ctrlport_probe2_c_impl();
++    ~ctrlport_probe2_c_impl() override;
+ 
+     void setup_rpc() override;
+ 
+diff --git a/gr-blocks/lib/ctrlport_probe2_f_impl.h b/gr-blocks/lib/ctrlport_probe2_f_impl.h
+index a21794e3ce..45f9c7ba05 100644
+--- a/gr-blocks/lib/ctrlport_probe2_f_impl.h
++++ b/gr-blocks/lib/ctrlport_probe2_f_impl.h
+@@ -35,7 +35,7 @@ public:
+                            const std::string& desc,
+                            int len,
+                            unsigned int disp_mask);
+-    ~ctrlport_probe2_f_impl();
++    ~ctrlport_probe2_f_impl() override;
+ 
+     void setup_rpc() override;
+ 
+diff --git a/gr-blocks/lib/ctrlport_probe2_i_impl.h b/gr-blocks/lib/ctrlport_probe2_i_impl.h
+index 546c770b6b..5644456db7 100644
+--- a/gr-blocks/lib/ctrlport_probe2_i_impl.h
++++ b/gr-blocks/lib/ctrlport_probe2_i_impl.h
+@@ -35,7 +35,7 @@ public:
+                            const std::string& desc,
+                            int len,
+                            unsigned int disp_mask);
+-    ~ctrlport_probe2_i_impl();
++    ~ctrlport_probe2_i_impl() override;
+ 
+     void setup_rpc() override;
+ 
+diff --git a/gr-blocks/lib/ctrlport_probe2_s_impl.h b/gr-blocks/lib/ctrlport_probe2_s_impl.h
+index e5ac38e753..c04a9dc8ff 100644
+--- a/gr-blocks/lib/ctrlport_probe2_s_impl.h
++++ b/gr-blocks/lib/ctrlport_probe2_s_impl.h
+@@ -35,7 +35,7 @@ public:
+                            const std::string& desc,
+                            int len,
+                            unsigned int disp_mask);
+-    ~ctrlport_probe2_s_impl();
++    ~ctrlport_probe2_s_impl() override;
+ 
+     void setup_rpc() override;
+ 
+diff --git a/gr-blocks/lib/ctrlport_probe_c_impl.h b/gr-blocks/lib/ctrlport_probe_c_impl.h
+index 6d7c911bb0..184431fdcf 100644
+--- a/gr-blocks/lib/ctrlport_probe_c_impl.h
++++ b/gr-blocks/lib/ctrlport_probe_c_impl.h
+@@ -30,7 +30,7 @@ private:
+ 
+ public:
+     ctrlport_probe_c_impl(const std::string& id, const std::string& desc);
+-    ~ctrlport_probe_c_impl();
++    ~ctrlport_probe_c_impl() override;
+ 
+     void setup_rpc() override;
+ 
+diff --git a/gr-digital/lib/crc_append_impl.h b/gr-digital/lib/crc_append_impl.h
+index 6caad4f66f..01438127b3 100644
+--- a/gr-digital/lib/crc_append_impl.h
++++ b/gr-digital/lib/crc_append_impl.h
+@@ -34,14 +34,14 @@ public:
+                     bool result_reflected,
+                     bool swap_endianness,
+                     unsigned skip_header_bytes);
+-    ~crc_append_impl();
++    ~crc_append_impl() override;
+ 
+-    void forecast(int noutput_items, gr_vector_int& ninput_items_required);
++    void forecast(int noutput_items, gr_vector_int& ninput_items_required) override;
+ 
+     int general_work(int noutput_items,
+                      gr_vector_int& ninput_items,
+                      gr_vector_const_void_star& input_items,
+-                     gr_vector_void_star& output_items);
++                     gr_vector_void_star& output_items) override;
+     void msg_handler(pmt::pmt_t pmt_msg);
+ };
+ 
+diff --git a/gr-digital/lib/crc_check_impl.h b/gr-digital/lib/crc_check_impl.h
+index 05a1950aeb..1ca1ad2a6b 100644
+--- a/gr-digital/lib/crc_check_impl.h
++++ b/gr-digital/lib/crc_check_impl.h
+@@ -36,14 +36,14 @@ public:
+                    bool swap_endianness,
+                    bool discard_crc,
+                    unsigned skip_header_bytes);
+-    ~crc_check_impl();
++    ~crc_check_impl() override;
+ 
+-    void forecast(int noutput_items, gr_vector_int& ninput_items_required);
++    void forecast(int noutput_items, gr_vector_int& ninput_items_required) override;
+ 
+     int general_work(int noutput_items,
+                      gr_vector_int& ninput_items,
+                      gr_vector_const_void_star& input_items,
+-                     gr_vector_void_star& output_items);
++                     gr_vector_void_star& output_items) override;
+     void msg_handler(const pmt::pmt_t& pmt_msg);
+ };
+ 
+diff --git a/gr-digital/lib/descrambler_bb_impl.h b/gr-digital/lib/descrambler_bb_impl.h
+index 3c198bc93c..f99834098a 100644
+--- a/gr-digital/lib/descrambler_bb_impl.h
++++ b/gr-digital/lib/descrambler_bb_impl.h
+@@ -24,7 +24,7 @@ private:
+ 
+ public:
+     descrambler_bb_impl(uint64_t mask, uint64_t seed, uint8_t len);
+-    ~descrambler_bb_impl();
++    ~descrambler_bb_impl() override;
+ 
+     int work(int noutput_items,
+              gr_vector_const_void_star& input_items,
+diff --git a/gr-digital/lib/glfsr_source_b_impl.h b/gr-digital/lib/glfsr_source_b_impl.h
+index 3c6a3ac747..acd8e085ec 100644
+--- a/gr-digital/lib/glfsr_source_b_impl.h
++++ b/gr-digital/lib/glfsr_source_b_impl.h
+@@ -31,7 +31,7 @@ public:
+                         bool repeat = true,
+                         uint64_t mask = 0,
+                         uint64_t seed = 0x1);
+-    ~glfsr_source_b_impl();
++    ~glfsr_source_b_impl() override;
+ 
+     int work(int noutput_items,
+              gr_vector_const_void_star& input_items,
+diff --git a/gr-digital/lib/glfsr_source_f_impl.h b/gr-digital/lib/glfsr_source_f_impl.h
+index 75cf72ec0a..625edfd363 100644
+--- a/gr-digital/lib/glfsr_source_f_impl.h
++++ b/gr-digital/lib/glfsr_source_f_impl.h
+@@ -31,7 +31,7 @@ public:
+                         bool repeat = true,
+                         uint64_t mask = 0,
+                         uint64_t seed = 0x1);
+-    ~glfsr_source_f_impl();
++    ~glfsr_source_f_impl() override;
+ 
+     int work(int noutput_items,
+              gr_vector_const_void_star& input_items,
+diff --git a/gr-digital/lib/scrambler_bb_impl.h b/gr-digital/lib/scrambler_bb_impl.h
+index aa4ff94357..31b6585569 100644
+--- a/gr-digital/lib/scrambler_bb_impl.h
++++ b/gr-digital/lib/scrambler_bb_impl.h
+@@ -25,7 +25,7 @@ private:
+ 
+ public:
+     scrambler_bb_impl(uint64_t mask, uint64_t seed, uint8_t len);
+-    ~scrambler_bb_impl();
++    ~scrambler_bb_impl() override;
+ 
+     int work(int noutput_items,
+              gr_vector_const_void_star& input_items,
+diff --git a/gr-fft/lib/ctrlport_probe_psd_impl.h b/gr-fft/lib/ctrlport_probe_psd_impl.h
+index a3c299efe7..147c85669d 100644
+--- a/gr-fft/lib/ctrlport_probe_psd_impl.h
++++ b/gr-fft/lib/ctrlport_probe_psd_impl.h
+@@ -35,7 +35,7 @@ private:
+ 
+ public:
+     ctrlport_probe_psd_impl(const std::string& id, const std::string& desc, int len);
+-    ~ctrlport_probe_psd_impl();
++    ~ctrlport_probe_psd_impl() override;
+ 
+     void setup_rpc() override;
+ 
+diff --git a/gr-qtgui/include/gnuradio/qtgui/timeRasterGlobalData.h b/gr-qtgui/include/gnuradio/qtgui/timeRasterGlobalData.h
+index 846fd0bc89..90fcbac8f5 100644
+--- a/gr-qtgui/include/gnuradio/qtgui/timeRasterGlobalData.h
++++ b/gr-qtgui/include/gnuradio/qtgui/timeRasterGlobalData.h
+@@ -30,7 +30,7 @@ public:
+     virtual QwtRasterData* copy() const;
+ 
+ #if QWT_VERSION >= 0x060200
+-    virtual QwtInterval interval(Qt::Axis) const override;
++    QwtInterval interval(Qt::Axis) const override;
+     void setInterval(Qt::Axis, const QwtInterval&);
+ #endif
+ 
+diff --git a/gr-qtgui/include/gnuradio/qtgui/waterfallGlobalData.h b/gr-qtgui/include/gnuradio/qtgui/waterfallGlobalData.h
+index 773ff5a7c3..a760eeb828 100644
+--- a/gr-qtgui/include/gnuradio/qtgui/waterfallGlobalData.h
++++ b/gr-qtgui/include/gnuradio/qtgui/waterfallGlobalData.h
+@@ -31,7 +31,7 @@ public:
+     virtual QwtRasterData* copy() const;
+ 
+ #if QWT_VERSION >= 0x060200
+-    virtual QwtInterval interval(Qt::Axis) const override;
++    QwtInterval interval(Qt::Axis) const override;
+     void setInterval(Qt::Axis, const QwtInterval&);
+ #endif
+ 
+diff --git a/gr-qtgui/lib/matrix_display.h b/gr-qtgui/lib/matrix_display.h
+index 806833d57b..2d0be3745c 100644
+--- a/gr-qtgui/lib/matrix_display.h
++++ b/gr-qtgui/lib/matrix_display.h
+@@ -88,7 +88,7 @@ public:
+                             const std::string& y_axis_label,
+                             const std::string& z_axis_label,
+                             QWidget* parent = nullptr);
+-    ~matrix_display();
++    ~matrix_display() override;
+ 
+     void set_contour(bool contour);
+     void set_color_map(const std::string& color_map);
+diff --git a/gr-qtgui/lib/matrix_display_signal.h b/gr-qtgui/lib/matrix_display_signal.h
+index aed42881d4..f2b9500091 100644
+--- a/gr-qtgui/lib/matrix_display_signal.h
++++ b/gr-qtgui/lib/matrix_display_signal.h
+@@ -19,7 +19,7 @@ class matrix_display_signal : public QObject
+ 
+ public:
+     matrix_display_signal() {}
+-    ~matrix_display_signal() {}
++    ~matrix_display_signal() override {}
+ 
+ signals:
+     void data_ready(QVector<double> data);
+diff --git a/gr-qtgui/lib/matrix_sink_impl.h b/gr-qtgui/lib/matrix_sink_impl.h
+index 75edcb835d..17601c45b6 100644
+--- a/gr-qtgui/lib/matrix_sink_impl.h
++++ b/gr-qtgui/lib/matrix_sink_impl.h
+@@ -41,7 +41,7 @@ public:
+                      const std::string& color_map,
+                      const std::string& interpolation,
+                      QWidget* parent = nullptr);
+-    ~matrix_sink_impl();
++    ~matrix_sink_impl() override;
+ 
+     void exec_() override;
+     QApplication* d_qApplication;
+diff --git a/gr-soapy/lib/block_impl.h b/gr-soapy/lib/block_impl.h
+index 76e494dbc9..ff62f02d33 100644
+--- a/gr-soapy/lib/block_impl.h
++++ b/gr-soapy/lib/block_impl.h
+@@ -65,7 +65,7 @@ protected:
+     block_impl(block_impl&&) = delete;
+     block_impl& operator=(const block_impl&) = delete;
+     block_impl& operator=(block_impl&&) = delete;
+-    virtual ~block_impl();
++    ~block_impl() override;
+ 
+     size_t d_nchan;
+     std::mutex d_device_mutex;
+@@ -192,15 +192,14 @@ public:
+     std::vector<unsigned>
+     read_registers(const std::string& name, unsigned addr, size_t length) const override;
+ 
+-    virtual arginfo_list_t get_setting_info() const override;
+-    virtual void write_setting(const std::string& key, const std::string& value) override;
+-    virtual std::string read_setting(const std::string& key) const override;
+-    virtual arginfo_list_t get_setting_info(size_t channel) const override;
+-    virtual void write_setting(size_t channel,
+-                               const std::string& key,
+-                               const std::string& value) override;
+-    virtual std::string read_setting(size_t channel,
+-                                     const std::string& key) const override;
++    arginfo_list_t get_setting_info() const override;
++    void write_setting(const std::string& key, const std::string& value) override;
++    std::string read_setting(const std::string& key) const override;
++    arginfo_list_t get_setting_info(size_t channel) const override;
++    void write_setting(size_t channel,
++                       const std::string& key,
++                       const std::string& value) override;
++    std::string read_setting(size_t channel, const std::string& key) const override;
+ 
+     std::vector<std::string> list_gpio_banks() const override;
+     void write_gpio(const std::string& bank, unsigned value) override;
+-- 
+2.47.3
+

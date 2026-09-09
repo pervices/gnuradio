@@ -1,0 +1,212 @@
+From 1f19866d5df319c500e81d4a9018c96451436dc5 Mon Sep 17 00:00:00 2001
+From: "A. Maitland Bottoms" <bottoms@debian.org>
+Date: Sat, 4 Feb 2023 23:38:01 -0500
+Subject: [PATCH] update codec2 mode enums
+
+Reflect the new Codec2 and FreeDV modes for use by gnuradio.
+---
+ .../grc/vocoder_codec2_decode_ps.block.yml    |  2 +-
+ .../grc/vocoder_codec2_encode_sp.block.yml    |  2 +-
+ gr-vocoder/grc/vocoder_freedv_rx_ss.block.yml | 22 +++++++++++++++----
+ gr-vocoder/grc/vocoder_freedv_tx_ss.block.yml | 22 +++++++++++++++----
+ gr-vocoder/include/gnuradio/vocoder/codec2.h  |  6 +++++
+ .../include/gnuradio/vocoder/freedv_api.h     | 21 ++++++++++++++++++
+ .../python/vocoder/bindings/codec2_python.cc  |  6 +++++
+ .../vocoder/bindings/freedv_api_python.cc     | 21 ++++++++++++++++++
+ 8 files changed, 92 insertions(+), 10 deletions(-)
+
+diff --git a/gr-vocoder/grc/vocoder_codec2_decode_ps.block.yml b/gr-vocoder/grc/vocoder_codec2_decode_ps.block.yml
+index e71eeb866..105f65490 100644
+--- a/gr-vocoder/grc/vocoder_codec2_decode_ps.block.yml
++++ b/gr-vocoder/grc/vocoder_codec2_decode_ps.block.yml
+@@ -5,7 +5,7 @@ flags: [ python, cpp ]
+ parameters:
+ -   id: mode
+     label: Bit rate
+-    dtype: raw
++    dtype: enum
+     default: codec2.MODE_2400
+     options: [codec2.MODE_3200, codec2.MODE_2400, codec2.MODE_1600, codec2.MODE_1400,
+         codec2.MODE_1300, codec2.MODE_1200, codec2.MODE_700, codec2.MODE_700B,
+diff --git a/gr-vocoder/grc/vocoder_codec2_encode_sp.block.yml b/gr-vocoder/grc/vocoder_codec2_encode_sp.block.yml
+index 068c8c516..13586bce1 100644
+--- a/gr-vocoder/grc/vocoder_codec2_encode_sp.block.yml
++++ b/gr-vocoder/grc/vocoder_codec2_encode_sp.block.yml
+@@ -5,7 +5,7 @@ flags: [ python, cpp ]
+ parameters:
+ -   id: mode
+     label: Bit rate
+-    dtype: raw
++    dtype: enum
+     default: codec2.MODE_2400
+     options: [codec2.MODE_3200, codec2.MODE_2400, codec2.MODE_1600, codec2.MODE_1400,
+         codec2.MODE_1300, codec2.MODE_1200, codec2.MODE_700, codec2.MODE_700B,
+diff --git a/gr-vocoder/grc/vocoder_freedv_rx_ss.block.yml b/gr-vocoder/grc/vocoder_freedv_rx_ss.block.yml
+index 31f88b322..5c7b668d4 100644
+--- a/gr-vocoder/grc/vocoder_freedv_rx_ss.block.yml
++++ b/gr-vocoder/grc/vocoder_freedv_rx_ss.block.yml
+@@ -4,11 +4,25 @@ label: FreeDV demodulator
+ parameters:
+ -   id: mode
+     label: Operating Mode
+-    dtype: raw
++    dtype: enum
+     default: freedv_api.MODE_1600
+-    options: [freedv_api.MODE_1600, freedv_api.MODE_700, freedv_api.MODE_700B, freedv_api.MODE_2400A,
+-        freedv_api.MODE_2400B, freedv_api.MODE_800XA, freedv_api.MODE_700C, freedv_api.MODE_700D]
+-    option_labels: ['1600', '700', 700B, 2400A, 2400B, 800XA, 700C, 700D]
++    options: [freedv_api.MODE_1600, freedv_api.MODE_700, freedv_api.MODE_700B,
++          freedv_api.MODE_2400A, freedv_api.MODE_2400B, freedv_api.MODE_800XA,
++          freedv_api.MODE_700C, freedv_api.MODE_700D, freedv_api.MODE_700E,
++          freedv_api.MODE_2020, freedv_api.MODE_2020B, freedv_api.MODE_FSK_LDPC,
++          freedv_api.MODE_DATAC1, freedv_api.MODE_DATAC3,
++          freedv_api.MODE_DATAC0]
++    option_labels: [1600, 700, 700B, 2400A, 2400B, 800XA, 700C, 700D, 700E,
++                    2020, 2020B, FSK_LDPC, DATAC1, DATAC3, DATAC0]
++    option_attributes:
++        cpp_options: [vocoder::freedv_api::MODE_1600, vocoder::freedv_api::MODE_700,
++          vocoder::freedv_api::MODE_700B, vocoder::freedv_api::MODE_2400A,
++          vocoder::freedv_api::MODE_2400B, vocoder::freedv_api::MODE_800XA,
++          vocoder::freedv_api::MODE_700C, vocoder::freedv_api::MODE_700D,
++          vocoder::freedv_api::MODE_700E, vocoder::freedv_api::MODE_2020,
++          vocoder::freedv_api::MODE_2020B, vocoder::freedv_api::MODE_FSK_LDPC,
++          vocoder::freedv_api::MODE_DATAC1, vocoder::freedv_api::MODE_DATAC3,
++          vocoder::freedv_api::MODE_DATAC0]
+ -   id: squelch_thresh
+     label: Squelch Threshold
+     dtype: float
+diff --git a/gr-vocoder/grc/vocoder_freedv_tx_ss.block.yml b/gr-vocoder/grc/vocoder_freedv_tx_ss.block.yml
+index a50dbb8ec..1e979b151 100644
+--- a/gr-vocoder/grc/vocoder_freedv_tx_ss.block.yml
++++ b/gr-vocoder/grc/vocoder_freedv_tx_ss.block.yml
+@@ -4,11 +4,25 @@ label: FreeDV modulator
+ parameters:
+ -   id: mode
+     label: Operating Mode
+-    dtype: raw
++    dtype: enum
+     default: freedv_api.MODE_1600
+-    options: [freedv_api.MODE_1600, freedv_api.MODE_700, freedv_api.MODE_700B, freedv_api.MODE_2400A,
+-        freedv_api.MODE_2400B, freedv_api.MODE_800XA, freedv_api.MODE_700C, freedv_api.MODE_700D]
+-    option_labels: ['1600', '700', 700B, 2400A, 2400B, 800XA, 700C, 700D]
++    options: [freedv_api.MODE_1600, freedv_api.MODE_700, freedv_api.MODE_700B,
++             freedv_api.MODE_2400A, freedv_api.MODE_2400B, freedv_api.MODE_800XA,
++             freedv_api.MODE_700C, freedv_api.MODE_700D, freedv_api.MODE_700E,
++             freedv_api.MODE_2020, freedv_api.MODE_2020B, freedv_api.MODE_FSK_LDPC,
++             freedv_api.MODE_DATAC1, freedv_api.MODE_DATAC3,
++             freedv_api.MODE_DATAC0]
++    option_labels: [1600, 700, 700B, 2400A, 2400B, 800XA, 700C, 700D, 700E,
++                   2020, 2020B, FSK_LDPC, DATAC1, DATAC3, DATAC0]
++    option_attributes:
++      cpp_options: [vocoder::freedv_api::MODE_1600, vocoder::freedv_api::MODE_700,
++        vocoder::freedv_api::MODE_700B, vocoder::freedv_api::MODE_2400A,
++        vocoder::freedv_api::MODE_2400B, vocoder::freedv_api::MODE_800XA,
++        vocoder::freedv_api::MODE_700C, vocoder::freedv_api::MODE_700D,
++        vocoder::freedv_api::MODE_700E, vocoder::freedv_api::MODE_2020,
++        vocoder::freedv_api::MODE_2020B, vocoder::freedv_api::MODE_FSK_LDPC,
++        vocoder::freedv_api::MODE_DATAC1, vocoder::freedv_api::MODE_DATAC3,
++        vocoder::freedv_api::MODE_DATAC0]
+ -   id: txt_msg
+     label: Text Message
+     dtype: string
+diff --git a/gr-vocoder/include/gnuradio/vocoder/codec2.h b/gr-vocoder/include/gnuradio/vocoder/codec2.h
+index 3e8ed22b5..74bf46867 100644
+--- a/gr-vocoder/include/gnuradio/vocoder/codec2.h
++++ b/gr-vocoder/include/gnuradio/vocoder/codec2.h
+@@ -41,6 +41,12 @@ public:
+ #endif
+ #ifdef CODEC2_MODE_WB
+         MODE_WB = CODEC2_MODE_WB,
++#endif
++#ifdef CODEC2_MODE_450
++        MODE_450 = CODEC2_MODE_450,
++#endif
++#ifdef CODEC2_MODE_450PWB
++        MODE_450PWB = CODEC2_MODE_450PWB,
+ #endif
+     };
+ 
+diff --git a/gr-vocoder/include/gnuradio/vocoder/freedv_api.h b/gr-vocoder/include/gnuradio/vocoder/freedv_api.h
+index 82e25153b..b67654c85 100644
+--- a/gr-vocoder/include/gnuradio/vocoder/freedv_api.h
++++ b/gr-vocoder/include/gnuradio/vocoder/freedv_api.h
+@@ -58,6 +58,27 @@ public:
+         SYNC_UNSYNC = FREEDV_SYNC_UNSYNC,
+         SYNC_AUTO = FREEDV_SYNC_AUTO,
+         SYNC_MANUAL = FREEDV_SYNC_MANUAL,
++#endif
++#ifdef FREEDV_MODE_2020
++        MODE_2020 = FREEDV_MODE_2020,
++#endif
++#ifdef FREEDV_MODE_2020B
++        MODE_2020B = FREEDV_MODE_2020B,
++#endif
++#ifdef FREEDV_MODE_700E
++        MODE_700E = FREEDV_MODE_700E,
++#endif
++#ifdef FREEDV_MODE_FSK_LDPC
++        MODE_FSK_LDPC = FREEDV_MODE_FSK_LDPC,
++#endif
++#ifdef FREEDV_MODE_DATAC1
++        MODE_DATAC1 = FREEDV_MODE_DATAC1,
++#endif
++#ifdef FREEDV_MODE_DATAC3
++        MODE_DATAC3 = FREEDV_MODE_DATAC3,
++#endif
++#ifdef FREEDV_MODE_DATAC0
++        MODE_DATAC0 = FREEDV_MODE_DATAC0,
+ #endif
+     };
+ 
+diff --git a/gr-vocoder/python/vocoder/bindings/codec2_python.cc b/gr-vocoder/python/vocoder/bindings/codec2_python.cc
+index bdcb1409b..430fdc470 100644
+--- a/gr-vocoder/python/vocoder/bindings/codec2_python.cc
++++ b/gr-vocoder/python/vocoder/bindings/codec2_python.cc
+@@ -44,6 +44,12 @@ void bind_codec2(py::module& m)
+ #endif
+ #ifdef CODEC2_MODE_WB
+         .value("MODE_WB", gr::vocoder::codec2::MODE_WB)
++#endif
++#ifdef CODEC2_MODE_450
++        .value("MODE_450", gr::vocoder::codec2::MODE_450)
++#endif
++#ifdef CODEC2_MODE_450PWB
++        .value("MODE_450PWB", gr::vocoder::codec2::MODE_450PWB)
+ #endif
+         .export_values();
+ 
+diff --git a/gr-vocoder/python/vocoder/bindings/freedv_api_python.cc b/gr-vocoder/python/vocoder/bindings/freedv_api_python.cc
+index a542181f7..9da6f51c8 100644
+--- a/gr-vocoder/python/vocoder/bindings/freedv_api_python.cc
++++ b/gr-vocoder/python/vocoder/bindings/freedv_api_python.cc
+@@ -51,6 +51,27 @@ void bind_freedv_api(py::module& m)
+         .value("SYNC_UNSYNC", gr::vocoder::freedv_api::SYNC_UNSYNC)
+         .value("SYNC_AUTO", gr::vocoder::freedv_api::SYNC_AUTO)
+         .value("SYNC_MANUAL", gr::vocoder::freedv_api::SYNC_MANUAL)
++#endif
++#ifdef FREEDV_MODE_2020
++        .value("MODE_2020", gr::vocoder::freedv_api::MODE_2020)
++#endif
++#ifdef FREEDV_MODE_2020B
++        .value("MODE_2020B", gr::vocoder::freedv_api::MODE_2020B)
++#endif
++#ifdef FREEDV_MODE_700E
++        .value("MODE_700E", gr::vocoder::freedv_api::MODE_700E)
++#endif
++#ifdef FREEDV_MODE_FSK_LDPC
++        .value("MODE_FSK_LDPC", gr::vocoder::freedv_api::MODE_FSK_LDPC)
++#endif
++#ifdef FREEDV_MODE_DATAC1
++        .value("MODE_DATAC1", gr::vocoder::freedv_api::MODE_DATAC1)
++#endif
++#ifdef FREEDV_MODE_DATAC3
++        .value("MODE_DATAC3", gr::vocoder::freedv_api::MODE_DATAC3)
++#endif
++#ifdef FREEDV_MODE_DATAC0
++        .value("MODE_DATAC0", gr::vocoder::freedv_api::MODE_DATAC0)
+ #endif
+         .export_values();
+ 
+-- 
+2.39.1
+

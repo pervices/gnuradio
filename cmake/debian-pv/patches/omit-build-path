@@ -1,15 +1,56 @@
+From 41ea83cece7052af09d01c6536bca90f6f6c3367 Mon Sep 17 00:00:00 2001
 From: "A. Maitland Bottoms" <bottoms@debian.org>
-Subject: omit build path
+Date: Mon, 9 Oct 2023 13:13:29 -0400
+Subject: [PATCH] omit build path
 
 Support reproducible builds by replacing reference to the build path.
 
+Signed-off-by: A. Maitland Bottoms <bottoms@debian.org>
+---
+ docs/doxygen/Doxyfile.in             | 2 ++
+ gnuradio-runtime/lib/CMakeLists.txt  | 2 ++
+ gnuradio-runtime/lib/constants.cc.in | 2 +-
+ 3 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/docs/doxygen/Doxyfile.in b/docs/doxygen/Doxyfile.in
+index 671c17dff..242ac416a 100644
+--- a/docs/doxygen/Doxyfile.in
++++ b/docs/doxygen/Doxyfile.in
+@@ -143,6 +143,8 @@ STRIP_FROM_PATH        =
+ 
+ STRIP_FROM_INC_PATH    = @PROJECT_SOURCE_DIR@/gnuradio-runtime/include \
+                          @PROJECT_BINARY_DIR@/gnuradio-runtime/include \
++                         @PROJECT_SOURCE_DIR@/gnuradio-runtime/ \
++                         @PROJECT_BINARY_DIR@/gnuradio-runtime/ \
+                          @PROJECT_SOURCE_DIR@/gr-analog/include \
+                          @PROJECT_BINARY_DIR@/gr-analog/include \
+                          @PROJECT_SOURCE_DIR@/gr-audio/include \
+diff --git a/gnuradio-runtime/lib/CMakeLists.txt b/gnuradio-runtime/lib/CMakeLists.txt
+index 577262df2..dd35bde1d 100644
 --- a/gnuradio-runtime/lib/CMakeLists.txt
 +++ b/gnuradio-runtime/lib/CMakeLists.txt
-@@ -20,6 +20,7 @@
+@@ -20,6 +20,8 @@ message(STATUS "Loading build date ${BUILD_DATE} into constants...")
  message(STATUS "Loading version ${VERSION} into constants...")
  
  #Generate the constants file, now that we actually know which components will be enabled.
-+string(REPLACE "${CMAKE_BINARY_DIR}" "BUILD_DIR" COMPILER_INFO "${COMPILER_INFO}")
++cmake_path(GET CMAKE_SOURCE_DIR PARENT_PATH top_build_dir)
++string(REPLACE "${top_build_dir}" "BUILD_DIR" SAFE_COMPILER_INFO "${COMPILER_INFO}")
  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/constants.cc.in
                 ${CMAKE_CURRENT_BINARY_DIR}/constants.cc ESCAPE_QUOTES @ONLY)
  
+diff --git a/gnuradio-runtime/lib/constants.cc.in b/gnuradio-runtime/lib/constants.cc.in
+index 4d8e240e2..102fd3acc 100644
+--- a/gnuradio-runtime/lib/constants.cc.in
++++ b/gnuradio-runtime/lib/constants.cc.in
+@@ -68,7 +68,7 @@ const std::string c_compiler() { return "@cmake_c_compiler_version@"; }
+ 
+ const std::string cxx_compiler() { return "@cmake_cxx_compiler_version@"; }
+ 
+-const std::string compiler_flags() { return "@COMPILER_INFO@"; }
++const std::string compiler_flags() { return "@SAFE_COMPILER_INFO@"; }
+ 
+ const std::string build_time_enabled_components() { return "@_gr_enabled_components@"; }
+ 
+-- 
+2.39.2
+

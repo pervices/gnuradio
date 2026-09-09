@@ -1,0 +1,40 @@
+From 5f2a4b58a2360f78822831cef9125cf5755b2c59 Mon Sep 17 00:00:00 2001
+From: Volker Schroer <3470424+dl1ksv@users.noreply.github.com>
+Date: Mon, 16 Jun 2025 17:08:44 +0200
+Subject: [PATCH 65/80] grc:  Map Escape key to 'reject' in PropsDialog
+
+See #7877
+
+But the problem is more general and affects blocks with ports.
+Changing the port number (input or output ) in a block and pressing Esc
+removes the block area and only the ports can be seen in the flowgraph.
+
+Pressing Esc in the PropsDialog for blocks without ports the key is mapped to accept,
+but I think the common use should be 'Abort Editing'
+
+So this pr maps Esc to reject.
+
+Fixes #7877
+
+Signed-off-by: Volker Schroer <3470424+dl1ksv@users.noreply.github.com>
+---
+ grc/gui/PropsDialog.py | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/grc/gui/PropsDialog.py b/grc/gui/PropsDialog.py
+index be30a369bf..4595b03dd2 100644
+--- a/grc/gui/PropsDialog.py
++++ b/grc/gui/PropsDialog.py
+@@ -304,6 +304,9 @@ class PropsDialog(Gtk.Dialog):
+             insert('\n\n# External Code ({}.py)\n'.format(block.name), src)
+ 
+     def _handle_key_press(self, widget, event):
++        if event.keyval == Gdk.KEY_Escape:
++            self.response(Gtk.ResponseType.REJECT)
++            return True  # Map Escape key to reject button
+         close_dialog = (
+             event.keyval == Gdk.KEY_Return and
+             event.get_state() & Gdk.ModifierType.CONTROL_MASK == 0 and
+-- 
+2.47.3
+

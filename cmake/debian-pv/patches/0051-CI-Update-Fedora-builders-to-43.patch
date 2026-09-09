@@ -1,0 +1,37 @@
+From 2d914845b2ff41882328dfe9f0d2b45220b45111 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Sat, 31 Jan 2026 13:24:42 +0100
+Subject: [PATCH 51/80] CI: Update Fedora builders to 43
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ .github/workflows/make-test.yml | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/.github/workflows/make-test.yml b/.github/workflows/make-test.yml
+index 19bda49c4c..6a24aadace 100644
+--- a/.github/workflows/make-test.yml
++++ b/.github/workflows/make-test.yml
+@@ -89,12 +89,12 @@ jobs:
+             ctest_args: '-E "qa_polar_..coder_(sc_)?systematic"'
+           - distro: 'Ubuntu 24.04'
+             containerid: 'gnuradio/ci:ubuntu-24.04-3.10'
+-          - distro: 'Fedora 41 (with 0xFE memory initialization, GLIBCXX_ASSERTIONS)'
+-            containerid: 'gnuradio/ci:fedora-41-3.10'
++          - distro: 'Fedora 42 (with 0xFE memory initialization, GLIBCXX_ASSERTIONS)'
++            containerid: 'gnuradio/ci:fedora-42-3.10'
+             cxxflags: -ftrivial-auto-var-init=pattern -Wp,-D_GLIBCXX_ASSERTIONS
+             ldpath: /usr/local/lib64
+-          - distro: 'Fedora 42 (clang, ninja)'
+-            containerid: 'gnuradio/ci:fedora-42-3.10'
++          - distro: 'Fedora 43 (clang, ninja)'
++            containerid: 'gnuradio/ci:fedora-43-3.10'
+             cxxflags: -Wno-unused-command-line-argument
+             cmakeflags: -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -GNinja
+             build_options: --
+-- 
+2.47.3
+

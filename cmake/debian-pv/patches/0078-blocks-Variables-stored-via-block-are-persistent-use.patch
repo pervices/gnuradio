@@ -1,0 +1,30 @@
+From ee15545e7675427cac5b7239ed31edf6b85271ba Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Sat, 7 Mar 2026 16:11:25 +0100
+Subject: [PATCH 78/80] blocks: Variables stored via block are persistent user
+ data, not GR configuration
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ gr-blocks/python/blocks/variable_save_restore.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gr-blocks/python/blocks/variable_save_restore.py b/gr-blocks/python/blocks/variable_save_restore.py
+index f31acad31c..3d9b8e7897 100644
+--- a/gr-blocks/python/blocks/variable_save_restore.py
++++ b/gr-blocks/python/blocks/variable_save_restore.py
+@@ -41,7 +41,7 @@ class variable_save_restore(gr.sync_block):
+         self.message_port_register_in(pmt.intern("restore"))
+         self.set_msg_handler(pmt.intern("restore"), self.handle_msg_restore)
+ 
+-        self.filename = os.path.join(gr.paths.userconf(), "saverestore", f"{top_block.__class__.__name__}.yml")
++        self.filename = os.path.join(gr.paths.persistent(), "saverestore", f"{top_block.__class__.__name__}.yml")
+         self.filename = os.path.expanduser(self.filename)
+         self.logger.info(f"Config file: {self.filename}")
+         os.makedirs(os.path.dirname(self.filename), exist_ok=True)
+-- 
+2.47.3
+

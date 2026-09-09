@@ -1,0 +1,81 @@
+From 3b66afe6d36ad9cab7485053a74160326e3baff1 Mon Sep 17 00:00:00 2001
+From: Frank Fu <frankfustuff@gmail.com>
+Date: Wed, 22 Oct 2025 16:11:04 -0400
+Subject: [PATCH 75/80] pmt: Add python_to_pair function for convenient
+ PDU/pair creation
+
+closes #7952
+Signed-off-by: Frank Fu <frankfustuff@gmail.com>
+---
+ gnuradio-runtime/python/pmt/__init__.py         |  1 +
+ gnuradio-runtime/python/pmt/pmt_to_python.py    |  5 +++++
+ gnuradio-runtime/python/pmt/qa_pmt_to_python.py | 15 ++++++++++++++-
+ 3 files changed, 20 insertions(+), 1 deletion(-)
+
+diff --git a/gnuradio-runtime/python/pmt/__init__.py b/gnuradio-runtime/python/pmt/__init__.py
+index 9b313330b0..026898ccf2 100644
+--- a/gnuradio-runtime/python/pmt/__init__.py
++++ b/gnuradio-runtime/python/pmt/__init__.py
+@@ -46,3 +46,4 @@ PMT_EOF = get_PMT_EOF()
+ 
+ from .pmt_to_python import pmt_to_python as to_python
+ from .pmt_to_python import python_to_pmt as to_pmt
++from .pmt_to_python import python_to_pair as to_pair
+diff --git a/gnuradio-runtime/python/pmt/pmt_to_python.py b/gnuradio-runtime/python/pmt/pmt_to_python.py
+index 3e8e0b940f..ae2e4fc019 100644
+--- a/gnuradio-runtime/python/pmt/pmt_to_python.py
++++ b/gnuradio-runtime/python/pmt/pmt_to_python.py
+@@ -142,3 +142,8 @@ def python_to_pmt(p):
+         elif isinstance(p, python_type):
+             return from_python(p)
+     raise ValueError("can't convert %s type to pmt (%s)" % (type(p), p))
++
++
++def python_to_pair(first, second):
++    """ Constructs PMT pair from two python elements """
++    return pmt.cons(python_to_pmt(first), python_to_pmt(second))
+diff --git a/gnuradio-runtime/python/pmt/qa_pmt_to_python.py b/gnuradio-runtime/python/pmt/qa_pmt_to_python.py
+index 3e0b520f24..b506535e5f 100644
+--- a/gnuradio-runtime/python/pmt/qa_pmt_to_python.py
++++ b/gnuradio-runtime/python/pmt/qa_pmt_to_python.py
+@@ -12,6 +12,7 @@
+ import unittest
+ import pmt
+ from pmt import pmt_to_python as pmt2py
++import numpy as np
+ 
+ 
+ class test_pmt_to_python(unittest.TestCase):
+@@ -20,9 +21,9 @@ class test_pmt_to_python(unittest.TestCase):
+         b = pmt.from_double(123765)
+         self.assertEqual(pmt.to_python(b), 123765)
+         t = pmt.to_pmt(list(range(5)))
++        self.assertTrue(pmt.is_vector(t))
+ 
+     def test_numpy_to_uvector_and_reverse(self):
+-        import numpy as np
+         N = 100
+         narr = np.ndarray(N, dtype=np.cdouble)
+         narr.real[:] = np.random.uniform(size=N)
+@@ -32,6 +33,18 @@ class test_pmt_to_python(unittest.TestCase):
+         self.assertEqual(nparr.dtype, narr.dtype)
+         self.assertTrue(np.all(nparr == narr))
+ 
++    def test_python_to_pair(self):
++        pdu = pmt.to_pair({"key": 42}, np.arange(64, dtype=np.uint8))
++        self.assertTrue(pmt.is_pdu(pdu))
++        self.assertTrue(pmt.is_pair(pdu))
++        metadict = pmt.car(pdu)
++        self.assertTrue(pmt.is_dict(metadict))
++        val = pmt.dict_ref(metadict, pmt.intern("key"), not_found=pmt.from_long(0))
++        self.assertEqual(42, pmt.to_long(val))
++        uvec = pmt.cdr(pdu)
++        self.assertTrue(pmt.is_u8vector(uvec))
++        self.assertListEqual(list(range(64)), pmt.u8vector_elements(uvec))
++
+ 
+ if __name__ == '__main__':
+     unittest.main()
+-- 
+2.47.3
+

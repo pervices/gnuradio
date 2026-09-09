@@ -1,0 +1,1294 @@
+From 39937baef41d34f8ab4b83f2fd4aaa4d25d70553 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Fri, 21 Feb 2025 12:03:18 +0100
+Subject: [PATCH 11/80] filter/mmse_resampler: fix out of bounds access,
+ resampler indexing
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The resampler regularly read input beyond what was available, because d_resamp.interpolate needs ntaps() amount of samples.
+
+I had unify mmse_{resampler,fir_interp}_{cc,ff} into templates.
+
+This became necessary because I didn't want to manually duplicate
+my fixes to mmse_resampler_cc to mmse_resampler_ff.
+
+Less code, less maintenance, fewer bugs.
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ .../include/gnuradio/filter/CMakeLists.txt    |   5 +-
+ .../gnuradio/filter/mmse_fir_interpolator.h   |  68 ++++++++
+ .../filter/mmse_fir_interpolator_cc.h         |  49 +-----
+ .../filter/mmse_fir_interpolator_ff.h         |  47 +-----
+ .../include/gnuradio/filter/mmse_resampler.h  |  55 +++++++
+ .../gnuradio/filter/mmse_resampler_cc.h       |  34 +---
+ .../gnuradio/filter/mmse_resampler_ff.h       |  34 +---
+ gr-filter/lib/CMakeLists.txt                  |  47 +++---
+ gr-filter/lib/mmse_fir_interpolator.cc        |  69 ++++++++
+ gr-filter/lib/mmse_fir_interpolator_cc.cc     |  54 -------
+ gr-filter/lib/mmse_fir_interpolator_ff.cc     |  54 -------
+ gr-filter/lib/mmse_resampler_cc_impl.cc       | 130 ----------------
+ gr-filter/lib/mmse_resampler_ff_impl.cc       | 129 ---------------
+ gr-filter/lib/mmse_resampler_ff_impl.h        |  47 ------
+ gr-filter/lib/mmse_resampler_impl.cc          | 147 ++++++++++++++++++
+ ...ampler_cc_impl.h => mmse_resampler_impl.h} |  21 +--
+ .../mmse_fir_interpolator_cc_python.cc        |   2 +-
+ .../mmse_fir_interpolator_ff_python.cc        |   2 +-
+ .../bindings/mmse_resampler_cc_python.cc      |   2 +-
+ .../bindings/mmse_resampler_ff_python.cc      |   2 +-
+ 20 files changed, 392 insertions(+), 606 deletions(-)
+ create mode 100644 gr-filter/include/gnuradio/filter/mmse_fir_interpolator.h
+ create mode 100644 gr-filter/include/gnuradio/filter/mmse_resampler.h
+ create mode 100644 gr-filter/lib/mmse_fir_interpolator.cc
+ delete mode 100644 gr-filter/lib/mmse_fir_interpolator_cc.cc
+ delete mode 100644 gr-filter/lib/mmse_fir_interpolator_ff.cc
+ delete mode 100644 gr-filter/lib/mmse_resampler_cc_impl.cc
+ delete mode 100644 gr-filter/lib/mmse_resampler_ff_impl.cc
+ delete mode 100644 gr-filter/lib/mmse_resampler_ff_impl.h
+ create mode 100644 gr-filter/lib/mmse_resampler_impl.cc
+ rename gr-filter/lib/{mmse_resampler_cc_impl.h => mmse_resampler_impl.h} (61%)
+
+diff --git a/gr-filter/include/gnuradio/filter/CMakeLists.txt b/gr-filter/include/gnuradio/filter/CMakeLists.txt
+index 74fc1051f6..ec1fbd822e 100644
+--- a/gr-filter/include/gnuradio/filter/CMakeLists.txt
++++ b/gr-filter/include/gnuradio/filter/CMakeLists.txt
+@@ -35,8 +35,9 @@ install(
+           fft_filter_ccf.h
+           fft_filter_fff.h
+           freq_xlating_fir_filter.h
+-          mmse_resampler_cc.h
+-          mmse_resampler_ff.h
++          mmse_resampler.h
++          mmse_resampler_cc.h # legacy for templated mmse_resampler<sample_t>
++          mmse_resampler_ff.h # legacy for templated mmse_resampler<sample_t>
+           hilbert_fc.h
+           iir_filter_ffd.h
+           iir_filter_ccc.h
+diff --git a/gr-filter/include/gnuradio/filter/mmse_fir_interpolator.h b/gr-filter/include/gnuradio/filter/mmse_fir_interpolator.h
+new file mode 100644
+index 0000000000..babfd04405
+--- /dev/null
++++ b/gr-filter/include/gnuradio/filter/mmse_fir_interpolator.h
+@@ -0,0 +1,68 @@
++/* -*- c++ -*- */
++/*
++ * Copyright 2002,2007,2012 Free Software Foundation, Inc.
++ *
++ * This file is part of GNU Radio
++ *
++ * SPDX-License-Identifier: GPL-3.0-or-later
++ *
++ */
++#ifndef INCLUDED_MMSE_FIR_INTERPOLATOR_H
++#define INCLUDED_MMSE_FIR_INTERPOLATOR_H
++
++#include <gnuradio/filter/api.h>
++#include <gnuradio/filter/fir_filter.h>
++#include <gnuradio/gr_complex.h>
++#include <vector>
++
++namespace gr {
++namespace filter {
++
++/*!
++ * \brief Compute intermediate samples between signal samples x(k*Ts)
++ * \ingroup filter_primitive
++ *
++ * \details
++ * This implements a Minimum Mean Squared Error interpolator with
++ * 8 taps. It is suitable for signals where the bandwidth of
++ * interest B = 1/(4*Ts) Where Ts is the time between samples.
++ *
++ * Although mu, the fractional delay, is specified as a float, it
++ * is actually quantized. 0.0 <= mu <= 1.0. That is, mu is
++ * quantized in the interpolate method to 32nd's of a sample.
++ *
++ * For more information, in the GNU Radio source code, see:
++ * \li gr-filter/lib/gen_interpolator_taps/README
++ * \li gr-filter/lib/gen_interpolator_taps/praxis.txt
++ */
++template <typename sample_t>
++class FILTER_API mmse_fir_interpolator
++{
++public:
++    mmse_fir_interpolator();
++    mmse_fir_interpolator(mmse_fir_interpolator&&) = default;
++
++    unsigned ntaps() const;
++    unsigned nsteps() const;
++
++    /*!
++     * \brief compute a single interpolated output value.
++     *
++     * \p input must have ntaps() valid entries and be 8-byte aligned.
++     * input[0] .. input[ntaps() - 1] are referenced to compute the output value.
++     * \throws std::invalid_argument if input is not 8-byte aligned.
++     *
++     * \p mu must be in the range [0, 1] and specifies the fractional delay.
++     *
++     * \returns the interpolated input value.
++     */
++    sample_t interpolate(const sample_t input[], float mu) const;
++
++protected:
++    std::vector<kernel::fir_filter<sample_t, sample_t, float>> filters;
++};
++
++} /* namespace filter */
++} /* namespace gr */
++
++#endif /* INCLUDED_MMSE_FIR_INTERPOLATOR_H */
+diff --git a/gr-filter/include/gnuradio/filter/mmse_fir_interpolator_cc.h b/gr-filter/include/gnuradio/filter/mmse_fir_interpolator_cc.h
+index 5eddd47dbb..77f53370bf 100644
+--- a/gr-filter/include/gnuradio/filter/mmse_fir_interpolator_cc.h
++++ b/gr-filter/include/gnuradio/filter/mmse_fir_interpolator_cc.h
+@@ -1,6 +1,7 @@
+ /* -*- c++ -*- */
+ /*
+  * Copyright 2002,2007,2012 Free Software Foundation, Inc.
++ * Copyright 2025 Marcus Müller
+  *
+  * This file is part of GNU Radio
+  *
+@@ -11,56 +12,12 @@
+ #define _GRI_MMSE_FIR_INTERPOLATOR_CC_H_
+ 
+ #include <gnuradio/filter/api.h>
+-#include <gnuradio/filter/fir_filter.h>
++#include <gnuradio/filter/mmse_fir_interpolator.h>
+ #include <gnuradio/gr_complex.h>
+-#include <vector>
+ 
+ namespace gr {
+ namespace filter {
+-
+-/*!
+- * \brief Compute intermediate samples between signal samples x(k*Ts)
+- * \ingroup filter_primitive
+- *
+- * \details
+- * This implements a Minimum Mean Squared Error interpolator with
+- * 8 taps. It is suitable for signals where the bandwidth of
+- * interest B = 1/(4*Ts) Where Ts is the time between samples.
+- *
+- * Although mu, the fractional delay, is specified as a float, it
+- * is actually quantized. 0.0 <= mu <= 1.0. That is, mu is
+- * quantized in the interpolate method to 32nd's of a sample.
+- *
+- * For more information, in the GNU Radio source code, see:
+- * \li gr-filter/lib/gen_interpolator_taps/README
+- * \li gr-filter/lib/gen_interpolator_taps/praxis.txt
+- */
+-class FILTER_API mmse_fir_interpolator_cc
+-{
+-public:
+-    mmse_fir_interpolator_cc();
+-    mmse_fir_interpolator_cc(mmse_fir_interpolator_cc&&) = default;
+-
+-    unsigned ntaps() const;
+-    unsigned nsteps() const;
+-
+-    /*!
+-     * \brief compute a single interpolated output value.
+-     *
+-     * \p input must have ntaps() valid entries and be 8-byte aligned.
+-     * input[0] .. input[ntaps() - 1] are referenced to compute the output value.
+-     * \throws std::invalid_argument if input is not 8-byte aligned.
+-     *
+-     * \p mu must be in the range [0, 1] and specifies the fractional delay.
+-     *
+-     * \returns the interpolated input value.
+-     */
+-    gr_complex interpolate(const gr_complex input[], float mu) const;
+-
+-protected:
+-    std::vector<kernel::fir_filter_ccf> filters;
+-};
+-
++using mmse_fir_interpolator_cc = mmse_fir_interpolator<gr_complex>;
+ } /* namespace filter */
+ } /* namespace gr */
+ 
+diff --git a/gr-filter/include/gnuradio/filter/mmse_fir_interpolator_ff.h b/gr-filter/include/gnuradio/filter/mmse_fir_interpolator_ff.h
+index e4c9a1c87c..e5464bd72a 100644
+--- a/gr-filter/include/gnuradio/filter/mmse_fir_interpolator_ff.h
++++ b/gr-filter/include/gnuradio/filter/mmse_fir_interpolator_ff.h
+@@ -1,6 +1,7 @@
+ /* -*- c++ -*- */
+ /*
+  * Copyright 2002,2012 Free Software Foundation, Inc.
++ * Copyright 2025 Marcus Müller
+  *
+  * This file is part of GNU Radio
+  *
+@@ -12,53 +13,11 @@
+ #define _MMSE_FIR_INTERPOLATOR_FF_H_
+ 
+ #include <gnuradio/filter/api.h>
+-#include <gnuradio/filter/fir_filter.h>
+-#include <vector>
++#include <gnuradio/filter/mmse_fir_interpolator.h>
+ 
+ namespace gr {
+ namespace filter {
+-
+-/*!
+- * \brief Compute intermediate samples between signal samples x(k*Ts)
+- * \ingroup filter_primitive
+- *
+- * \details
+- * This implements a Minimum Mean Squared Error interpolator with
+- * 8 taps. It is suitable for signals where the bandwidth of
+- * interest B = 1/(4*Ts) Where Ts is the time between samples.
+- *
+- * Although mu, the fractional delay, is specified as a float, it
+- * is actually quantized. 0.0 <= mu <= 1.0. That is, mu is
+- * quantized in the interpolate method to 32nd's of a sample.
+- *
+- * For more information, in the GNU Radio source code, see:
+- * \li gr-filter/lib/gen_interpolator_taps/README
+- * \li gr-filter/lib/gen_interpolator_taps/praxis.txt
+- */
+-class FILTER_API mmse_fir_interpolator_ff
+-{
+-public:
+-    mmse_fir_interpolator_ff();
+-    mmse_fir_interpolator_ff(mmse_fir_interpolator_ff&&) = default;
+-
+-    unsigned ntaps() const;
+-    unsigned nsteps() const;
+-
+-    /*!
+-     * \brief compute a single interpolated output value.
+-     * \p input must have ntaps() valid entries.
+-     * input[0] .. input[ntaps() - 1] are referenced to compute the output value.
+-     *
+-     * \p mu must be in the range [0, 1] and specifies the fractional delay.
+-     *
+-     * \returns the interpolated input value.
+-     */
+-    float interpolate(const float input[], float mu) const;
+-
+-protected:
+-    std::vector<kernel::fir_filter_fff> filters;
+-};
+-
++using mmse_fir_interpolator_ff = mmse_fir_interpolator<float>;
+ } /* namespace filter */
+ } /* namespace gr */
+ 
+diff --git a/gr-filter/include/gnuradio/filter/mmse_resampler.h b/gr-filter/include/gnuradio/filter/mmse_resampler.h
+new file mode 100644
+index 0000000000..20a464392e
+--- /dev/null
++++ b/gr-filter/include/gnuradio/filter/mmse_resampler.h
+@@ -0,0 +1,55 @@
++/* -*- c++ -*- */
++/*
++ * Copyright 2004,2007,2012-2013 Free Software Foundation, Inc.
++ * Copyright 2025 Marcus Müller
++ *
++ * This file is part of GNU Radio
++ *
++ * SPDX-License-Identifier: GPL-3.0-or-later
++ *
++ */
++
++#ifndef INCLUDED_MMSE_RESAMPLER_H
++#define INCLUDED_MMSE_RESAMPLER_H
++
++#include <gnuradio/block.h>
++#include <gnuradio/filter/api.h>
++
++namespace gr {
++namespace filter {
++
++/*!
++ * \brief resampling MMSE filter with complex input, complex output
++ * \ingroup resamplers_blk
++ *
++ * \details
++ * The resampling ratio and mu parameters can be set with a pmt dict
++ * message. Keys are pmt symbols with the strings "resamp_ratio" and "mu"
++ * and values are pmt floats.
++ */
++template <typename sample_t>
++class FILTER_API mmse_resampler : virtual public block
++{
++public:
++    typedef std::shared_ptr<mmse_resampler<sample_t>> sptr;
++
++    /*!
++     * \brief Build the resampling MMSE filter (complex input, complex output)
++     *
++     * \param phase_shift The phase shift of the output signal to the input
++     * \param resamp_ratio The resampling ratio = input_rate / output_rate.
++     */
++    static sptr make(float phase_shift, float resamp_ratio);
++
++    virtual float mu() const = 0;
++    virtual float resamp_ratio() const = 0;
++    virtual void set_mu(float mu) = 0;
++    virtual void set_resamp_ratio(float resamp_ratio) = 0;
++};
++
++using mmse_resampler_cc = mmse_resampler<gr_complex>;
++using mmse_resampler_ff = mmse_resampler<float>;
++} /* namespace filter */
++} /* namespace gr */
++
++#endif /* INCLUDED_MMSE_RESAMPLER_H */
+diff --git a/gr-filter/include/gnuradio/filter/mmse_resampler_cc.h b/gr-filter/include/gnuradio/filter/mmse_resampler_cc.h
+index 03d1060f14..5e1ca05269 100644
+--- a/gr-filter/include/gnuradio/filter/mmse_resampler_cc.h
++++ b/gr-filter/include/gnuradio/filter/mmse_resampler_cc.h
+@@ -11,41 +11,13 @@
+ #ifndef INCLUDED_MMSE_RESAMPLER_CC_H
+ #define INCLUDED_MMSE_RESAMPLER_CC_H
+ 
+-#include <gnuradio/block.h>
+ #include <gnuradio/filter/api.h>
++#include <gnuradio/filter/mmse_resampler.h>
++#include <gnuradio/types.h>
+ 
+ namespace gr {
+ namespace filter {
+-
+-/*!
+- * \brief resampling MMSE filter with complex input, complex output
+- * \ingroup resamplers_blk
+- *
+- * \details
+- * The resampling ratio and mu parameters can be set with a pmt dict
+- * message. Keys are pmt symbols with the strings "resamp_ratio" and "mu"
+- * and values are pmt floats.
+- */
+-class FILTER_API mmse_resampler_cc : virtual public block
+-{
+-public:
+-    // gr::filter::mmse_resampler_cc::sptr
+-    typedef std::shared_ptr<mmse_resampler_cc> sptr;
+-
+-    /*!
+-     * \brief Build the resampling MMSE filter (complex input, complex output)
+-     *
+-     * \param phase_shift The phase shift of the output signal to the input
+-     * \param resamp_ratio The resampling ratio = input_rate / output_rate.
+-     */
+-    static sptr make(float phase_shift, float resamp_ratio);
+-
+-    virtual float mu() const = 0;
+-    virtual float resamp_ratio() const = 0;
+-    virtual void set_mu(float mu) = 0;
+-    virtual void set_resamp_ratio(float resamp_ratio) = 0;
+-};
+-
++using mmse_resampler_cc = mmse_resampler<gr_complex>;
+ } /* namespace filter */
+ } /* namespace gr */
+ 
+diff --git a/gr-filter/include/gnuradio/filter/mmse_resampler_ff.h b/gr-filter/include/gnuradio/filter/mmse_resampler_ff.h
+index 8494aa3380..150543902b 100644
+--- a/gr-filter/include/gnuradio/filter/mmse_resampler_ff.h
++++ b/gr-filter/include/gnuradio/filter/mmse_resampler_ff.h
+@@ -11,42 +11,12 @@
+ #ifndef INCLUDED_MMSE_RESAMPLER_FF_H
+ #define INCLUDED_MMSE_RESAMPLER_FF_H
+ 
+-#include <gnuradio/block.h>
+ #include <gnuradio/filter/api.h>
++#include <gnuradio/filter/mmse_resampler.h>
+ 
+ namespace gr {
+ namespace filter {
+-
+-/*!
+- * \brief Resampling MMSE filter with float input, float output
+- * \ingroup resamplers_blk
+- *
+- * \details
+- * The resampling ratio and mu parameters can be set with a pmt dict
+- * message. Keys are pmt symbols with the strings "resamp_ratio" and "mu"
+- * and values are pmt floats.
+- */
+-
+-class FILTER_API mmse_resampler_ff : virtual public block
+-{
+-public:
+-    // gr::filter::mmse_resampler_ff::sptr
+-    typedef std::shared_ptr<mmse_resampler_ff> sptr;
+-
+-    /*!
+-     * \brief Build the resampling MMSE filter (float input, float output)
+-     *
+-     * \param phase_shift The phase shift of the output signal to the input
+-     * \param resamp_ratio The resampling ratio = input_rate / output_rate.
+-     */
+-    static sptr make(float phase_shift, float resamp_ratio);
+-
+-    virtual float mu() const = 0;
+-    virtual float resamp_ratio() const = 0;
+-    virtual void set_mu(float mu) = 0;
+-    virtual void set_resamp_ratio(float resamp_ratio) = 0;
+-};
+-
++using mmse_resampler_ff = mmse_resampler<float>;
+ } /* namespace filter */
+ } /* namespace gr */
+ 
+diff --git a/gr-filter/lib/CMakeLists.txt b/gr-filter/lib/CMakeLists.txt
+index b34d3d11e9..d59c05deed 100644
+--- a/gr-filter/lib/CMakeLists.txt
++++ b/gr-filter/lib/CMakeLists.txt
+@@ -10,48 +10,47 @@
+ ########################################################################
+ add_library(
+     gnuradio-filter
+-    fir_filter.cc
+-    fir_filter_blk_impl.cc
+-    fir_filter_with_buffer.cc
+-    fft_filter.cc
+-    firdes.cc
+-    freq_xlating_fir_filter_impl.cc
+-    ival_decimator_impl.cc
+-    iir_filter.cc
+-    interp_fir_filter_impl.cc
+-    mmse_fir_interpolator_cc.cc
+-    mmse_fir_interpolator_ff.cc
+-    mmse_interp_differentiator_cc.cc
+-    mmse_interp_differentiator_ff.cc
+-    pm_remez.cc
+-    polyphase_filterbank.cc
+     dc_blocker_cc_impl.cc
+     dc_blocker_ff_impl.cc
+-    filter_delay_fc_impl.cc
+-    filterbank.cc
+-    filterbank_vcvcf_impl.cc
++    fft_filter.cc
+     fft_filter_ccc_impl.cc
+     fft_filter_ccf_impl.cc
+     fft_filter_fff_impl.cc
+-    mmse_resampler_cc_impl.cc
+-    mmse_resampler_ff_impl.cc
++    filter_delay_fc_impl.cc
++    filterbank.cc
++    filterbank_vcvcf_impl.cc
++    fir_filter.cc
++    fir_filter_blk_impl.cc
++    fir_filter_with_buffer.cc
++    firdes.cc
++    freq_xlating_fir_filter_impl.cc
+     hilbert_fc_impl.cc
+-    iir_filter_ffd_impl.cc
++    iir_filter.cc
+     iir_filter_ccc_impl.cc
+-    iir_filter_ccf_impl.cc
+     iir_filter_ccd_impl.cc
++    iir_filter_ccf_impl.cc
+     iir_filter_ccz_impl.cc
++    iir_filter_ffd_impl.cc
++    interp_fir_filter_impl.cc
++    ival_decimator_impl.cc
++    mmse_fir_interpolator.cc
++    mmse_interp_differentiator_cc.cc
++    mmse_interp_differentiator_ff.cc
++    mmse_resampler_impl.cc
+     pfb_arb_resampler.cc
+-    pfb_arb_resampler_ccf_impl.cc
+     pfb_arb_resampler_ccc_impl.cc
++    pfb_arb_resampler_ccf_impl.cc
+     pfb_arb_resampler_fff_impl.cc
+     pfb_channelizer_ccf_impl.cc
+     pfb_decimator_ccf_impl.cc
+     pfb_interpolator_ccf_impl.cc
+     pfb_synthesizer_ccf_impl.cc
++    pm_remez.cc
++    polyphase_filterbank.cc
+     rational_resampler_impl.cc
+     single_pole_iir_filter_cc_impl.cc
+-    single_pole_iir_filter_ff_impl.cc)
++    single_pole_iir_filter_ff_impl.cc
++)
+ 
+ target_link_libraries(
+     gnuradio-filter
+diff --git a/gr-filter/lib/mmse_fir_interpolator.cc b/gr-filter/lib/mmse_fir_interpolator.cc
+new file mode 100644
+index 0000000000..d111f40cac
+--- /dev/null
++++ b/gr-filter/lib/mmse_fir_interpolator.cc
+@@ -0,0 +1,69 @@
++/* -*- c++ -*- */
++/*
++ * Copyright 2002,2012 Free Software Foundation, Inc.
++ * Copyrigth 2025 Marcus Müller
++ *
++ * This file is part of GNU Radio
++ *
++ * SPDX-License-Identifier: GPL-3.0-or-later
++ *
++ */
++
++#include <gnuradio/filter/interpolator_taps.h>
++#include <gnuradio/filter/mmse_fir_interpolator.h>
++#include <gnuradio/gr_complex.h>
++#include <stdexcept>
++
++namespace gr {
++namespace filter {
++
++namespace {
++template <typename sample_t>
++std::vector<kernel::fir_filter<sample_t, sample_t, float>> build_filters()
++{
++    std::vector<kernel::fir_filter<sample_t, sample_t, float>> filters;
++    filters.reserve(NSTEPS + 1);
++    for (int i = 0; i < NSTEPS + 1; i++) {
++        std::vector<float> t(&taps[i][0], &taps[i][NTAPS]);
++        filters.emplace_back(std::move(t));
++    }
++    return filters;
++}
++} // namespace
++
++template <typename sample_t>
++mmse_fir_interpolator<sample_t>::mmse_fir_interpolator()
++    : filters(build_filters<sample_t>())
++{
++}
++
++template <typename sample_t>
++unsigned mmse_fir_interpolator<sample_t>::ntaps() const
++{
++    return NTAPS;
++}
++
++template <typename sample_t>
++unsigned mmse_fir_interpolator<sample_t>::nsteps() const
++{
++    return NSTEPS;
++}
++
++template <typename sample_t>
++sample_t mmse_fir_interpolator<sample_t>::interpolate(const sample_t input[],
++                                                      float mu) const
++{
++    int imu = (int)rint(mu * NSTEPS);
++
++    if ((imu < 0) || (imu > NSTEPS)) {
++        throw std::runtime_error("mmse_fir_interpolator<sample_t>: imu out of bounds.");
++    }
++
++    return filters[imu].filter(input);
++}
++
++template class mmse_fir_interpolator<float>;
++template class mmse_fir_interpolator<gr_complex>;
++
++} /* namespace filter */
++} /* namespace gr */
+diff --git a/gr-filter/lib/mmse_fir_interpolator_cc.cc b/gr-filter/lib/mmse_fir_interpolator_cc.cc
+deleted file mode 100644
+index 4d8abcb7a3..0000000000
+--- a/gr-filter/lib/mmse_fir_interpolator_cc.cc
++++ /dev/null
+@@ -1,54 +0,0 @@
+-/* -*- c++ -*- */
+-/*
+- * Copyright 2002,2012 Free Software Foundation, Inc.
+- *
+- * This file is part of GNU Radio
+- *
+- * SPDX-License-Identifier: GPL-3.0-or-later
+- *
+- */
+-
+-#ifdef HAVE_CONFIG_H
+-#include <config.h>
+-#endif
+-
+-#include <gnuradio/filter/interpolator_taps.h>
+-#include <gnuradio/filter/mmse_fir_interpolator_cc.h>
+-#include <stdexcept>
+-
+-namespace gr {
+-namespace filter {
+-
+-namespace {
+-std::vector<kernel::fir_filter_ccf> build_filters()
+-{
+-    std::vector<kernel::fir_filter_ccf> filters;
+-    filters.reserve(NSTEPS + 1);
+-    for (int i = 0; i < NSTEPS + 1; i++) {
+-        std::vector<float> t(&taps[i][0], &taps[i][NTAPS]);
+-        filters.emplace_back(std::move(t));
+-    }
+-    return filters;
+-}
+-} // namespace
+-
+-mmse_fir_interpolator_cc::mmse_fir_interpolator_cc() : filters(build_filters()) {}
+-
+-unsigned mmse_fir_interpolator_cc::ntaps() const { return NTAPS; }
+-
+-unsigned mmse_fir_interpolator_cc::nsteps() const { return NSTEPS; }
+-
+-gr_complex mmse_fir_interpolator_cc::interpolate(const gr_complex input[], float mu) const
+-{
+-    int imu = (int)rint(mu * NSTEPS);
+-
+-    if ((imu < 0) || (imu > NSTEPS)) {
+-        throw std::runtime_error("mmse_fir_interpolator_cc: imu out of bounds.");
+-    }
+-
+-    gr_complex r = filters[imu].filter(input);
+-    return r;
+-}
+-
+-} /* namespace filter */
+-} /* namespace gr */
+diff --git a/gr-filter/lib/mmse_fir_interpolator_ff.cc b/gr-filter/lib/mmse_fir_interpolator_ff.cc
+deleted file mode 100644
+index cba63b4b07..0000000000
+--- a/gr-filter/lib/mmse_fir_interpolator_ff.cc
++++ /dev/null
+@@ -1,54 +0,0 @@
+-/* -*- c++ -*- */
+-/*
+- * Copyright 2002,2012 Free Software Foundation, Inc.
+- *
+- * This file is part of GNU Radio
+- *
+- * SPDX-License-Identifier: GPL-3.0-or-later
+- *
+- */
+-
+-#ifdef HAVE_CONFIG_H
+-#include <config.h>
+-#endif
+-
+-#include <gnuradio/filter/interpolator_taps.h>
+-#include <gnuradio/filter/mmse_fir_interpolator_ff.h>
+-#include <stdexcept>
+-
+-namespace gr {
+-namespace filter {
+-
+-namespace {
+-std::vector<kernel::fir_filter_fff> build_filters()
+-{
+-    std::vector<kernel::fir_filter_fff> filters;
+-    filters.reserve(NSTEPS + 1);
+-    for (int i = 0; i < NSTEPS + 1; i++) {
+-        std::vector<float> t(&taps[i][0], &taps[i][NTAPS]);
+-        filters.emplace_back(std::move(t));
+-    }
+-    return filters;
+-}
+-} // namespace
+-
+-mmse_fir_interpolator_ff::mmse_fir_interpolator_ff() : filters(build_filters()) {}
+-
+-unsigned mmse_fir_interpolator_ff::ntaps() const { return NTAPS; }
+-
+-unsigned mmse_fir_interpolator_ff::nsteps() const { return NSTEPS; }
+-
+-float mmse_fir_interpolator_ff::interpolate(const float input[], float mu) const
+-{
+-    int imu = (int)rint(mu * NSTEPS);
+-
+-    if ((imu < 0) || (imu > NSTEPS)) {
+-        throw std::runtime_error("mmse_fir_interpolator_ff: imu out of bounds.");
+-    }
+-
+-    float r = filters[imu].filter(input);
+-    return r;
+-}
+-
+-} /* namespace filter */
+-} /* namespace gr */
+diff --git a/gr-filter/lib/mmse_resampler_cc_impl.cc b/gr-filter/lib/mmse_resampler_cc_impl.cc
+deleted file mode 100644
+index 2a2054c625..0000000000
+--- a/gr-filter/lib/mmse_resampler_cc_impl.cc
++++ /dev/null
+@@ -1,130 +0,0 @@
+-/* -*- c++ -*- */
+-/*
+- * Copyright 2004,2007,2010,2012-2013 Free Software Foundation, Inc.
+- *
+- * This file is part of GNU Radio
+- *
+- * SPDX-License-Identifier: GPL-3.0-or-later
+- *
+- */
+-
+-#ifdef HAVE_CONFIG_H
+-#include "config.h"
+-#endif
+-
+-#include "mmse_resampler_cc_impl.h"
+-#include <gnuradio/io_signature.h>
+-#include <stdexcept>
+-
+-namespace gr {
+-namespace filter {
+-
+-mmse_resampler_cc::sptr mmse_resampler_cc::make(float phase_shift, float resamp_ratio)
+-{
+-    return gnuradio::make_block_sptr<mmse_resampler_cc_impl>(phase_shift, resamp_ratio);
+-}
+-
+-mmse_resampler_cc_impl::mmse_resampler_cc_impl(float phase_shift, float resamp_ratio)
+-    : block("mmse_resampler_cc",
+-            io_signature::make2(1, 2, sizeof(gr_complex), sizeof(float)),
+-            io_signature::make(1, 1, sizeof(gr_complex))),
+-      d_mu(phase_shift),
+-      d_mu_inc(resamp_ratio)
+-{
+-    if (resamp_ratio <= 0)
+-        throw std::out_of_range("resampling ratio must be > 0");
+-    if (phase_shift < 0 || phase_shift > 1)
+-        throw std::out_of_range("phase shift ratio must be > 0 and < 1");
+-
+-    set_inverse_relative_rate(d_mu_inc);
+-    message_port_register_in(pmt::intern("msg_in"));
+-    set_msg_handler(pmt::intern("msg_in"),
+-                    [this](pmt::pmt_t msg) { this->handle_msg(msg); });
+-}
+-
+-void mmse_resampler_cc_impl::handle_msg(pmt::pmt_t msg)
+-{
+-    if (!pmt::is_dict(msg))
+-        return;
+-    // set resamp_ratio or mu by message dict
+-    if (pmt::dict_has_key(msg, pmt::intern("resamp_ratio"))) {
+-        set_resamp_ratio(pmt::to_float(pmt::dict_ref(
+-            msg, pmt::intern("resamp_ratio"), pmt::from_float(resamp_ratio()))));
+-    }
+-    if (pmt::dict_has_key(msg, pmt::intern("mu"))) {
+-        set_mu(
+-            pmt::to_float(pmt::dict_ref(msg, pmt::intern("mu"), pmt::from_float(mu()))));
+-    }
+-}
+-
+-void mmse_resampler_cc_impl::forecast(int noutput_items,
+-                                      gr_vector_int& ninput_items_required)
+-{
+-    unsigned ninputs = ninput_items_required.size();
+-    for (unsigned i = 0; i < ninputs; i++) {
+-        ninput_items_required[i] =
+-            (int)ceil((noutput_items * d_mu_inc) + d_resamp.ntaps());
+-    }
+-}
+-
+-int mmse_resampler_cc_impl::general_work(int noutput_items,
+-                                         gr_vector_int& ninput_items,
+-                                         gr_vector_const_void_star& input_items,
+-                                         gr_vector_void_star& output_items)
+-{
+-    const gr_complex* in = (const gr_complex*)input_items[0];
+-    gr_complex* out = (gr_complex*)output_items[0];
+-
+-    int ii = 0; // input index
+-    int oo = 0; // output index
+-
+-    if (ninput_items.size() == 1) {
+-        while (oo < noutput_items) {
+-            out[oo++] = d_resamp.interpolate(&in[ii], static_cast<float>(d_mu));
+-
+-            double s = d_mu + d_mu_inc;
+-            double f = floor(s);
+-            int incr = (int)f;
+-            d_mu = s - f;
+-            ii += incr;
+-        }
+-
+-        consume_each(ii);
+-        return noutput_items;
+-    }
+-
+-    else {
+-        const float* rr = (const float*)input_items[1];
+-        while (oo < noutput_items) {
+-            out[oo++] = d_resamp.interpolate(&in[ii], static_cast<float>(d_mu));
+-            d_mu_inc = static_cast<double>(rr[ii]);
+-
+-            double s = d_mu + d_mu_inc;
+-            double f = floor(s);
+-            int incr = (int)f;
+-            d_mu = s - f;
+-            ii += incr;
+-        }
+-
+-        set_inverse_relative_rate(d_mu_inc);
+-        consume_each(ii);
+-        return noutput_items;
+-    }
+-}
+-
+-float mmse_resampler_cc_impl::mu() const { return static_cast<float>(d_mu); }
+-
+-float mmse_resampler_cc_impl::resamp_ratio() const
+-{
+-    return static_cast<float>(d_mu_inc);
+-}
+-
+-void mmse_resampler_cc_impl::set_mu(float mu) { d_mu = static_cast<double>(mu); }
+-
+-void mmse_resampler_cc_impl::set_resamp_ratio(float resamp_ratio)
+-{
+-    d_mu_inc = static_cast<double>(resamp_ratio);
+-}
+-
+-} /* namespace filter */
+-} /* namespace gr */
+diff --git a/gr-filter/lib/mmse_resampler_ff_impl.cc b/gr-filter/lib/mmse_resampler_ff_impl.cc
+deleted file mode 100644
+index 5f48250061..0000000000
+--- a/gr-filter/lib/mmse_resampler_ff_impl.cc
++++ /dev/null
+@@ -1,129 +0,0 @@
+-/* -*- c++ -*- */
+-/*
+- * Copyright 2004,2007,2010,2013 Free Software Foundation, Inc.
+- *
+- * This file is part of GNU Radio
+- *
+- * SPDX-License-Identifier: GPL-3.0-or-later
+- *
+- */
+-
+-#ifdef HAVE_CONFIG_H
+-#include "config.h"
+-#endif
+-
+-#include "mmse_resampler_ff_impl.h"
+-#include <gnuradio/io_signature.h>
+-#include <stdexcept>
+-
+-namespace gr {
+-namespace filter {
+-
+-mmse_resampler_ff::sptr mmse_resampler_ff::make(float phase_shift, float resamp_ratio)
+-{
+-    return gnuradio::make_block_sptr<mmse_resampler_ff_impl>(phase_shift, resamp_ratio);
+-}
+-
+-mmse_resampler_ff_impl::mmse_resampler_ff_impl(float phase_shift, float resamp_ratio)
+-    : block("mmse_resampler_ff",
+-            io_signature::make(1, 2, sizeof(float)),
+-            io_signature::make(1, 1, sizeof(float))),
+-      d_mu(phase_shift),
+-      d_mu_inc(resamp_ratio)
+-{
+-    if (resamp_ratio <= 0)
+-        throw std::out_of_range("resampling ratio must be > 0");
+-    if (phase_shift < 0 || phase_shift > 1)
+-        throw std::out_of_range("phase shift ratio must be > 0 and < 1");
+-
+-    set_inverse_relative_rate(d_mu_inc);
+-
+-    message_port_register_in(pmt::intern("msg_in"));
+-    set_msg_handler(pmt::intern("msg_in"),
+-                    [this](pmt::pmt_t msg) { this->handle_msg(msg); });
+-}
+-
+-void mmse_resampler_ff_impl::handle_msg(pmt::pmt_t msg)
+-{
+-    if (!pmt::is_dict(msg))
+-        return;
+-    // set resamp_ratio or mu by message dict
+-    if (pmt::dict_has_key(msg, pmt::intern("resamp_ratio"))) {
+-        set_resamp_ratio(pmt::to_float(pmt::dict_ref(
+-            msg, pmt::intern("resamp_ratio"), pmt::from_float(resamp_ratio()))));
+-    }
+-    if (pmt::dict_has_key(msg, pmt::intern("mu"))) {
+-        set_mu(
+-            pmt::to_float(pmt::dict_ref(msg, pmt::intern("mu"), pmt::from_float(mu()))));
+-    }
+-}
+-
+-void mmse_resampler_ff_impl::forecast(int noutput_items,
+-                                      gr_vector_int& ninput_items_required)
+-{
+-    unsigned ninputs = ninput_items_required.size();
+-    for (unsigned i = 0; i < ninputs; i++) {
+-        ninput_items_required[i] =
+-            (int)ceil((noutput_items * d_mu_inc) + d_resamp.ntaps());
+-    }
+-}
+-
+-int mmse_resampler_ff_impl::general_work(int noutput_items,
+-                                         gr_vector_int& ninput_items,
+-                                         gr_vector_const_void_star& input_items,
+-                                         gr_vector_void_star& output_items)
+-{
+-    const float* in = (const float*)input_items[0];
+-    float* out = (float*)output_items[0];
+-
+-    int ii = 0; // input index
+-    int oo = 0; // output index
+-
+-    if (ninput_items.size() == 1) {
+-        while (oo < noutput_items) {
+-            out[oo++] = d_resamp.interpolate(&in[ii], static_cast<float>(d_mu));
+-
+-            double s = d_mu + d_mu_inc;
+-            double f = floor(s);
+-            int incr = (int)f;
+-            d_mu = s - f;
+-            ii += incr;
+-        }
+-
+-        consume_each(ii);
+-        return noutput_items;
+-    } else {
+-        const float* rr = (const float*)input_items[1];
+-        while (oo < noutput_items) {
+-            out[oo++] = d_resamp.interpolate(&in[ii], static_cast<float>(d_mu));
+-            d_mu_inc = static_cast<double>(rr[ii]);
+-
+-            double s = d_mu + d_mu_inc;
+-            double f = floor(s);
+-            int incr = (int)f;
+-            d_mu = s - f;
+-            ii += incr;
+-        }
+-
+-        set_inverse_relative_rate(d_mu_inc);
+-        consume_each(ii);
+-        return noutput_items;
+-    }
+-}
+-
+-float mmse_resampler_ff_impl::mu() const { return static_cast<float>(d_mu); }
+-
+-float mmse_resampler_ff_impl::resamp_ratio() const
+-{
+-    return static_cast<float>(d_mu_inc);
+-}
+-
+-void mmse_resampler_ff_impl::set_mu(float mu) { d_mu = static_cast<double>(mu); }
+-
+-void mmse_resampler_ff_impl::set_resamp_ratio(float resamp_ratio)
+-{
+-    d_mu_inc = static_cast<double>(resamp_ratio);
+-}
+-
+-} /* namespace filter */
+-} /* namespace gr */
+diff --git a/gr-filter/lib/mmse_resampler_ff_impl.h b/gr-filter/lib/mmse_resampler_ff_impl.h
+deleted file mode 100644
+index 97257eb9ba..0000000000
+--- a/gr-filter/lib/mmse_resampler_ff_impl.h
++++ /dev/null
+@@ -1,47 +0,0 @@
+-/* -*- c++ -*- */
+-/*
+- * Copyright 2004,2007,2012-2013 Free Software Foundation, Inc.
+- *
+- * This file is part of GNU Radio
+- *
+- * SPDX-License-Identifier: GPL-3.0-or-later
+- *
+- */
+-
+-#ifndef INCLUDED_MMSE_RESAMPLER_FF_IMPL_H
+-#define INCLUDED_MMSE_RESAMPLER_FF_IMPL_H
+-
+-#include <gnuradio/filter/mmse_fir_interpolator_ff.h>
+-#include <gnuradio/filter/mmse_resampler_ff.h>
+-
+-namespace gr {
+-namespace filter {
+-
+-class FILTER_API mmse_resampler_ff_impl : public mmse_resampler_ff
+-{
+-private:
+-    double d_mu;
+-    double d_mu_inc;
+-    const mmse_fir_interpolator_ff d_resamp;
+-
+-public:
+-    mmse_resampler_ff_impl(float phase_shift, float resamp_ratio);
+-
+-    void handle_msg(pmt::pmt_t msg);
+-
+-    void forecast(int noutput_items, gr_vector_int& ninput_items_required) override;
+-    int general_work(int noutput_items,
+-                     gr_vector_int& ninput_items,
+-                     gr_vector_const_void_star& input_items,
+-                     gr_vector_void_star& output_items) override;
+-
+-    float mu() const override;
+-    float resamp_ratio() const override;
+-    void set_mu(float mu) override;
+-    void set_resamp_ratio(float resamp_ratio) override;
+-};
+-
+-} /* namespace filter */
+-} /* namespace gr */
+-
+-#endif /* INCLUDED_MMSE_RESAMPLER_FF_IMPL_H */
+diff --git a/gr-filter/lib/mmse_resampler_impl.cc b/gr-filter/lib/mmse_resampler_impl.cc
+new file mode 100644
+index 0000000000..0106a50918
+--- /dev/null
++++ b/gr-filter/lib/mmse_resampler_impl.cc
+@@ -0,0 +1,147 @@
++/* -*- c++ -*- */
++/*
++ * Copyright 2004,2007,2010,2012-2013 Free Software Foundation, Inc.
++ * Copyright 2025 Marcus Müller
++ *
++ * This file is part of GNU Radio
++ *
++ * SPDX-License-Identifier: GPL-3.0-or-later
++ *
++ */
++
++#include "mmse_resampler_impl.h"
++#include <gnuradio/filter/mmse_resampler.h>
++#include <gnuradio/gr_complex.h>
++#include <gnuradio/io_signature.h>
++#include <gnuradio/thread/thread.h>
++#include <cmath>
++#include <stdexcept>
++
++namespace gr {
++namespace filter {
++
++template <typename sample_t>
++typename mmse_resampler<sample_t>::sptr mmse_resampler<sample_t>::make(float phase_shift,
++                                                                       float resamp_ratio)
++{
++    return gnuradio::make_block_sptr<mmse_resampler_impl<sample_t>>(phase_shift,
++                                                                    resamp_ratio);
++}
++
++template <typename sample_t>
++mmse_resampler_impl<sample_t>::mmse_resampler_impl(float phase_shift, float resamp_ratio)
++    : block("mmse_resampler",
++            io_signature::make2(1, 2, sizeof(sample_t), sizeof(float)),
++            io_signature::make(1, 1, sizeof(sample_t))),
++      d_mu(phase_shift),
++      d_delta_mu(resamp_ratio)
++{
++    if (resamp_ratio <= 0) {
++        throw std::out_of_range("resampling ratio must be > 0");
++    }
++    if (phase_shift < 0 || phase_shift > 1) {
++        throw std::out_of_range("phase shift ratio must be > 0 and < 1");
++    }
++
++    this->set_inverse_relative_rate(d_delta_mu);
++    this->message_port_register_in(pmt::intern("msg_in"));
++    this->set_msg_handler(pmt::intern("msg_in"),
++                          [this](pmt::pmt_t msg) { this->handle_msg(msg); });
++}
++
++template <typename sample_t>
++void mmse_resampler_impl<sample_t>::handle_msg(const pmt::pmt_t& msg)
++{
++    static auto ratio_key = pmt::intern("resamp_ratio");
++    static auto mu_key = pmt::intern("mu");
++    if (!pmt::is_dict(msg))
++        return;
++    // set resamp_ratio or mu by message dict
++    if (pmt::dict_has_key(msg, ratio_key)) {
++        set_resamp_ratio(pmt::to_float(
++            pmt::dict_ref(msg, ratio_key, pmt::from_float(resamp_ratio()))));
++    }
++    if (pmt::dict_has_key(msg, mu_key)) {
++        set_mu(pmt::to_float(pmt::dict_ref(msg, mu_key, pmt::from_float(mu()))));
++    }
++}
++
++template <typename sample_t>
++void mmse_resampler_impl<sample_t>::forecast(int noutput_items,
++                                             gr_vector_int& ninput_items_required)
++{
++    for (auto& req : ninput_items_required) {
++        req = std::lrint((noutput_items * d_delta_mu) + d_resamp.ntaps());
++    }
++}
++
++template <typename sample_t>
++int mmse_resampler_impl<sample_t>::general_work(int noutput_items,
++                                                gr_vector_int& ninput_items,
++                                                gr_vector_const_void_star& input_items,
++                                                gr_vector_void_star& output_items)
++{
++    const sample_t* in = (const sample_t*)input_items[0];
++    sample_t* out = (sample_t*)output_items[0];
++    const bool rate_input = ninput_items.size() == 2;
++    const auto in_length =
++        rate_input ? std::min(ninput_items[0], ninput_items[1]) : ninput_items[0];
++    const auto max_input_index = in_length - d_resamp.ntaps() + 1;
++
++    gr::thread::scoped_lock lock(d_setter_mutex);
++    unsigned int idx_in = 0; // input index
++    int idx_out = 0;         // output index
++
++    while (idx_out < noutput_items && idx_in < max_input_index) {
++        out[idx_out++] = d_resamp.interpolate(&in[idx_in], static_cast<float>(d_mu));
++        if (rate_input) {
++            d_delta_mu = static_cast<double>(
++                reinterpret_cast<const float*>(input_items[1])[idx_in]);
++        }
++        const double mu_updated = d_mu + d_delta_mu;
++        const double integer_part = floor(mu_updated);
++        d_mu = mu_updated - integer_part;
++        idx_in += static_cast<int>(integer_part);
++    }
++    if (rate_input) {
++        this->set_inverse_relative_rate(d_delta_mu);
++    }
++    this->consume_each(idx_in);
++
++    return idx_out;
++}
++
++template <typename sample_t>
++float mmse_resampler_impl<sample_t>::mu() const
++{
++    return static_cast<float>(d_mu);
++}
++
++template <typename sample_t>
++float mmse_resampler_impl<sample_t>::resamp_ratio() const
++{
++    return static_cast<float>(d_delta_mu);
++}
++
++template <typename sample_t>
++void mmse_resampler_impl<sample_t>::set_mu(float mu)
++{
++    // rescale mu increment, but not the index increment
++    set_resamp_ratio(d_delta_mu * mu / d_mu);
++
++    gr::thread::scoped_lock lock(d_setter_mutex);
++    d_mu = static_cast<double>(mu);
++}
++
++template <typename sample_t>
++void mmse_resampler_impl<sample_t>::set_resamp_ratio(float resamp_ratio)
++{
++    gr::thread::scoped_lock lock(d_setter_mutex);
++    d_delta_mu = static_cast<double>(resamp_ratio);
++    this->set_inverse_relative_rate(d_delta_mu);
++}
++
++template class mmse_resampler<float>;
++template class mmse_resampler<gr_complex>;
++} /* namespace filter */
++} /* namespace gr */
+diff --git a/gr-filter/lib/mmse_resampler_cc_impl.h b/gr-filter/lib/mmse_resampler_impl.h
+similarity index 61%
+rename from gr-filter/lib/mmse_resampler_cc_impl.h
+rename to gr-filter/lib/mmse_resampler_impl.h
+index b817fe5432..5e86af6408 100644
+--- a/gr-filter/lib/mmse_resampler_cc_impl.h
++++ b/gr-filter/lib/mmse_resampler_impl.h
+@@ -8,26 +8,29 @@
+  *
+  */
+ 
+-#ifndef INCLUDED_MMSE_RESAMPLER_CC_IMPL_H
+-#define INCLUDED_MMSE_RESAMPLER_CC_IMPL_H
++#ifndef INCLUDED_MMSE_RESAMPLER_IMPL_H
++#define INCLUDED_MMSE_RESAMPLER_IMPL_H
+ 
+ #include <gnuradio/filter/mmse_fir_interpolator_cc.h>
+-#include <gnuradio/filter/mmse_resampler_cc.h>
++#include <gnuradio/filter/mmse_resampler.h>
++#include <gnuradio/thread/thread.h>
+ 
+ namespace gr {
+ namespace filter {
+ 
+-class FILTER_API mmse_resampler_cc_impl : public mmse_resampler_cc
++template <typename sample_t>
++class FILTER_API mmse_resampler_impl : public mmse_resampler<sample_t>
+ {
+ private:
+     double d_mu;
+-    double d_mu_inc;
+-    const mmse_fir_interpolator_cc d_resamp;
++    double d_delta_mu;
++    const mmse_fir_interpolator<sample_t> d_resamp;
++    gr::thread::mutex d_setter_mutex;
+ 
+ public:
+-    mmse_resampler_cc_impl(float phase_shift, float resamp_ratio);
++    mmse_resampler_impl(float phase_shift, float resamp_ratio);
+ 
+-    void handle_msg(pmt::pmt_t msg);
++    void handle_msg(const pmt::pmt_t& msg);
+ 
+     void forecast(int noutput_items, gr_vector_int& ninput_items_required) override;
+     int general_work(int noutput_items,
+@@ -44,4 +47,4 @@ public:
+ } /* namespace filter */
+ } /* namespace gr */
+ 
+-#endif /* INCLUDED_MMSE_RESAMPLER_CC_IMPL_H */
++#endif /* INCLUDED_MMSE_RESAMPLER_IMPL_H */
+diff --git a/gr-filter/python/filter/bindings/mmse_fir_interpolator_cc_python.cc b/gr-filter/python/filter/bindings/mmse_fir_interpolator_cc_python.cc
+index b3d2c3475e..f0053f0b7f 100644
+--- a/gr-filter/python/filter/bindings/mmse_fir_interpolator_cc_python.cc
++++ b/gr-filter/python/filter/bindings/mmse_fir_interpolator_cc_python.cc
+@@ -14,7 +14,7 @@
+ /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
+ /* BINDTOOL_USE_PYGCCXML(0)                                                        */
+ /* BINDTOOL_HEADER_FILE(mmse_fir_interpolator_cc.h) */
+-/* BINDTOOL_HEADER_FILE_HASH(0490610d46f74dce45c062d4aa295314)                     */
++/* BINDTOOL_HEADER_FILE_HASH(fdbaa77633469430557a351448c77d17)                     */
+ /***********************************************************************************/
+ 
+ #include <pybind11/complex.h>
+diff --git a/gr-filter/python/filter/bindings/mmse_fir_interpolator_ff_python.cc b/gr-filter/python/filter/bindings/mmse_fir_interpolator_ff_python.cc
+index af5722e83d..a29d017eaf 100644
+--- a/gr-filter/python/filter/bindings/mmse_fir_interpolator_ff_python.cc
++++ b/gr-filter/python/filter/bindings/mmse_fir_interpolator_ff_python.cc
+@@ -14,7 +14,7 @@
+ /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
+ /* BINDTOOL_USE_PYGCCXML(0)                                                        */
+ /* BINDTOOL_HEADER_FILE(mmse_fir_interpolator_ff.h) */
+-/* BINDTOOL_HEADER_FILE_HASH(0bba83011a10ac652b4b4e900eaf77bf)                     */
++/* BINDTOOL_HEADER_FILE_HASH(ce21f1a3f8852251f76974a0aa0d441a)                     */
+ /***********************************************************************************/
+ 
+ #include <pybind11/complex.h>
+diff --git a/gr-filter/python/filter/bindings/mmse_resampler_cc_python.cc b/gr-filter/python/filter/bindings/mmse_resampler_cc_python.cc
+index 70324e35d1..6e2029f83b 100644
+--- a/gr-filter/python/filter/bindings/mmse_resampler_cc_python.cc
++++ b/gr-filter/python/filter/bindings/mmse_resampler_cc_python.cc
+@@ -14,7 +14,7 @@
+ /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
+ /* BINDTOOL_USE_PYGCCXML(0)                                                        */
+ /* BINDTOOL_HEADER_FILE(mmse_resampler_cc.h)                                        */
+-/* BINDTOOL_HEADER_FILE_HASH(9cf9abbd2c4a2604ec3d4f0326b34e2d)                     */
++/* BINDTOOL_HEADER_FILE_HASH(dfa438d05c223212377d0c4d11d52998)                     */
+ /***********************************************************************************/
+ 
+ #include <pybind11/complex.h>
+diff --git a/gr-filter/python/filter/bindings/mmse_resampler_ff_python.cc b/gr-filter/python/filter/bindings/mmse_resampler_ff_python.cc
+index 700e50620d..04e6f917f3 100644
+--- a/gr-filter/python/filter/bindings/mmse_resampler_ff_python.cc
++++ b/gr-filter/python/filter/bindings/mmse_resampler_ff_python.cc
+@@ -14,7 +14,7 @@
+ /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
+ /* BINDTOOL_USE_PYGCCXML(0)                                                        */
+ /* BINDTOOL_HEADER_FILE(mmse_resampler_ff.h)                                        */
+-/* BINDTOOL_HEADER_FILE_HASH(5dea389730508377e38956347f30f7e9)                     */
++/* BINDTOOL_HEADER_FILE_HASH(de0e58d3cd04d2e7ab7526a60ff7546a)                     */
+ /***********************************************************************************/
+ 
+ #include <pybind11/complex.h>
+-- 
+2.47.3
+

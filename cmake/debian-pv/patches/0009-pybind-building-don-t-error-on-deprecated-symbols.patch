@@ -1,0 +1,64 @@
+From 7483930fea32e8fe9983262330f437518e0d3dfe Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Sat, 22 Feb 2025 22:15:19 +0100
+Subject: [PATCH 09/80] pybind/building: don't error on deprecated symbols
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+By definition, pybind has to bind even deprecated functions (until we
+actually remove them).
+
+So, erroring out when we do that is not an option.
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ cmake/Modules/GrPybind.cmake | 18 ++++++++++++------
+ 1 file changed, 12 insertions(+), 6 deletions(-)
+
+diff --git a/cmake/Modules/GrPybind.cmake b/cmake/Modules/GrPybind.cmake
+index 6aaeda6e8e..6441f2ff96 100644
+--- a/cmake/Modules/GrPybind.cmake
++++ b/cmake/Modules/GrPybind.cmake
+@@ -47,8 +47,10 @@ macro(GR_PYBIND_MAKE name updir filter files)
+         ${name}_python PRIVATE ${Boost_LIBRARIES} pybind11::pybind11 Python::Module
+                                Python::NumPy gnuradio-${MODULE_NAME})
+     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+-        target_compile_options(${name}_python PRIVATE -Wno-unused-variable
+-        )# disable warnings for docstring templates
++        target_compile_options(${name}_python PRIVATE
++            -Wno-unused-variable
++            -Wno-error=deprecated-declarations
++        ) # disable warnings for docstring templates
+     endif(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+     add_dependencies(${name}_python ${name}_docstrings)
+ 
+@@ -177,8 +179,10 @@ macro(GR_PYBIND_MAKE_CHECK_HASH name updir filter files)
+         ${name}_python PRIVATE ${Boost_LIBRARIES} pybind11::pybind11 Python::Module
+                                Python::NumPy gnuradio-${MODULE_NAME})
+     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+-        target_compile_options(${name}_python PRIVATE -Wno-unused-variable
+-        )# disable warnings for docstring templates
++        target_compile_options(${name}_python PRIVATE
++            -Wno-unused-variable
++            -Wno-error=deprecated-declarations
++        ) # disable warnings for docstring templates
+     endif(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+     if(NOT SNDFILE_FOUND AND ${name} STREQUAL blocks)
+         target_compile_options(${name}_python PRIVATE -DNO_WAVFILE)
+@@ -323,8 +327,10 @@ macro(GR_PYBIND_MAKE_OOT name updir filter files)
+         ${name}_python PRIVATE ${Boost_LIBRARIES} pybind11::pybind11 Python::Module
+                                Python::NumPy gnuradio-${MODULE_NAME})
+     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+-        target_compile_options(${name}_python PRIVATE -Wno-unused-variable
+-        )# disable warnings for docstring templates
++        target_compile_options(${name}_python PRIVATE
++            -Wno-unused-variable
++            -Wno-error=deprecated-declarations
++        ) # disable warnings for docstring templates
+     endif(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+     add_dependencies(${name}_python ${name}_docstrings ${regen_targets})
+ 
+-- 
+2.47.3
+

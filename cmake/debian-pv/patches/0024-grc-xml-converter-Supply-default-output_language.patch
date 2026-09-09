@@ -1,0 +1,31 @@
+From b4cbba12ff48d0b81f2ccce1121b466d2680323f Mon Sep 17 00:00:00 2001
+From: Martin Braun <martin.braun@ettus.com>
+Date: Thu, 23 Jan 2025 10:35:25 +0100
+Subject: [PATCH 24/80] grc: xml converter: Supply default output_language
+
+Old XML-based GRC files don't necessarily provide output_language, but
+they only supported Python anyway, so we auto-populate that field.
+
+Signed-off-by: Martin Braun <martin.braun@ettus.com>
+---
+ grc/converter/flow_graph.py | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/grc/converter/flow_graph.py b/grc/converter/flow_graph.py
+index c03802aaa1..f3db83dff2 100644
+--- a/grc/converter/flow_graph.py
++++ b/grc/converter/flow_graph.py
+@@ -23,6 +23,10 @@ def from_xml(filename):
+         file_format = _guess_file_format_1(data)
+ 
+     data['metadata'] = {'file_format': file_format}
++    # Old XML-based flow graphs only supported Python, but didn't always declare
++    # that in the options. We'll default to Python if it's not set.
++    if 'output_language' not in data['options']:
++        data['options']['output_language'] = 'python'
+ 
+     return data
+ 
+-- 
+2.47.3
+

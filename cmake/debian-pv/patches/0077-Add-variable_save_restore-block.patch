@@ -1,0 +1,628 @@
+From fb0b06c2e2b889818bb0eb9e243e4baf9d100b53 Mon Sep 17 00:00:00 2001
+From: Philipp Niedermayer <eltos@outlook.de>
+Date: Tue, 4 Jun 2024 14:10:39 +0000
+Subject: [PATCH 77/80] Add variable_save_restore block
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Autored-by: Philipp Niedermayer <eltos@outlook.de>
+Co-authored-by: Marcus Müller <mmueller@gnuradio.org>
+Signed-off-by: Philipp Niedermayer <eltos@outlook.de>
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ gr-blocks/examples/variable_save_restore.grc  | 303 ++++++++++++++++++
+ gr-blocks/grc/blocks.tree.yml                 |   1 +
+ .../blocks_variable_save_restore.block.yml    |  86 +++++
+ gr-blocks/python/blocks/CMakeLists.txt        |   1 +
+ gr-blocks/python/blocks/__init__.py           |   1 +
+ .../python/blocks/variable_save_restore.py    | 161 ++++++++++
+ 6 files changed, 553 insertions(+)
+ create mode 100644 gr-blocks/examples/variable_save_restore.grc
+ create mode 100644 gr-blocks/grc/blocks_variable_save_restore.block.yml
+ create mode 100644 gr-blocks/python/blocks/variable_save_restore.py
+
+diff --git a/gr-blocks/examples/variable_save_restore.grc b/gr-blocks/examples/variable_save_restore.grc
+new file mode 100644
+index 0000000000..6084a65d40
+--- /dev/null
++++ b/gr-blocks/examples/variable_save_restore.grc
+@@ -0,0 +1,303 @@
++options:
++  parameters:
++    author: Philipp Niedermayer
++    catch_exceptions: 'True'
++    category: '[GRC Hier Blocks]'
++    cmake_opt: ''
++    comment: ''
++    copyright: ''
++    description: ''
++    gen_cmake: 'On'
++    gen_linking: dynamic
++    generate_options: qt_gui
++    hier_block_src_path: '.:'
++    id: variable_save_restore
++    max_nouts: '0'
++    output_language: python
++    placement: (0,0)
++    qt_qss_theme: ''
++    realtime_scheduling: ''
++    run: 'True'
++    run_command: '{python} -u {filename}'
++    run_options: prompt
++    sizing_mode: fixed
++    thread_safe_setters: ''
++    title: Varialbe Save Restore example
++    window_size: (1000,1000)
++  states:
++    bus_sink: false
++    bus_source: false
++    bus_structure: null
++    coordinate: [8, 8]
++    rotation: 0
++    state: enabled
++
++blocks:
++- name: info
++  id: variable_qtgui_entry
++  parameters:
++    comment: ''
++    entry_signal: editingFinished
++    gui_hint: 101,0
++    label: Slot description
++    type: string
++    value: '?'
++  states:
++    bus_sink: false
++    bus_source: false
++    bus_structure: null
++    coordinate: [1016, 148.0]
++    rotation: 0
++    state: true
++- name: samp_rate
++  id: variable
++  parameters:
++    comment: ''
++    value: '32000'
++  states:
++    bus_sink: false
++    bus_source: false
++    bus_structure: null
++    coordinate: [184, 12]
++    rotation: 0
++    state: enabled
++- name: slot
++  id: variable_qtgui_chooser
++  parameters:
++    comment: ''
++    gui_hint: 100,0
++    label: Slot
++    label0: '1'
++    label1: '2'
++    label2: '3'
++    label3: TEST
++    label4: private
++    labels: '[]'
++    num_opts: '5'
++    option0: '1'
++    option1: '2'
++    option2: '3'
++    option3: TEST
++    option4: private
++    options: '[0, 1, 2]'
++    orient: Qt.QVBoxLayout
++    type: string
++    value: '1'
++    widget: combo_box
++  states:
++    bus_sink: false
++    bus_source: false
++    bus_structure: null
++    coordinate: [888, 204.0]
++    rotation: 0
++    state: true
++- name: variable_0
++  id: variable
++  parameters:
++    comment: ''
++    value: '456'
++  states:
++    bus_sink: false
++    bus_source: false
++    bus_structure: null
++    coordinate: [440, 88.0]
++    rotation: 0
++    state: true
++- name: variable_check_0
++  id: variable_qtgui_check_box
++  parameters:
++    comment: ''
++    'false': 'False'
++    gui_hint: ''
++    label: Check
++    'true': 'True'
++    type: bool
++    value: 'True'
++  states:
++    bus_sink: false
++    bus_source: false
++    bus_structure: null
++    coordinate: [568, 356.0]
++    rotation: 0
++    state: true
++- name: variable_chooser_0
++  id: variable_qtgui_chooser
++  parameters:
++    comment: ''
++    gui_hint: ''
++    label: Choice
++    label0: A
++    label1: B
++    label2: C
++    label3: ''
++    label4: ''
++    labels: '[]'
++    num_opts: '3'
++    option0: '0'
++    option1: '1'
++    option2: '2'
++    option3: '3'
++    option4: '4'
++    options: '[0, 1, 2]'
++    orient: Qt.QVBoxLayout
++    type: int
++    value: '0'
++    widget: combo_box
++  states:
++    bus_sink: false
++    bus_source: false
++    bus_structure: null
++    coordinate: [416, 356.0]
++    rotation: 0
++    state: true
++- name: variable_entry_0
++  id: variable_qtgui_entry
++  parameters:
++    comment: ''
++    entry_signal: editingFinished
++    gui_hint: ''
++    label: 'Raw:'
++    type: raw
++    value: samp_rate
++  states:
++    bus_sink: false
++    bus_source: false
++    bus_structure: null
++    coordinate: [584, 92.0]
++    rotation: 0
++    state: true
++- name: variable_entry_1
++  id: variable_qtgui_entry
++  parameters:
++    comment: ''
++    entry_signal: editingFinished
++    gui_hint: ''
++    label: Float
++    type: real
++    value: '3.1415'
++  states:
++    bus_sink: false
++    bus_source: false
++    bus_structure: null
++    coordinate: [584, 172.0]
++    rotation: 0
++    state: true
++- name: variable_entry_2
++  id: variable_qtgui_entry
++  parameters:
++    comment: ''
++    entry_signal: editingFinished
++    gui_hint: ''
++    label: String
++    type: string
++    value: hello
++  states:
++    bus_sink: false
++    bus_source: false
++    bus_structure: null
++    coordinate: [584, 252.0]
++    rotation: 0
++    state: true
++- name: variable_qtgui_label_0
++  id: variable_qtgui_label
++  parameters:
++    comment: ''
++    formatter: None
++    gui_hint: ''
++    label: 'Value of variable_0:'
++    type: real
++    value: variable_0
++  states:
++    bus_sink: false
++    bus_source: false
++    bus_structure: null
++    coordinate: [392, 164.0]
++    rotation: 0
++    state: true
++- name: variable_qtgui_label_0_0
++  id: variable_qtgui_label
++  parameters:
++    comment: ''
++    formatter: None
++    gui_hint: ''
++    label: 'Double of variable_1:'
++    type: real
++    value: 2*variable_entry_1
++  states:
++    bus_sink: false
++    bus_source: false
++    bus_structure: null
++    coordinate: [384, 252.0]
++    rotation: 0
++    state: true
++- name: variable_save_restore_1
++  id: variable_save_restore
++  parameters:
++    affinity: ''
++    alias: ''
++    comment: ''
++    description_variable: '"info"'
++    restore_trigger: '"variable_to_trigger_restore"'
++    save_trigger: '"variable_to_trigger_save"'
++    show_msg_ports: 'Yes'
++    slot: slot
++    variables: '"""
++
++      samp_rate,variable_0,variable_entry_0,variable_entry_1,
++
++      variable_entry_2,
++
++      variable_chooser_0,variable_check_0,
++
++      """'
++  states:
++    bus_sink: false
++    bus_source: false
++    bus_structure: null
++    coordinate: [1376, 264.0]
++    rotation: 0
++    state: true
++- name: restore
++  id: variable_qtgui_msg_push_button
++  parameters:
++    comment: ''
++    gui_hint: 103,0
++    label: Restore
++    msgName: pressed
++    relBackgroundColor: default
++    relFontColor: default
++    type: int
++    value: '1'
++  states:
++    bus_sink: false
++    bus_source: false
++    bus_structure: null
++    coordinate: [1016, 332.0]
++    rotation: 0
++    state: true
++- name: save
++  id: variable_qtgui_msg_push_button
++  parameters:
++    comment: ''
++    gui_hint: 102,0
++    label: Save
++    msgName: pressed
++    relBackgroundColor: default
++    relFontColor: default
++    type: int
++    value: '1'
++  states:
++    bus_sink: false
++    bus_source: false
++    bus_structure: null
++    coordinate: [1016, 236.0]
++    rotation: 0
++    state: true
++
++connections:
++- [restore, pressed, variable_save_restore_1, restore]
++- [save, pressed, variable_save_restore_1, save]
++
++metadata:
++  file_format: 1
++  grc_version: 3.10.8.0
+diff --git a/gr-blocks/grc/blocks.tree.yml b/gr-blocks/grc/blocks.tree.yml
+index a7068ec797..e18c45e745 100644
+--- a/gr-blocks/grc/blocks.tree.yml
++++ b/gr-blocks/grc/blocks.tree.yml
+@@ -173,3 +173,4 @@
+   - blocks_vco_c
+ - Variables:
+   - variable_tag_object
++  - variable_save_restore
+diff --git a/gr-blocks/grc/blocks_variable_save_restore.block.yml b/gr-blocks/grc/blocks_variable_save_restore.block.yml
+new file mode 100644
+index 0000000000..2caeb91599
+--- /dev/null
++++ b/gr-blocks/grc/blocks_variable_save_restore.block.yml
+@@ -0,0 +1,86 @@
++id: variable_save_restore
++label: Variable Save Restore
++
++documentation: |-
++    Block to save and restore variable values
++    
++    Values are saved to ~/.config/gnuradio/FLOWGRAPH.variables.sav (replace FLOWGRAPH with actual flowgraph name).
++    
++    Slot is a string that can be used to save multiple sets of values, e.g. to quickly switch between configurations.
++    
++    Variables is a list or comma-separated string of flowgraph variable names to save and restore. Variables inside hier blocks can be addressed as "hier_block_id.variable_id".
++
++    Slot descr. var. is optionally the name of a special string variable which serves as editable label for the slot. It's value will be kept in sync with the selected slot *even before* variable values are restored. Use the name of a QT GUI Entry widget string variable here.   
++    
++    Saving and restoring can either be triggered by messages on the respective ports (message content is ignored), or by a dedicated variable on positive flank (e.g. if the value changes from 0 -> 1 or False -> True).
++    
++    For GUI values it is strongly recommended to use the following widgets, which will reflect an update of the value on the display:
++    - QT GUI Entry
++    - QT GUI Chooser
++    - QT GUI Check Box
++    
++    
++
++templates:
++  imports: from gnuradio import blocks
++  make: blocks.saveRestoreVariables(self, ${slot}, ${variables}, ${save_trigger}, ${restore_trigger}, ${description_variable})
++  callbacks:
++  - set_slot(${slot})
++  - set_variables(${variables})
++  - set_save_trigger(${save_trigger})
++  - set_restore_trigger(${restore_trigger})
++  
++
++parameters:
++- id: slot
++  label: Slot
++  dtype: string
++  default: "default"
++- id: description_variable
++  label: Slot descr. var.
++  dtype: raw
++  default: '""'
++- id: variables
++  label: Variables
++  dtype: _multiline
++  default: |
++    """
++    samp_rate,variable_1,
++    other_variable,
++    hier_block_1.my_var_0
++    """
++- id: show_msg_ports
++  label: Show msg ports
++  dtype: enum
++  default: "Yes"
++  options: ["Yes", "No"]
++  option_attributes:
++      show: [True, False]
++  hide: 'part'
++- id: save_trigger
++  label: Save trg
++  dtype: raw
++  default: '"variable_to_trigger_save"'
++  hide: ${'all' if show_msg_ports.show else 'part'}
++- id: restore_trigger
++  label: Restore trg
++  dtype: raw
++  default: '"variable_to_trigger_restore"'
++  hide: ${'all' if show_msg_ports.show else 'part'}
++
++inputs:
++- label: save
++  domain: message
++  id: save
++  optional: true
++  hide: ${not show_msg_ports.show}
++- label: restore
++  domain: message
++  id: restore
++  optional: true
++  hide: ${not show_msg_ports.show}
++
++
++#  'file_format' specifies the version of the GRC yml format used in the file
++#  and should usually not be changed.
++file_format: 1
+diff --git a/gr-blocks/python/blocks/CMakeLists.txt b/gr-blocks/python/blocks/CMakeLists.txt
+index 24f222a0ec..34c694e2fb 100644
+--- a/gr-blocks/python/blocks/CMakeLists.txt
++++ b/gr-blocks/python/blocks/CMakeLists.txt
+@@ -17,6 +17,7 @@ gr_python_install(
+           msg_pair_to_var.py
+           msg_meta_to_pair.py
+           var_to_msg.py
++          variable_save_restore.py
+           pdu_compatibility.py # REMOVE IN 3.11
+     DESTINATION ${GR_PYTHON_DIR}/gnuradio/blocks)
+ 
+diff --git a/gr-blocks/python/blocks/__init__.py b/gr-blocks/python/blocks/__init__.py
+index 49c19b1110..c39f895c89 100644
+--- a/gr-blocks/python/blocks/__init__.py
++++ b/gr-blocks/python/blocks/__init__.py
+@@ -26,6 +26,7 @@ from .stream_to_vector_decimator import *
+ from .msg_meta_to_pair import meta_to_pair
+ from .msg_pair_to_var import msg_pair_to_var
+ from .var_to_msg import var_to_msg_pair
++from .variable_save_restore import variable_save_restore
+ from .matrix_interleaver import *
+ from .parse_file_metadata import parse_header, parse_extra_dict
+ 
+diff --git a/gr-blocks/python/blocks/variable_save_restore.py b/gr-blocks/python/blocks/variable_save_restore.py
+new file mode 100644
+index 0000000000..f31acad31c
+--- /dev/null
++++ b/gr-blocks/python/blocks/variable_save_restore.py
+@@ -0,0 +1,161 @@
++#!/usr/bin/env python
++# -*- coding: utf-8 -*-
++#
++# Copyright 2023 Philipp Niedermayer.
++#
++# SPDX-License-Identifier: GPL-3.0-or-later
++#
++
++
++from gnuradio import gr
++import yaml
++import pmt
++import os
++
++
++class SafeDumper(yaml.SafeDumper):
++    """A safe yaml dumper with support for additional datatypes"""
++    pass
++
++
++class SafeLoader(yaml.SafeLoader):
++    """A safe yaml loader with support for additional datatypes"""
++    pass
++
++
++SafeDumper.add_representer(complex, yaml.representer.Representer.represent_complex)
++SafeDumper.add_representer(tuple, yaml.representer.Representer.represent_tuple)
++SafeLoader.add_constructor(u"tag:yaml.org,2002:python/complex", yaml.constructor.Constructor.construct_python_complex)
++SafeLoader.add_constructor(u"tag:yaml.org,2002:python/tuple", yaml.constructor.Constructor.construct_python_tuple)
++
++
++class variable_save_restore(gr.sync_block):
++    """
++    (see description in this blocks yml file)
++    """
++
++    def __init__(self, top_block=None, slot="default", variables="", save_trigger=False, restore_trigger=False, description_variable=None):
++        gr.sync_block.__init__(self, name="variable_save_restore", in_sig=[], out_sig=None)
++        self.message_port_register_in(pmt.intern("save"))
++        self.set_msg_handler(pmt.intern("save"), self.handle_msg_save)
++        self.message_port_register_in(pmt.intern("restore"))
++        self.set_msg_handler(pmt.intern("restore"), self.handle_msg_restore)
++
++        self.filename = os.path.join(gr.paths.userconf(), "saverestore", f"{top_block.__class__.__name__}.yml")
++        self.filename = os.path.expanduser(self.filename)
++        self.logger.info(f"Config file: {self.filename}")
++        os.makedirs(os.path.dirname(self.filename), exist_ok=True)
++        self.load_storage()
++
++        self.top_block = top_block
++        self.description_variable = description_variable
++        self.set_slot(slot)
++        self.set_variables(variables)
++        self.save_trigger = save_trigger
++        self.restore_trigger = restore_trigger
++
++    def set_slot(self, slot):
++        self.slot = slot
++        if self.description_variable:
++            data = self.storage.get(self.slot, {})
++            info = data.get(self.description_variable, "")
++            self.set_variable_values({self.description_variable: info})
++
++    def set_variables(self, variables):
++        if isinstance(variables, str):
++            variables = [v.strip() for v in variables.split(",") if v.strip()]
++        self.variables = variables
++        if self.description_variable:
++            self.variables.append(self.description_variable)
++
++    def set_save_trigger(self, save_trigger):
++        if save_trigger and not self.save_trigger:
++            self.save()
++        self.save_trigger = save_trigger
++
++    def set_restore_trigger(self, restore_trigger):
++        if restore_trigger and not self.restore_trigger:
++            self.restore()
++        self.restore_trigger = restore_trigger
++
++    def handle_msg_save(self, msg):
++        self.save()
++
++    def handle_msg_restore(self, msg):
++        self.restore()
++
++    def get_variable_values(self):
++        """Get values of variables using top-glock getters"""
++        data = {}
++        for name in self.variables:
++            try:
++                data[name] = self._get_variable(self.top_block, name)
++            except AttributeError as e:
++                self.logger.error(
++                    f"AttributeError:{e}\nERROR: Failed to get variable `{name}`"
++                )
++
++        return data
++
++    def _get_variable(self, block, name):
++        if "." in name:
++            subblock, name = name.split(".", maxsplit=1)
++            return self._get_variable(getattr(block, subblock), name)
++        return getattr(block, f"get_{name}")()
++
++    def set_variable_values(self, data, verbose=False):
++        """Set values of variables using top-glock setters"""
++        n = 0
++        for name, val in data.items():
++            if verbose:
++                self.logger.debug(f"{name:20s}    {val}")
++            try:
++                self._set_variable(self.top_block, name, val)
++                n += 1
++            except AttributeError as e:
++                self.logger.error(
++                    f"AttributeError:{e}\nERROR: Failed to set variable `{name}` to `{val}`"
++                )
++        return n
++
++    def _set_variable(self, block, name, val):
++        if "." in name:
++            subblock, name = name.split(".", maxsplit=1)
++            return self._set_variable(getattr(block, subblock), name, val)
++        setter = getattr(block, f"set_{name}")
++        setter(val)
++
++    def save(self):
++        data = self.get_variable_values()
++        self.storage[self.slot] = data
++        try:
++            self.save_storage()
++        except Exception as e:
++            self.logger.error(
++                f"Exception:{e}\nFailed to save variables to slot {self.slot}"
++            )
++        else:
++            self.logger.info(
++                f"Saved {len(data)} of {len(self.variables)} variables to slot {self.slot}"
++            )
++
++    def restore(self):
++        data = self.storage.get(self.slot, {})
++        data = {k: v for k, v in data.items() if k in self.variables}
++        n = self.set_variable_values(data)
++        self.logger.info(
++            f"Restored {n} of {len(self.variables)} variables from slot {self.slot}"
++        )
++
++    def load_storage(self):
++        """Load from disk into memory"""
++        if os.path.exists(self.filename):
++            with open(self.filename, 'r') as handle:
++                self.storage = yaml.load(handle, SafeLoader)
++        else:
++            self.storage = {}
++
++    def save_storage(self):
++        """Save from memory to disk"""
++        with open(self.filename, 'w') as handle:
++            yaml.dump(self.storage, handle, SafeDumper)
+-- 
+2.47.3
+

@@ -1,0 +1,95 @@
+From 3dbd71f9c9769a9096495d59bc4d7660d1b149d4 Mon Sep 17 00:00:00 2001
+From: Volker Schroer <3470424+dl1ksv@users.noreply.github.com>
+Date: Wed, 29 Jan 2025 17:47:08 +0100
+Subject: [PATCH 07/80] grc-qt: Right-clicking in the canvas doesn't bring up
+ the context menu
+
+Right-clicking in the canvas now brings up a context menu on a selected block.
+If multiple blocks are selected the context menu is assoziated to th 'first' block
+in the list. If no block is selected a message appears.
+
+If the mouse is over a block this block will be selected.
+
+Fixes #7610
+
+Signed-off-by: Volker Schroer <3470424+dl1ksv@users.noreply.github.com>
+---
+ grc/gui_qt/components/canvas/block.py   |  8 ++------
+ grc/gui_qt/components/flowgraph_view.py | 24 +++++++++++++++++++++++-
+ 2 files changed, 25 insertions(+), 7 deletions(-)
+
+diff --git a/grc/gui_qt/components/canvas/block.py b/grc/gui_qt/components/canvas/block.py
+index 50dd5134fb..3c41027acc 100755
+--- a/grc/gui_qt/components/canvas/block.py
++++ b/grc/gui_qt/components/canvas/block.py
+@@ -380,16 +380,12 @@ class GUIBlock(QGraphicsItem):
+ 
+         self.moveToTop()
+ 
+-    def contextMenuEvent(self, e):
+-        if not self.isSelected():
+-            self.scene().clearSelection()
+-            self.setSelected(True)
+-
++    def context_menu(self, pos):
+         self.right_click_menu = self.scene()._app().MainWindow.menus["edit"]
+         example_action = QAction("Examples...")
+         example_action.triggered.connect(self.view_examples)
+         self.right_click_menu.addAction(example_action)
+-        self.right_click_menu.exec_(e.screenPos())
++        self.right_click_menu.exec_(pos)
+ 
+     def view_examples(self):
+         self.scene().app.MainWindow.example_browser_triggered(key_filter=self.core.key)
+diff --git a/grc/gui_qt/components/flowgraph_view.py b/grc/gui_qt/components/flowgraph_view.py
+index a7b75175c2..5b754f9e6b 100644
+--- a/grc/gui_qt/components/flowgraph_view.py
++++ b/grc/gui_qt/components/flowgraph_view.py
+@@ -14,6 +14,7 @@ from .canvas.block import Block
+ from .. import base
+ from .canvas.flowgraph import FlowgraphScene, Flowgraph
+ from .canvas.colors import LIGHT_FLOWGRAPH_BACKGROUND_COLOR, DARK_FLOWGRAPH_BACKGROUND_COLOR
++from .canvas.block import GUIBlock
+ 
+ from ...core.generator import Generator
+ 
+@@ -61,7 +62,16 @@ class FlowgraphView(
+         log.debug("Creating actions")
+ 
+     def contextMenuEvent(self, event):
+-        super(FlowgraphView, self).contextMenuEvent(event)
++        if self.scene().selected_blocks():
++            block = self.scene().selected_blocks()[0]
++            self.scene().clearSelection()
++            block.setSelected(True)
++            block.context_menu(event.globalPos())
++        else:
++            empty_menu = QtWidgets.QMenu()
++            no_action = QtWidgets.QAction("No block selected", enabled=False)
++            empty_menu.addAction(no_action)
++            empty_menu.exec_(event.globalPos())
+ 
+     def createMenus(self, actions, menus):
+         log.debug("Creating menus")
+@@ -162,6 +172,18 @@ class FlowgraphView(
+             self.setCursor(Qt.ClosedHandCursor)
+             event.accept()
+ 
++        elif event.button() == Qt.RightButton:
++
++            #  Check if the right click happened on a block
++            #  then select this block and deselect all others
++            #  Otherwise contextMenuEvent will lock for a already
++            #  selected block to handle
++
++            block = self.itemAt(event.pos())
++            if block:
++                self.scene().clearSelection()
++                block.setSelected(True)
++
+     def mouseMoveEvent(self, event):
+         if self.isPanning:
+             new_pos = event.pos()
+-- 
+2.47.3
+

@@ -1,0 +1,44 @@
+From: "A. Maitland Bottoms" <bottoms@debian.org>
+Subject: gr-vide-sdl2
+
+Port to SDL 2.
+
+--- a/gr-video-sdl/CMakeLists.txt
++++ b/gr-video-sdl/CMakeLists.txt
+@@ -8,14 +8,14 @@
+ ########################################################################
+ # Setup dependencies
+ ########################################################################
+-find_package(SDL)
++find_package(SDL2)
+ 
+ ########################################################################
+ # Register component
+ ########################################################################
+ include(GrComponent)
+ GR_REGISTER_COMPONENT("gr-video-sdl" ENABLE_GR_VIDEO_SDL
+-    SDL_FOUND
++    SDL2_FOUND
+     ENABLE_GNURADIO_RUNTIME
+ )
+ 
+--- a/gr-video-sdl/lib/CMakeLists.txt
++++ b/gr-video-sdl/lib/CMakeLists.txt
+@@ -13,7 +13,7 @@
+ target_link_libraries(
+     gnuradio-video-sdl
+     PUBLIC gnuradio-runtime
+-    PRIVATE ${SDL_LIBRARY})
++    PRIVATE SDL2::SDL2)
+ 
+ if(ENABLE_COMMON_PCH)
+     target_link_libraries(gnuradio-video-sdl PRIVATE common-precompiled-headers)
+@@ -22,7 +22,7 @@
+ target_include_directories(
+     gnuradio-video-sdl
+     PUBLIC $<INSTALL_INTERFACE:include>
+-           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include> ${SDL_INCLUDE_DIR})
++           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include> ${SDL2_INCLUDE_DIR})
+ 
+ #Add Windows DLL resource file if using MSVC
+ if(MSVC)

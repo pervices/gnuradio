@@ -1,0 +1,25 @@
+From cbee1616396a6ed10363979b5a8f3e80c2b7b50f Mon Sep 17 00:00:00 2001
+From: "info@revskills.de" <info@revskills.de>
+Date: Sat, 7 Jun 2025 15:18:17 +0200
+Subject: [PATCH 28/80] Add missing mmse_fir_interpolator.h to CMake
+
+Signed-off-by: info@revskills.de <info@revskills.de>
+---
+ gr-filter/include/gnuradio/filter/CMakeLists.txt | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/gr-filter/include/gnuradio/filter/CMakeLists.txt b/gr-filter/include/gnuradio/filter/CMakeLists.txt
+index ec1fbd822e..32df9af6d6 100644
+--- a/gr-filter/include/gnuradio/filter/CMakeLists.txt
++++ b/gr-filter/include/gnuradio/filter/CMakeLists.txt
+@@ -19,6 +19,7 @@ install(
+           iir_filter.h
+           interpolator_taps.h
+           interp_fir_filter.h
++          mmse_fir_interpolator.h
+           mmse_fir_interpolator_cc.h
+           mmse_fir_interpolator_ff.h
+           mmse_interp_differentiator_cc.h
+-- 
+2.47.3
+

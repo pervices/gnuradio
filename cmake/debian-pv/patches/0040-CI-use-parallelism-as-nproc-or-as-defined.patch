@@ -1,0 +1,37 @@
+From c52e2e21422913431bc6b68c0cce0ec0c172d705 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Tue, 10 Jun 2025 23:54:50 +0200
+Subject: [PATCH 40/80] CI: use parallelism as nproc, or as defined
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ .github/workflows/make-test.yml | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/.github/workflows/make-test.yml b/.github/workflows/make-test.yml
+index a3cc8c2b3d..9a3eae4247 100644
+--- a/.github/workflows/make-test.yml
++++ b/.github/workflows/make-test.yml
+@@ -97,6 +97,7 @@ jobs:
+             containerid: 'gnuradio/ci:fedora-41-3.10'
+             cxxflags: -Wno-unused-command-line-argument
+             cmakeflags: -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -GNinja
++            build_options: --
+             ldpath: /usr/local/lib64
+           - distro: 'Debian 12'
+             containerid: 'gnuradio/ci:debian-12-3.10'
+@@ -135,7 +136,7 @@ jobs:
+         path: /build/compile_commands.json
+         if-no-files-found: ignore
+     - name: Make
+-      run: cmake --build /build --parallel 2
++      run: cmake --build /build ${{ matrix.build_options || '--parallel $(nproc)' }}
+     - name: Make Test
+       env:
+         QT_QPA_PLATFORM: offscreen
+-- 
+2.47.3
+

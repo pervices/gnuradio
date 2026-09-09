@@ -1,0 +1,621 @@
+From bf7df9ddf54ac873640729015fb1128741aa1a43 Mon Sep 17 00:00:00 2001
+From: Cristian Le <git@lecris.dev>
+Date: Tue, 11 Mar 2025 10:13:25 +0100
+Subject: [PATCH] Switch to standard `GNUInstallDirs`
+
+`GNUInstallDirs` has been a standard since at least CMake 3.0 and distros are configuring it to their standard. It is better to use these as defaults instead.
+
+Signed-off-by: Cristian Le <git@lecris.dev>
+---
+ .conda/recipe/build.sh                        |  1 -
+ CMakeLists.txt                                | 68 ++++++++-----------
+ cmake/Modules/GnuradioConfig.cmake.in         |  1 -
+ cmake/Modules/GrPlatform.cmake                | 42 +++++++-----
+ gnuradio-runtime/include/gnuradio/constants.h |  6 +-
+ gnuradio-runtime/lib/CMakeLists.txt           |  4 +-
+ gnuradio-runtime/lib/constants.cc.in          |  2 +-
+ gnuradio-runtime/lib/pmt/CMakeLists.txt       |  2 +-
+ .../gnuradio/gr/bindings/constants_python.cc  |  2 +-
+ gr-analog/lib/CMakeLists.txt                  |  2 +-
+ gr-audio/lib/CMakeLists.txt                   |  2 +-
+ gr-blocks/lib/CMakeLists.txt                  |  2 +-
+ gr-channels/lib/CMakeLists.txt                |  2 +-
+ gr-digital/lib/CMakeLists.txt                 |  2 +-
+ gr-dtv/lib/CMakeLists.txt                     |  2 +-
+ gr-fec/lib/CMakeLists.txt                     |  2 +-
+ gr-fft/lib/CMakeLists.txt                     |  2 +-
+ gr-filter/lib/CMakeLists.txt                  |  2 +-
+ gr-iio/lib/CMakeLists.txt                     |  2 +-
+ gr-network/lib/CMakeLists.txt                 |  2 +-
+ gr-pdu/lib/CMakeLists.txt                     |  2 +-
+ gr-qtgui/lib/CMakeLists.txt                   |  2 +-
+ gr-qtgui/python/qtgui/CMakeLists.txt          |  2 +-
+ gr-soapy/lib/CMakeLists.txt                   |  2 +-
+ gr-trellis/lib/CMakeLists.txt                 |  2 +-
+ gr-uhd/lib/CMakeLists.txt                     |  2 +-
+ .../gr-newmod/.conda/recipe/build.sh          |  1 -
+ .../templates/gr-newmod/CMakeLists.txt        |  7 +-
+ .../templates/gr-newmod/lib/CMakeLists.txt    |  4 +-
+ gr-video-sdl/lib/CMakeLists.txt               |  2 +-
+ gr-vocoder/lib/CMakeLists.txt                 |  2 +-
+ gr-wavelet/lib/CMakeLists.txt                 |  2 +-
+ gr-zeromq/lib/CMakeLists.txt                  |  2 +-
+ 33 files changed, 88 insertions(+), 94 deletions(-)
+
+--- a/.conda/recipe/build.sh
++++ b/.conda/recipe/build.sh
+@@ -18,7 +18,6 @@
+     -DCMAKE_BUILD_TYPE=Release
+     -DCMAKE_PREFIX_PATH=$PREFIX
+     -DCMAKE_INSTALL_PREFIX=$PREFIX
+-    -DLIB_SUFFIX=""
+     -DPYTHON_EXECUTABLE=$PYTHON
+     -DGR_PYTHON_DIR=$SP_DIR
+ )
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -131,55 +131,42 @@
+ ########################################################################
+ # Install directories
+ ########################################################################
+-include(GrPlatform) #define LIB_SUFFIX
+-
++include(GNUInstallDirs)
+ # Install our Cmake modules into $prefix/lib/cmake/gnuradio
+ # See "Package Configuration Files" on page:
+ #    http://www.cmake.org/Wiki/CMake/Tutorials/Packaging
+ 
+ if(NOT CMAKE_MODULES_DIR)
+-    set(CMAKE_MODULES_DIR lib${LIB_SUFFIX}/cmake)
++    set(CMAKE_MODULES_DIR ${CMAKE_INSTALL_LIBDIR}/cmake)
+ endif(NOT CMAKE_MODULES_DIR)
+ 
+ # cmake-format: off
+-SET(GR_RUNTIME_DIR     bin CACHE PATH "Path to install all binaries")
+-SET(GR_LIBRARY_DIR     lib${LIB_SUFFIX} CACHE PATH "Path to install libraries")
+-SET(GR_INCLUDE_DIR     include CACHE PATH "Path to install header files")
++SET(GR_RUNTIME_DIR     ${CMAKE_INSTALL_BINDIR} CACHE PATH "Path to install all binaries")
++SET(GR_LIBRARY_DIR     ${CMAKE_INSTALL_LIBDIR} CACHE PATH "Path to install libraries")
++SET(GR_INCLUDE_DIR     ${CMAKE_INSTALL_INCLUDEDIR} CACHE PATH "Path to install header files")
+ SET(GR_CMAKE_DIR       ${CMAKE_MODULES_DIR}/gnuradio)
+-SET(GR_DATA_DIR        share CACHE PATH "Base location for data")
++SET(GR_DATA_DIR        ${CMAKE_INSTALL_DATADIR} CACHE PATH "Base location for data")
+ SET(GR_PKG_DATA_DIR    ${GR_DATA_DIR}/${CMAKE_PROJECT_NAME} CACHE PATH "Path to install package data")
+ SET(GR_DOC_DIR         ${GR_DATA_DIR}/doc CACHE PATH "Path to install documentation")
+ SET(GR_PKG_DOC_DIR     ${GR_DOC_DIR}/${CMAKE_PROJECT_NAME}-${DOCVER} CACHE PATH "Path to install package docs")
+-SET(GR_MAN_DIR         ${GR_DATA_DIR}/man CACHE PATH "Path to install man pages")
+-SET(GR_LIBEXEC_DIR     libexec CACHE PATH "Path to install libexec files")
++SET(GR_MAN_DIR         ${CMAKE_INSTALL_MANDIR} CACHE PATH "Path to install man pages")
++SET(GR_LIBEXEC_DIR     ${CMAKE_INSTALL_LIBEXECDIR} CACHE PATH "Path to install libexec files")
+ SET(GR_PKG_LIBEXEC_DIR ${GR_LIBEXEC_DIR}/${CMAKE_PROJECT_NAME} CACHE PATH "Path to install package libexec files")
+ SET(GRC_BLOCKS_DIR     ${GR_PKG_DATA_DIR}/grc/blocks CACHE PATH "Path to install GRC blocks")
+ SET(GR_THEMES_DIR      ${GR_PKG_DATA_DIR}/themes CACHE PATH "Path to install QTGUI themes")
+ SET(GRC_EXAMPLES_DIR   ${GR_PKG_DATA_DIR}/examples CACHE PATH "Path to install GRC example flowgraphs")
++set(GR_CONF_DIR        ${CMAKE_INSTALL_SYSCONFDIR} CACHE PATH "Path to install config files")
++set(GR_PKG_CONF_DIR    ${GR_CONF_DIR}/${CMAKE_PROJECT_NAME}/conf.d CACHE PATH "Path to install package configs")
++set(GR_PREFSDIR        ${GR_CONF_DIR}/${CMAKE_PROJECT_NAME}/conf.d CACHE PATH "Path to install preference files")
++
++if(DEFINED CACHE{SYSCONFDIR} AND NOT GR_IGNORE_SYSCONFDIR_SET)
++    # If you need to ignore this error, set GR_IGNORE_SYSCONFDIR_SET
++    message(FATAL_ERROR
++        "SYSCONFDIR cache variable has been removed. Use GR_CONF_DIR or CMAKE_INSTALL_SYSCONFDIR instead."
++    )
++endif()
+ # cmake-format: on
+ 
+-# Set location of config/prefs files in /etc
+-# Special exception if prefix is /usr so we don't make a /usr/etc.
+-set(GR_CONF_DIR
+-    etc
+-    CACHE PATH "Path to install config files")
+-string(COMPARE EQUAL "${CMAKE_INSTALL_PREFIX}" "/usr" isusr)
+-if(isusr)
+-    set(SYSCONFDIR
+-        "/${GR_CONF_DIR}"
+-        CACHE PATH "System configuration directory")
+-else(isusr)
+-    set(SYSCONFDIR
+-        "${CMAKE_INSTALL_PREFIX}/${GR_CONF_DIR}"
+-        CACHE PATH "System configuration directory" FORCE)
+-endif(isusr)
+-
+-set(GR_PKG_CONF_DIR
+-    ${SYSCONFDIR}/${CMAKE_PROJECT_NAME}/conf.d
+-    CACHE PATH "Path to install package configs")
+-set(GR_PREFSDIR
+-    ${SYSCONFDIR}/${CMAKE_PROJECT_NAME}/conf.d
+-    CACHE PATH "Path to install preference files")
+ 
+ option(ENABLE_PERFORMANCE_COUNTERS "Enable block performance counters" ON)
+ if(ENABLE_PERFORMANCE_COUNTERS)
+@@ -190,6 +177,7 @@
+     message(STATUS "NO PERF COUNTERS")
+ endif(ENABLE_PERFORMANCE_COUNTERS)
+ 
++string(COMPARE EQUAL "${CMAKE_INSTALL_PREFIX}" "/usr" isusr)
+ string(COMPARE EQUAL "${CMAKE_INSTALL_PREFIX}" "/usr/local" isusrlocal)
+ string(COMPARE EQUAL "${CMAKE_INSTALL_PREFIX}" "$ENV{HOME}/.local" ishomelocal)
+ 
+@@ -198,7 +186,7 @@
+     if(NOT DEFINED GR_BASH_COMPLETIONS_DIR)
+         if(isusr OR isusrlocal OR ishomelocal)
+             set(GR_BASH_COMPLETIONS_DIR
+-                share/bash-completion/completions
++                ${CMAKE_INSTALL_DATADIR}/bash-completion/completions
+                 CACHE PATH "Path to install bash completions")
+         else(isusr OR isusrlocal OR ishomelocal)
+             message(WARNING "GR_BASH_COMPLETIONS_DIR is not defined")
+@@ -212,7 +200,7 @@
+     if(NOT DEFINED GR_ZSH_COMPLETIONS_DIR)
+         if(isusr OR isusrlocal)
+             set(GR_ZSH_COMPLETIONS_DIR
+-                share/zsh/site-functions
++                ${CMAKE_INSTALL_DATADIR}/zsh/site-functions
+                 CACHE PATH "Path to install zsh completions")
+         else(isusr OR isusrlocal)
+             message(WARNING "GR_ZSH_COMPLETIONS_DIR is not defined")
+@@ -226,7 +214,7 @@
+     if(NOT DEFINED GR_FISH_COMPLETIONS_DIR)
+         if(isusr OR ishomelocal)
+             set(GR_FISH_COMPLETIONS_DIR
+-                share/fish/vendor_completions.d
++                ${CMAKE_INSTALL_DATADIR}/fish/vendor_completions.d
+                 CACHE PATH "Path to install fish completions")
+         else(isusr OR ishomelocal)
+             message(WARNING "GR_FISH_COMPLETIONS_DIR is not defined")
+@@ -243,17 +231,21 @@
+ file(TO_CMAKE_PATH "\${prefix}"                        exec_prefix)
+ file(TO_CMAKE_PATH "\${exec_prefix}/${GR_LIBRARY_DIR}" libdir)
+ file(TO_CMAKE_PATH "\${prefix}/${GR_INCLUDE_DIR}"      includedir)
+-file(TO_CMAKE_PATH "${SYSCONFDIR}"                     SYSCONFDIR)
+-file(TO_CMAKE_PATH "${GR_PREFSDIR}"                    GR_PREFSDIR)
+ # cmake-format: on
+ 
++if(CMAKE_VERSION VERSION_LESS 3.20)
++    set(dir SYSCONFIGDIR)
++endif()
++GNUInstallDirs_get_absolute_install_dir(GR_CONF_DIR_FULL GR_CONF_DIR SYSCONFIGDIR)
++GNUInstallDirs_get_absolute_install_dir(GR_PREFSDIR_FULL GR_PREFSDIR SYSCONFIGDIR)
++
+ if(WIN32)
+     file(RELATIVE_PATH prefix_relative_to_lib "${prefix}/${GR_RUNTIME_DIR}" "${prefix}")
+ else(WIN32)
+     file(RELATIVE_PATH prefix_relative_to_lib "${prefix}/${GR_LIBRARY_DIR}" "${prefix}")
+ endif(WIN32)
+-file(RELATIVE_PATH SYSCONFDIR_relative_to_prefix "${prefix}" "${SYSCONFDIR}")
+-file(RELATIVE_PATH GR_PREFSDIR_relative_to_prefix "${prefix}" "${GR_PREFSDIR}")
++file(RELATIVE_PATH GR_CONF_DIR_relative_to_prefix "${prefix}" "${GR_CONF_DIR_FULL}")
++file(RELATIVE_PATH GR_PREFSDIR_relative_to_prefix "${prefix}" "${GR_PREFSDIR_FULL}")
+ 
+ ########################################################################
+ # On Apple only, set install name and use rpath correctly, if not already set
+--- a/cmake/Modules/GnuradioConfig.cmake.in
++++ b/cmake/Modules/GnuradioConfig.cmake.in
+@@ -69,7 +69,6 @@
+ set(GR_PKG_LIBEXEC_DIR "@GR_PKG_LIBEXEC_DIR@")
+ set(GR_THEMES_DIR "@GR_THEMES_DIR@")
+ set(GR_CONF_DIR "@GR_CONF_DIR@")
+-set(SYSCONFDIR "@SYSCONFDIR@")
+ set(GR_PREFSDIR "@GR_PREFSDIR@")
+ 
+ # We check the requested components in the order given by the list below –
+--- a/cmake/Modules/GrPlatform.cmake
++++ b/cmake/Modules/GrPlatform.cmake
+@@ -5,10 +5,12 @@
+ # SPDX-License-Identifier: GPL-3.0-or-later
+ #
+ 
+-if(DEFINED __INCLUDED_GR_PLATFORM_CMAKE)
+-    return()
+-endif()
+-set(__INCLUDED_GR_PLATFORM_CMAKE TRUE)
++include_guard()
++
++message(DEPRECATION
++    "GrPlatform usage is deprecated, use GNUInstallDirs variables directly.\n"
++    "See https://github.com/gnuradio/gnuradio/pull/7768."
++)
+ 
+ ########################################################################
+ # Setup additional defines for OS types
+@@ -36,23 +38,27 @@
+ endif()
+ 
+ ########################################################################
+-# when the library suffix should be 64 (applies to redhat linux family)
+-########################################################################
+-if(REDHAT OR SLACKWARE)
+-    set(LIB64_CONVENTION TRUE)
+-endif()
+-
+-if(NOT DEFINED LIB_SUFFIX
+-   AND LIB64_CONVENTION
+-   AND CMAKE_SYSTEM_PROCESSOR MATCHES "64$")
+-    set(LIB_SUFFIX 64)
+-endif()
+-
+-########################################################################
+-# Detect /lib versus /lib64
++# Try to compute LIB_SUFFIX as best as possible
+ ########################################################################
+-if(CMAKE_INSTALL_LIBDIR MATCHES lib64)
+-    set(LIB_SUFFIX 64)
++get_property(enabled_languages GLOBAL PROPERTY ENABLED_LANGUAGES)
++if(C NOT IN_LIST enabled_languages OR CXX NOT IN_LIST enabled_languages)
++    message(WARNING "GrPlatform should be included after a project is defined")
++
++    # Try best guess of LIB_SUFFIX
++    if(REDHAT OR SLACKWARE)
++        set(LIB64_CONVENTION TRUE)
++    endif()
++
++    if(NOT DEFINED LIB_SUFFIX
++        AND LIB64_CONVENTION
++        AND CMAKE_SYSTEM_PROCESSOR MATCHES "64$")
++        set(LIB_SUFFIX 64)
++    endif()
++else()
++    include(GNUInstallDirs)
++    if(CMAKE_INSTALL_LIBDIR MATCHES "lib64$")
++        set(LIB_SUFFIX 64)
++    endif()
+ endif()
+ 
+ set(LIB_SUFFIX
+--- a/gnuradio-runtime/include/gnuradio/constants.h
++++ b/gnuradio-runtime/include/gnuradio/constants.h
+@@ -17,17 +17,17 @@
+ namespace gr {
+ 
+ /*!
+- * \brief return SYSCONFDIR. Typically ${CMAKE_INSTALL_PREFIX}/etc or /etc
++ * \brief return GR_CONF_DIR. Typically ${CMAKE_INSTALL_PREFIX}/etc or /etc
+  */
+ GR_RUNTIME_API const std::string prefix();
+ 
+ /*!
+- * \brief return SYSCONFDIR. Typically ${CMAKE_INSTALL_PREFIX}/etc or /etc
++ * \brief return GR_CONF_DIR. Typically ${CMAKE_INSTALL_PREFIX}/etc or /etc
+  */
+ GR_RUNTIME_API const std::string sysconfdir();
+ 
+ /*!
+- * \brief return preferences file directory. Typically ${SYSCONFDIR}/etc/conf.d
++ * \brief return preferences file directory. Typically ${GR_CONF_DIR}/gnuradio/conf.d
+  */
+ GR_RUNTIME_API const std::string prefsdir();
+ 
+--- a/gnuradio-runtime/lib/CMakeLists.txt
++++ b/gnuradio-runtime/lib/CMakeLists.txt
+@@ -142,7 +142,7 @@
+ 
+ target_include_directories(
+     gnuradio-runtime
+-    PUBLIC $<INSTALL_INTERFACE:include>
++    PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../include>
+     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+@@ -264,7 +264,7 @@
+ endif(WIN32)
+ 
+ #need to link with librt on ubuntu 11.10 and Hurd for shm_*
+-if((LINUX) OR (CMAKE_SYSTEM_NAME MATCHES "^(kFreeBSD|GNU)$"))
++if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|kFreeBSD|GNU)$")
+     target_link_libraries(gnuradio-runtime PUBLIC rt)
+ endif()
+ 
+--- a/gnuradio-runtime/lib/constants.cc.in
++++ b/gnuradio-runtime/lib/constants.cc.in
+@@ -37,7 +37,7 @@
+ 
+ const std::string sysconfdir()
+ {
+-    path sysconfdir_rel_prefix = "@SYSCONFDIR_relative_to_prefix@";
++    path sysconfdir_rel_prefix = "@GR_CONF_DIR_relative_to_prefix@";
+     path prefix_path = prefix();
+     path sysconfdir_path = prefix_path / sysconfdir_rel_prefix;
+ 
+--- a/gnuradio-runtime/lib/pmt/CMakeLists.txt
++++ b/gnuradio-runtime/lib/pmt/CMakeLists.txt
+@@ -18,7 +18,7 @@
+ 
+ target_include_directories(
+     gnuradio-pmt
+-    PUBLIC $<INSTALL_INTERFACE:include>
++    PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../include>
+     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/)
+ 
+--- a/gnuradio-runtime/python/gnuradio/gr/bindings/constants_python.cc
++++ b/gnuradio-runtime/python/gnuradio/gr/bindings/constants_python.cc
+@@ -14,7 +14,7 @@
+ /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
+ /* BINDTOOL_USE_PYGCCXML(0)                                                        */
+ /* BINDTOOL_HEADER_FILE(constants.h)                                        */
+-/* BINDTOOL_HEADER_FILE_HASH(23118d18abd7aebdb0d674771473ed8b)                     */
++/* BINDTOOL_HEADER_FILE_HASH(041484ee6adaa786bfff0c081c465c1e)                     */
+ /***********************************************************************************/
+ 
+ #include <pybind11/complex.h>
+--- a/gr-analog/lib/CMakeLists.txt
++++ b/gr-analog/lib/CMakeLists.txt
+@@ -48,7 +48,7 @@
+     PRIVATE gnuradio-filter)
+ 
+ target_include_directories(
+-    gnuradio-analog PUBLIC $<INSTALL_INTERFACE:include>
++    gnuradio-analog PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+ 
+ #Add Windows DLL resource file if using MSVC
+--- a/gr-audio/lib/CMakeLists.txt
++++ b/gr-audio/lib/CMakeLists.txt
+@@ -13,7 +13,7 @@
+ add_library(gnuradio-audio audio_registry.cc)
+ target_link_libraries(gnuradio-audio PUBLIC gnuradio-runtime)
+ target_include_directories(
+-    gnuradio-audio PUBLIC $<INSTALL_INTERFACE:include>
++    gnuradio-audio PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+ 
+ list(APPEND gr_audio_confs ${CMAKE_CURRENT_SOURCE_DIR}/gr-audio.conf)
+--- a/gr-blocks/lib/CMakeLists.txt
++++ b/gr-blocks/lib/CMakeLists.txt
+@@ -180,7 +180,7 @@
+ endif()
+ 
+ target_include_directories(
+-    gnuradio-blocks PUBLIC $<INSTALL_INTERFACE:include>
++    gnuradio-blocks PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+ 
+ set_source_files_properties(file_source_impl.cc PROPERTIES SKIP_PRECOMPILE_HEADERS ON
+--- a/gr-channels/lib/CMakeLists.txt
++++ b/gr-channels/lib/CMakeLists.txt
+@@ -26,7 +26,7 @@
+     PRIVATE gnuradio-filter gnuradio-analog gnuradio-blocks)
+ 
+ target_include_directories(
+-    gnuradio-channels PUBLIC $<INSTALL_INTERFACE:include>
++    gnuradio-channels PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+                              $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+ 
+ #Add Windows DLL resource file if using MSVC
+--- a/gr-digital/lib/CMakeLists.txt
++++ b/gr-digital/lib/CMakeLists.txt
+@@ -97,7 +97,7 @@
+ 
+ target_include_directories(
+     gnuradio-digital
+-    PUBLIC $<INSTALL_INTERFACE:include>
++    PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+ 
+ #Add Windows DLL resource file if using MSVC
+--- a/gr-dtv/lib/CMakeLists.txt
++++ b/gr-dtv/lib/CMakeLists.txt
+@@ -75,7 +75,7 @@
+     PRIVATE gnuradio-analog gnuradio-filter gnuradio-fec Volk::volk)
+ 
+ target_include_directories(
+-    gnuradio-dtv PUBLIC $<INSTALL_INTERFACE:include>
++    gnuradio-dtv PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+                         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+ 
+ include(CheckCCompilerFlag)
+--- a/gr-fec/lib/CMakeLists.txt
++++ b/gr-fec/lib/CMakeLists.txt
+@@ -54,7 +54,7 @@
+     polar_encoder_systematic.cc
+     polar_decoder_sc_systematic.cc)
+ target_include_directories(
+-    gnuradio-fec PUBLIC $<INSTALL_INTERFACE:include>
++    gnuradio-fec PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+                         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+ 
+ add_subdirectory(reed-solomon)
+--- a/gr-fft/lib/CMakeLists.txt
++++ b/gr-fft/lib/CMakeLists.txt
+@@ -23,7 +23,7 @@
+ )
+ 
+ target_include_directories(
+-    gnuradio-fft PUBLIC $<INSTALL_INTERFACE:include>
++    gnuradio-fft PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+                         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+ 
+ if(ENABLE_GR_CTRLPORT)
+--- a/gr-filter/lib/CMakeLists.txt
++++ b/gr-filter/lib/CMakeLists.txt
+@@ -58,7 +58,7 @@
+     PRIVATE gnuradio-blocks)
+ 
+ target_include_directories(
+-    gnuradio-filter PUBLIC $<INSTALL_INTERFACE:include>
++    gnuradio-filter PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+ 
+ #Add Windows DLL resource file if using MSVC
+--- a/gr-iio/lib/CMakeLists.txt
++++ b/gr-iio/lib/CMakeLists.txt
+@@ -20,7 +20,7 @@
+     iio_types.cc)
+ 
+ target_include_directories(
+-    gnuradio-iio PUBLIC $<INSTALL_INTERFACE:include>
++    gnuradio-iio PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+                         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+ target_link_libraries(
+     gnuradio-iio
+--- a/gr-network/lib/CMakeLists.txt
++++ b/gr-network/lib/CMakeLists.txt
+@@ -30,7 +30,7 @@
+ 
+ target_include_directories(
+     gnuradio-network
+-    PUBLIC $<INSTALL_INTERFACE:include>
++    PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/asio
+ )
+--- a/gr-pdu/lib/CMakeLists.txt
++++ b/gr-pdu/lib/CMakeLists.txt
+@@ -37,7 +37,7 @@
+ 
+ target_include_directories(
+     gnuradio-pdu
+-    PUBLIC $<INSTALL_INTERFACE:include>
++    PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+ 
+ if(BUILD_SHARED_LIBS)
+--- a/gr-qtgui/lib/CMakeLists.txt
++++ b/gr-qtgui/lib/CMakeLists.txt
+@@ -81,7 +81,7 @@
+ target_compile_definitions(gnuradio-qtgui PRIVATE -DQWT_DLL)
+ target_include_directories(
+     gnuradio-qtgui
+-    PUBLIC $<INSTALL_INTERFACE:include>
++    PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+     PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+ target_link_libraries(gnuradio-qtgui
+--- a/gr-qtgui/python/qtgui/CMakeLists.txt
++++ b/gr-qtgui/python/qtgui/CMakeLists.txt
+@@ -43,7 +43,7 @@
+     set(GR_TEST_LIBRARY_DIRS "")
+     set(GR_TEST_PYTHON_DIRS ${PROJECT_BINARY_DIR}/gnuradio-runtime/python)
+ 
+-    if(LINUX AND NOT DEFINED ENV{DISPLAY})
++    if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT DEFINED ENV{DISPLAY})
+         find_program(XVFB_EXECUTABLE xvfb-run)
+         if(XVFB_EXECUTABLE)
+             set(QA_DISPLAY_SERVER "${XVFB_EXECUTABLE}")
+--- a/gr-soapy/lib/CMakeLists.txt
++++ b/gr-soapy/lib/CMakeLists.txt
+@@ -16,7 +16,7 @@
+ target_link_libraries(gnuradio-soapy PUBLIC gnuradio-runtime ${SoapySDR_LIBRARIES})
+ 
+ target_include_directories(
+-    gnuradio-soapy PUBLIC $<INSTALL_INTERFACE:include>
++    gnuradio-soapy PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+ 
+ #Add Windows DLL resource file if using MSVC
+--- a/gr-trellis/lib/CMakeLists.txt
++++ b/gr-trellis/lib/CMakeLists.txt
+@@ -33,7 +33,7 @@
+ target_link_libraries(gnuradio-trellis PUBLIC gnuradio-runtime gnuradio-digital)
+ 
+ target_include_directories(
+-    gnuradio-trellis PUBLIC $<INSTALL_INTERFACE:include>
++    gnuradio-trellis PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+ 
+ #Add Windows DLL resource file if using MSVC
+--- a/gr-uhd/lib/CMakeLists.txt
++++ b/gr-uhd/lib/CMakeLists.txt
+@@ -35,7 +35,7 @@
+ target_link_libraries(gnuradio-uhd PUBLIC gnuradio-runtime UHD::UHD)
+ 
+ target_include_directories(
+-    gnuradio-uhd PUBLIC $<INSTALL_INTERFACE:include>
++    gnuradio-uhd PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+                         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+ 
+ #Add Windows DLL resource file if using MSVC
+--- a/gr-utils/modtool/templates/gr-newmod/.conda/recipe/build.sh
++++ b/gr-utils/modtool/templates/gr-newmod/.conda/recipe/build.sh
+@@ -8,7 +8,6 @@
+ cmake_config_args=(
+     -DCMAKE_BUILD_TYPE=Release
+     -DCMAKE_INSTALL_PREFIX=$PREFIX
+-    -DLIB_SUFFIX=""
+     -DENABLE_DOXYGEN=OFF
+     -DENABLE_TESTING=ON
+ )
+--- a/gr-utils/modtool/templates/gr-newmod/CMakeLists.txt
++++ b/gr-utils/modtool/templates/gr-newmod/CMakeLists.txt
+@@ -65,14 +65,13 @@
+ # Install directories
+ ########################################################################
+ include(GrVersion)
+-
+-include(GrPlatform) #define LIB_SUFFIX
++include(GNUInstallDirs)
+ 
+ if(NOT CMAKE_MODULES_DIR)
+-    set(CMAKE_MODULES_DIR lib${LIB_SUFFIX}/cmake)
++    set(CMAKE_MODULES_DIR ${CMAKE_INSTALL_LIBDIR}/cmake)
+ endif(NOT CMAKE_MODULES_DIR)
+ 
+-set(GR_INCLUDE_DIR include/gnuradio/howto)
++set(GR_INCLUDE_DIR ${CMAKE_INSTALL_INCLUDEDIR}/gnuradio/howto)
+ set(GR_CMAKE_DIR ${CMAKE_MODULES_DIR}/gnuradio-howto)
+ set(GR_PKG_DATA_DIR ${GR_DATA_DIR}/${CMAKE_PROJECT_NAME})
+ set(GR_PKG_DOC_DIR ${GR_DOC_DIR}/${CMAKE_PROJECT_NAME})
+--- a/gr-utils/modtool/templates/gr-newmod/lib/CMakeLists.txt
++++ b/gr-utils/modtool/templates/gr-newmod/lib/CMakeLists.txt
+@@ -9,7 +9,7 @@
+ ########################################################################
+ # Setup library
+ ########################################################################
+-include(GrPlatform) #define LIB_SUFFIX
++include(GNUInstallDirs)
+ 
+ list(APPEND howto_sources)
+ 
+@@ -26,7 +26,7 @@
+ target_include_directories(
+     gnuradio-howto
+     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+-    PUBLIC $<INSTALL_INTERFACE:include>)
++    PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+ set_target_properties(gnuradio-howto PROPERTIES DEFINE_SYMBOL "gnuradio_howto_EXPORTS")
+ 
+ if(APPLE)
+--- a/gr-video-sdl/lib/CMakeLists.txt
++++ b/gr-video-sdl/lib/CMakeLists.txt
+@@ -17,7 +17,7 @@
+ 
+ target_include_directories(
+     gnuradio-video-sdl
+-    PUBLIC $<INSTALL_INTERFACE:include>
++    PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include> ${SDL_INCLUDE_DIR})
+ 
+ #Add Windows DLL resource file if using MSVC
+--- a/gr-vocoder/lib/CMakeLists.txt
++++ b/gr-vocoder/lib/CMakeLists.txt
+@@ -24,7 +24,7 @@
+     ulaw_encode_sb_impl.cc)
+ target_include_directories(
+     gnuradio-vocoder
+-    PUBLIC $<INSTALL_INTERFACE:include>
++    PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+ target_link_libraries(gnuradio-vocoder PUBLIC gnuradio-runtime)
+ 
+--- a/gr-wavelet/lib/CMakeLists.txt
++++ b/gr-wavelet/lib/CMakeLists.txt
+@@ -28,7 +28,7 @@
+ 
+ target_include_directories(
+     gnuradio-wavelet
+-    PUBLIC $<INSTALL_INTERFACE:include>
++    PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+ 
+ if(BUILD_SHARED_LIBS)
+--- a/gr-zeromq/lib/CMakeLists.txt
++++ b/gr-zeromq/lib/CMakeLists.txt
+@@ -31,7 +31,7 @@
+     PRIVATE ZeroMQ::ZeroMQ)
+ 
+ target_include_directories(
+-    gnuradio-zeromq PUBLIC $<INSTALL_INTERFACE:include>
++    gnuradio-zeromq PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+ 
+ #Add Windows DLL resource file if using MSVC

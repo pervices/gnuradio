@@ -1,0 +1,40 @@
+From fcbc030c10537b4c10b5b31c4b8173168477083d Mon Sep 17 00:00:00 2001
+From: SanchitKS12 <sanchit.sharma3412@gmail.com>
+Date: Wed, 5 Nov 2025 19:17:20 +0530
+Subject: [PATCH 59/80] qtgui: Deprecate Qt GUI Push Button in favor of Msg
+ Push Button
+
+Also documents the supersedence.
+
+Signed-off-by: SanchitKS12 <sanchit.sharma3412@gmail.com>
+---
+ gr-qtgui/grc/qtgui_msgpushbutton.block.yml | 2 ++
+ gr-qtgui/grc/qtgui_push_button.block.yml   | 2 +-
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/gr-qtgui/grc/qtgui_msgpushbutton.block.yml b/gr-qtgui/grc/qtgui_msgpushbutton.block.yml
+index 3688d37f41..6633ba2204 100644
+--- a/gr-qtgui/grc/qtgui_msgpushbutton.block.yml
++++ b/gr-qtgui/grc/qtgui_msgpushbutton.block.yml
+@@ -69,4 +69,6 @@ documentation: |-
+ 
+     The GUI hint can be used to position the widget within the application. The hint is of the form [tab_id@tab_index]: [row, col, row_span, col_span]. Both the tab specification and the grid position are optional.
+ 
++    This block replaces the deprecated “QT GUI Push Button” and provides a message-based interface for button events.
++    
+ file_format: 1
+diff --git a/gr-qtgui/grc/qtgui_push_button.block.yml b/gr-qtgui/grc/qtgui_push_button.block.yml
+index 4c43e4a6f2..413c4c84d7 100644
+--- a/gr-qtgui/grc/qtgui_push_button.block.yml
++++ b/gr-qtgui/grc/qtgui_push_button.block.yml
+@@ -1,6 +1,6 @@
+ id: variable_qtgui_push_button
+ label: QT GUI Push Button
+-flags: [ show_id, python ]
++flags: [show_id, python, deprecated]
+ 
+ parameters:
+ -   id: label
+-- 
+2.47.3
+

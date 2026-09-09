@@ -1,0 +1,26 @@
+From fac10cc2a4f34b26e0c8e9e06e954abb02cc9fa1 Mon Sep 17 00:00:00 2001
+From: Zaky Hermawan <zaky.hermawan9615@gmail.com>
+Date: Fri, 14 Feb 2025 05:44:10 +0700
+Subject: [PATCH 08/80] grc-qt: fix broken complexity calculation
+
+Signed-off-by: Zaky Hermawan <zaky.hermawan9615@gmail.com>
+---
+ grc/gui_qt/components/canvas/block.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/grc/gui_qt/components/canvas/block.py b/grc/gui_qt/components/canvas/block.py
+index 3c41027acc..c6efe27e64 100755
+--- a/grc/gui_qt/components/canvas/block.py
++++ b/grc/gui_qt/components/canvas/block.py
+@@ -72,7 +72,7 @@ class GUIBlock(QGraphicsItem):
+     def __init__(self, core, parent, **n):
+         super(GUIBlock, self).__init__()
+         self.core = core
+-        self.parent = self.scene()
++        self.parent = parent
+         self.font = QFont("Helvetica", 10)
+ 
+         self.create_shapes_and_labels()
+-- 
+2.47.3
+

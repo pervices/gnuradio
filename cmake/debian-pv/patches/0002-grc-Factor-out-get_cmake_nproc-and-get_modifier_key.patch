@@ -1,0 +1,249 @@
+From 0ef47fa2bf3e85dfd7814f634ea8541d5a37c704 Mon Sep 17 00:00:00 2001
+From: Martin Braun <martin.braun@ettus.com>
+Date: Wed, 20 Nov 2024 16:42:07 +0100
+Subject: [PATCH 02/80] grc: Factor out get_cmake_nproc and get_modifier_key
+
+These functions are GUI-independent, and should therefore go into
+a non-widget-specific location.
+
+Signed-off-by: Martin Braun <martin.braun@ettus.com>
+---
+ grc/core/utils/system.py          | 51 +++++++++++++++++++++++++++++++
+ grc/gui/Actions.py                |  4 +--
+ grc/gui/Dialogs.py                |  5 +--
+ grc/gui/Executor.py               |  4 +--
+ grc/gui/Utils.py                  | 42 -------------------------
+ grc/gui_qt/Utils.py               | 20 ------------
+ grc/gui_qt/components/executor.py |  2 +-
+ 7 files changed, 59 insertions(+), 69 deletions(-)
+ create mode 100644 grc/core/utils/system.py
+
+diff --git a/grc/core/utils/system.py b/grc/core/utils/system.py
+new file mode 100644
+index 0000000000..f09c869d77
+--- /dev/null
++++ b/grc/core/utils/system.py
+@@ -0,0 +1,51 @@
++"""Utilities that interact and query the system.
++
++Copyright 2008-2011,2015 Free Software Foundation, Inc.
++This file is part of GNU Radio
++
++SPDX-License-Identifier: GPL-3.0-or-later
++"""
++
++import os
++from sys import platform
++
++
++def get_modifier_key(angle_brackets=False):
++    """Get the modifier key based on platform.
++
++    Args:
++        angle_brackets: if return the modifier key with <> or not
++
++    Returns:
++        return the string with the modifier key
++    """
++    if platform == "darwin":
++        if angle_brackets:
++            return "<Meta>"
++        else:
++            return "Meta"
++    else:
++        if angle_brackets:
++            return "<Ctrl>"
++        else:
++            return "Ctrl"
++
++
++_nproc = None
++
++
++def get_cmake_nproc():
++    """ Get number of cmake processes for C++ flowgraphs """
++    global _nproc  # Cached result
++    if _nproc:
++        return _nproc
++    try:
++        # See https://docs.python.org/3.8/library/os.html#os.cpu_count
++        _nproc = len(os.sched_getaffinity(0))
++    except:
++        _nproc = os.cpu_count()
++    if not _nproc:
++        _nproc = 1
++
++    _nproc = max(_nproc // 2 - 1, 1)
++    return _nproc
+diff --git a/grc/gui/Actions.py b/grc/gui/Actions.py
+index 8e9f1f78d3..67edc745d0 100644
+--- a/grc/gui/Actions.py
++++ b/grc/gui/Actions.py
+@@ -11,7 +11,7 @@ import logging
+ 
+ from gi.repository import Gtk, Gdk, Gio, GLib, GObject
+ 
+-from . import Utils
++from ..core.utils.system import get_modifier_key
+ 
+ log = logging.getLogger(__name__)
+ 
+@@ -150,7 +150,7 @@ class Action(Gio.SimpleAction):
+         self.icon_name = icon_name
+         if keypresses:
+             self.keypresses = [
+-                kp.replace("<Ctrl>", Utils.get_modifier_key(True))
++                kp.replace("<Ctrl>", get_modifier_key(True))
+                 for kp in keypresses
+             ]
+         else:
+diff --git a/grc/gui/Dialogs.py b/grc/gui/Dialogs.py
+index 01037abee6..439abd97ee 100644
+--- a/grc/gui/Dialogs.py
++++ b/grc/gui/Dialogs.py
+@@ -13,6 +13,7 @@ from gi.repository import Gtk, GLib, Gdk, Gio
+ 
+ from . import Utils, Actions, Constants
+ from ..core import Messages
++from ..core.utils.system import get_modifier_key
+ 
+ 
+ class SimpleTextDisplay(Gtk.TextView):
+@@ -307,7 +308,7 @@ def show_help(parent):
+         *Press Ctrl+K or see menu for Keyboard - Shortcuts
+         \
+     """)
+-    markup = markup.replace("Ctrl", Utils.get_modifier_key())
++    markup = markup.replace("Ctrl", get_modifier_key())
+ 
+     MessageDialogWrapper(
+         parent, Gtk.MessageType.INFO, Gtk.ButtonsType.CLOSE, title='Help', markup=markup
+@@ -349,7 +350,7 @@ def show_keyboard_shortcuts(parent):
+     <u>Ctrl++/-</u>: Zoom in and out
+     \
+     """)
+-    markup = markup.replace("Ctrl", Utils.get_modifier_key())
++    markup = markup.replace("Ctrl", get_modifier_key())
+ 
+     MessageDialogWrapper(
+         parent, Gtk.MessageType.INFO, Gtk.ButtonsType.CLOSE, title='Keyboard - Shortcuts', markup=markup
+diff --git a/grc/gui/Executor.py b/grc/gui/Executor.py
+index 4d604ca097..48ecffdb29 100644
+--- a/grc/gui/Executor.py
++++ b/grc/gui/Executor.py
+@@ -16,7 +16,7 @@ from shutil import which as find_executable
+ from gi.repository import GLib
+ 
+ from ..core import Messages
+-from . import Utils
++from ..core.utils.system import get_cmake_nproc
+ 
+ 
+ class ExecFlowGraphThread(threading.Thread):
+@@ -91,7 +91,7 @@ class ExecFlowGraphThread(threading.Thread):
+ 
+         xterm_executable = find_executable(self.xterm_executable)
+ 
+-        nproc = Utils.get_cmake_nproc()
++        nproc = get_cmake_nproc()
+ 
+         run_command_args = f'cmake .. && cmake --build . -j{nproc} && cd ../.. && {xterm_executable} -e {run_command}'
+         Messages.send_start_exec(run_command_args)
+diff --git a/grc/gui/Utils.py b/grc/gui/Utils.py
+index 2629afaa1a..afde566026 100644
+--- a/grc/gui/Utils.py
++++ b/grc/gui/Utils.py
+@@ -150,45 +150,3 @@ def scale(coor, reverse=False):
+ def scale_scalar(coor, reverse=False):
+     factor = Constants.DPI_SCALING if not reverse else 1 / Constants.DPI_SCALING
+     return int(coor * factor)
+-
+-
+-def get_modifier_key(angle_brackets=False):
+-    """
+-    Get the modifier key based on platform.
+-
+-    Args:
+-        angle_brackets: if return the modifier key with <> or not
+-
+-    Returns:
+-        return the string with the modifier key
+-    """
+-    if platform == "darwin":
+-        if angle_brackets:
+-            return "<Meta>"
+-        else:
+-            return "Meta"
+-    else:
+-        if angle_brackets:
+-            return "<Ctrl>"
+-        else:
+-            return "Ctrl"
+-
+-
+-_nproc = None
+-
+-
+-def get_cmake_nproc():
+-    """ Get number of cmake processes for C++ flowgraphs """
+-    global _nproc  # Cached result
+-    if _nproc:
+-        return _nproc
+-    try:
+-        # See https://docs.python.org/3.8/library/os.html#os.cpu_count
+-        _nproc = len(os.sched_getaffinity(0))
+-    except:
+-        _nproc = os.cpu_count()
+-    if not _nproc:
+-        _nproc = 1
+-
+-    _nproc = max(_nproc // 2 - 1, 1)
+-    return _nproc
+diff --git a/grc/gui_qt/Utils.py b/grc/gui_qt/Utils.py
+index c575498f07..22653e65be 100644
+--- a/grc/gui_qt/Utils.py
++++ b/grc/gui_qt/Utils.py
+@@ -60,26 +60,6 @@ def num_to_str(num):
+         return str(num)
+ 
+ 
+-_nproc = None
+-
+-
+-def get_cmake_nproc():
+-    """ Get number of cmake processes for C++ flowgraphs """
+-    global _nproc  # Cached result
+-    if _nproc:
+-        return _nproc
+-    try:
+-        # See https://docs.python.org/3.8/library/os.html#os.cpu_count
+-        _nproc = len(os.sched_getaffinity(0))
+-    except:
+-        _nproc = os.cpu_count()
+-    if not _nproc:
+-        _nproc = 1
+-
+-    _nproc = max(_nproc // 2 - 1, 1)
+-    return _nproc
+-
+-
+ def make_screenshot(fg_view, file_path, transparent_bg=False):
+     if not file_path:
+         return
+diff --git a/grc/gui_qt/components/executor.py b/grc/gui_qt/components/executor.py
+index 54e9c3b38b..d3e6e9b2ce 100644
+--- a/grc/gui_qt/components/executor.py
++++ b/grc/gui_qt/components/executor.py
+@@ -6,8 +6,8 @@ import time
+ from pathlib import Path
+ from shutil import which as find_executable
+ 
+-from ..Utils import get_cmake_nproc
+ from ...core import Messages
++from ...core.utils.system import get_cmake_nproc
+ 
+ 
+ class ExecFlowGraphThread(threading.Thread):
+-- 
+2.47.3
+

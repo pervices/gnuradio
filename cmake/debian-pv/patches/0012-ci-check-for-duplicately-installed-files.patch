@@ -1,0 +1,54 @@
+From 627481c4547edf0a097cb841e493bf84cbf7958d Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Sat, 22 Feb 2025 01:12:44 +0100
+Subject: [PATCH 12/80] ci: check for duplicately installed files
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ .github/workflows/make-test.yml          |  4 +++-
+ tools/check_installation_duplicates.bash | 15 +++++++++++++++
+ 2 files changed, 18 insertions(+), 1 deletion(-)
+ create mode 100755 tools/check_installation_duplicates.bash
+
+diff --git a/.github/workflows/make-test.yml b/.github/workflows/make-test.yml
+index 3e1dab5c14..a3cc8c2b3d 100644
+--- a/.github/workflows/make-test.yml
++++ b/.github/workflows/make-test.yml
+@@ -167,7 +167,9 @@ jobs:
+         if-no-files-found: warn
+         # these things are kinda large, keep them around for 7 days: we can recreate them if we want
+         retention-days: 7
+-
++    - name: Check for installation duplicates
++      if: ${{ ! matrix.skip_upload }}
++      run: tools/check_installation_duplicates.bash /build/install_manifest.txt
+   mingw64:
+     timeout-minutes: 80
+   # All of these shall depend on the formatting check (needs: check-formatting)
+diff --git a/tools/check_installation_duplicates.bash b/tools/check_installation_duplicates.bash
+new file mode 100755
+index 0000000000..8598c887b0
+--- /dev/null
++++ b/tools/check_installation_duplicates.bash
+@@ -0,0 +1,15 @@
++#!/bin/bash
++# Checks whether any files got installed twice
++# Argument: path of install_manifest.txt from a cmake build
++infile="$1" 
++sort "${infile}" > /tmp/sorted \
++  && sort -u "${infile}" > /tmp/sorted_unique \
++  && differences="$(comm -3 /tmp/sorted /tmp/sorted_unique)" \
++  || exit 12
++
++if [[ -n "${differences}" ]]; then
++  printf '%s\n' "${differences}" | while read -r line ; do
++    printf '::error file=%s"::duplicately installed file "%s"\n' "${line}" "${line}"
++  done
++exit 42
++fi
+-- 
+2.47.3
+

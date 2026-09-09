@@ -1,0 +1,44 @@
+From 64b829fd912f5deffd3001e9e3721def13863fc1 Mon Sep 17 00:00:00 2001
+From: Martin Braun <martin.braun@ettus.com>
+Date: Wed, 22 Jan 2025 20:35:04 +0100
+Subject: [PATCH 22/80] grc: Accept failures in message sending
+
+This fixes a rare corner case seen in unit tests, where multiple tests
+interfere with one another on the sys.stdout messenger.
+
+Signed-off-by: Martin Braun <martin.braun@ettus.com>
+---
+ grc/core/Messages.py | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/grc/core/Messages.py b/grc/core/Messages.py
+index c9a4fef2e3..91a21a375c 100644
+--- a/grc/core/Messages.py
++++ b/grc/core/Messages.py
+@@ -5,8 +5,9 @@
+ #
+ 
+ 
+-import traceback
++import logging
+ import sys
++import traceback
+ 
+ #  A list of functions that can receive a message.
+ MESSENGERS_LIST = list()
+@@ -40,7 +41,11 @@ def send(message):
+         message: a message string
+     """
+     for messenger in MESSENGERS_LIST:
+-        messenger(_indent + message)
++        try:
++            messenger(_indent + message)
++        except:
++            logging.getLogger(__name__).error(
++                "Error in messenger: %s (message: %s)", messenger, message)
+ 
+ 
+ # register stdout by default
+-- 
+2.47.3
+

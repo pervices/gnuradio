@@ -1,0 +1,67 @@
+From f2e0608f39417494d963db44d09252a8a6cd0b11 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Thu, 19 Jun 2025 17:49:33 +0200
+Subject: [PATCH 47/80] CI: use sccache for MinGW64 build
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ .github/workflows/make-test.yml    | 20 +++++++++++++++++++-
+ tools/setup_cmake_cache_flags.bash |  2 ++
+ 2 files changed, 21 insertions(+), 1 deletion(-)
+
+diff --git a/.github/workflows/make-test.yml b/.github/workflows/make-test.yml
+index 7bfbd6fe0f..910d775515 100644
+--- a/.github/workflows/make-test.yml
++++ b/.github/workflows/make-test.yml
+@@ -237,14 +237,32 @@ jobs:
+           spdlog:p
+           thrift:p
+           volk:p
++          sccache:p
+     - name: Checkout code
+       uses: actions/checkout@v4
++    - name: Prepare sccache usage (if available)
++      if: ${{ vars.SCCACHE_S3_BUCKET && vars.SCCACHE_S3_ENDPOINT }}
++      id: enable_sccache
++      env:
++        SCCACHE_S3_ENDPOINT: ${{ vars.SCCACHE_S3_ENDPOINT }}
++        SCCACHE_S3_BUCKET: ${{ vars.SCCACHE_S3_BUCKET }}
++        SCCACHE_S3_REGION: ${{ vars.SCCACHE_S3_REGION }}
++      run: tools/setup_cmake_cache_flags.bash "${{ matrix.distro }}"
+     - name: CMake
++      env:
++        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY }}
++        AWS_ACCESS_KEY_ID: ${{ vars.SCCACHE_S3_KEY_ID }}
+       run: |
+         cmake -S . -B build \
+           -DCMAKE_INSTALL_PREFIX=${RUNNER_TEMP}/msys64/mingw64 \
+-          -DENABLE_DOXYGEN=OFF
++          -DENABLE_DOXYGEN=OFF \
++          ${{ steps.enable_sccache.outputs.CXX_LAUNCHER }} \
++          ${{ steps.enable_sccache.outputs.C_LAUNCHER }}
+     - name: Make
++      env:
++        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY }}
++        AWS_ACCESS_KEY_ID: ${{ vars.SCCACHE_S3_KEY_ID }}
++        SCCACHE_CONF: ${{ steps.enable_sccache.outputs.SCCACHE_CONF }}
+       run: cmake --build build
+     - name: Make Install
+       run: cmake --install build
+diff --git a/tools/setup_cmake_cache_flags.bash b/tools/setup_cmake_cache_flags.bash
+index 3bd9bfc8d8..4988950293 100755
+--- a/tools/setup_cmake_cache_flags.bash
++++ b/tools/setup_cmake_cache_flags.bash
+@@ -30,5 +30,7 @@ no_credentials = false
+ region = "${SCCACHE_S3_REGION}"
+ EOF
+ 
++add_output SCCACHE_CONF "$(realpath ~/.config/sccache/config)"
++
+ bail_with_message 'enabling sccache' "Using ${SCCACHE_BIN} ($(${SCCACHE_BIN} --version)) as sccache binary."
+ 
+-- 
+2.47.3
+
