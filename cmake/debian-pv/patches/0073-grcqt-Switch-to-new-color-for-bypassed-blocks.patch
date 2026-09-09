@@ -1,0 +1,29 @@
+From 68fed3e623be124f1ce1ee2fdcdac3209f46e39d Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?H=C3=A5kon=20V=C3=A5gsether?= <hakon.vagsether@gmail.com>
+Date: Fri, 26 Dec 2025 14:12:15 +0100
+Subject: [PATCH 73/80] grcqt: Switch to new color for bypassed blocks
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Håkon Vågsether <hakon.vagsether@gmail.com>
+---
+ grc/gui_qt/components/canvas/colors.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/grc/gui_qt/components/canvas/colors.py b/grc/gui_qt/components/canvas/colors.py
+index 3b3e33cb8d..9f3c28b54e 100755
+--- a/grc/gui_qt/components/canvas/colors.py
++++ b/grc/gui_qt/components/canvas/colors.py
+@@ -37,7 +37,7 @@ MISSING_BLOCK_BORDER_COLOR = get_color('#FF0000')
+ # Block color constants
+ BLOCK_ENABLED_COLOR = get_color('#F1ECFF')
+ BLOCK_DISABLED_COLOR = get_color('#CCCCCC')
+-BLOCK_BYPASSED_COLOR = get_color('#F4FF81')
++BLOCK_BYPASSED_COLOR = get_color('#B0C4DE')
+ 
+ CONNECTION_ENABLED_COLOR = get_color('#616161')
+ CONNECTION_DISABLED_COLOR = get_color('#BBBBBB')
+-- 
+2.47.3
+

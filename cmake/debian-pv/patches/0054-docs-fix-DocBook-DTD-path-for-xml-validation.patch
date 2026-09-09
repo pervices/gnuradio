@@ -1,0 +1,25 @@
+From 33b7fea3e6673f7a6b0d3a29d371df5fe2bf88bf Mon Sep 17 00:00:00 2001
+From: Amith Biju <amithbiju@ug.cusat.ac.in>
+Date: Tue, 10 Feb 2026 18:32:35 +0530
+Subject: [PATCH 54/80] docs: fix DocBook DTD path for xml validation
+
+Signed-off-by: Amith Biju <amithbiju@ug.cusat.ac.in>
+---
+ gr-trellis/docs/gr-trellis.xml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gr-trellis/docs/gr-trellis.xml b/gr-trellis/docs/gr-trellis.xml
+index cc645d458e..6748b49c0b 100644
+--- a/gr-trellis/docs/gr-trellis.xml
++++ b/gr-trellis/docs/gr-trellis.xml
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="ISO-8859-1"?>
+ <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+-          "docbookx.dtd" [
++          "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+   <!ENTITY test_tcm_listing SYSTEM "test_tcm.py.xml">
+   <!ENTITY test_viterbi_equalization1_listing SYSTEM "test_viterbi_equalization1.py.xml">
+ ]>
+-- 
+2.47.3
+

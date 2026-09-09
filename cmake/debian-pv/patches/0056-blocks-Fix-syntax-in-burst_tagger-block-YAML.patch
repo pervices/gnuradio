@@ -1,0 +1,30 @@
+From e1d7f307ea464f981353ebd4438561aaf8e81f85 Mon Sep 17 00:00:00 2001
+From: Lgx <ludovic.goix@gmail.com>
+Date: Wed, 22 Oct 2025 17:06:06 -0400
+Subject: [PATCH 56/80] blocks: Fix syntax in burst_tagger block YAML
+
+Fix burst_tagger block for setter and missing parens
+
+Signed-off-by: Ludovic Goix <ludovic.goix@gmail.com>
+---
+ gr-blocks/grc/blocks_burst_tagger.block.yml | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/gr-blocks/grc/blocks_burst_tagger.block.yml b/gr-blocks/grc/blocks_burst_tagger.block.yml
+index 9f8f50d8e5..38b33ee76e 100644
+--- a/gr-blocks/grc/blocks_burst_tagger.block.yml
++++ b/gr-blocks/grc/blocks_burst_tagger.block.yml
+@@ -55,8 +55,8 @@ templates:
+ cpp_templates:
+     includes: ['#include <gnuradio/blocks/burst_tagger.h>']
+     declarations: 'blocks::burst_tagger::sptr ${id};'
+-    make: "this->${id} = blocks::burst_tagger::make(${type.size};\nthis->${id}.set_true_tag(${true_key},${true_value});\n\
+-        this->${id}.set_false_tag(${false_key},${false_value});\n\t"
++    make: "this->${id} = blocks::burst_tagger::make(${type.size});\nthis->${id}->set_true_tag(${true_key},${true_value});\n\
++        this->${id}->set_false_tag(${false_key},${false_value});\n\t"
+     callbacks:
+     - set_true_tag(${true_key},${true_value})
+     - set_false_tag(${false_key},${false_value})
+-- 
+2.47.3
+

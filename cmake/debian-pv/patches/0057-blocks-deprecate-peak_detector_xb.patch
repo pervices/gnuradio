@@ -1,0 +1,42 @@
+From e9e1219bf1e673d5f1c9a61cd49ed9aef9d2037f Mon Sep 17 00:00:00 2001
+From: Moez Ahmed <101599070+Moez-Ahmed@users.noreply.github.com>
+Date: Fri, 2 May 2025 22:35:26 -0400
+Subject: [PATCH 57/80] blocks: deprecate peak_detector_xb
+
+grc: Mark peak_detector block as deprecated (Issue #7818)
+
+This commit adds the `flags: [deprecated]` property to the
+`gr-blocks/grc/blocks_peak_detector_xb.block.yml` file.
+
+This change is the first step in addressing Issue #7818, which
+identifies problems with the `peak_detector` block and recommends
+its deprecation and eventual removal.
+
+Marking the block as deprecated will:
+- Visually indicate in GNU Radio Companion (GRC) that the block
+  is no longer recommended for use (likely with an orange color
+  or warning icon).
+- Inform users that this block may be removed in future releases,
+  encouraging them to migrate to alternative solutions like
+  `peak_detector2`.
+
+Signed-off-by: Moez Ahmed <moezahmed015@gmail.com>
+---
+ gr-blocks/grc/blocks_peak_detector_xb.block.yml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gr-blocks/grc/blocks_peak_detector_xb.block.yml b/gr-blocks/grc/blocks_peak_detector_xb.block.yml
+index a921c626f4..c27a746d89 100644
+--- a/gr-blocks/grc/blocks_peak_detector_xb.block.yml
++++ b/gr-blocks/grc/blocks_peak_detector_xb.block.yml
+@@ -1,6 +1,6 @@
+ id: blocks_peak_detector_xb
+ label: Peak Detector
+-flags: [ python, cpp ]
++flags: [ python, cpp, deprecated ]
+ 
+ parameters:
+ -   id: type
+-- 
+2.47.3
+

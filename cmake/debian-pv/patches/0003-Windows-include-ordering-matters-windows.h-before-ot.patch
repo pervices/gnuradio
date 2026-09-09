@@ -1,0 +1,266 @@
+From 99aa14f6dc202bc3b3e7fecbbf4b323141dcd2fa Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Sun, 12 Jan 2025 23:48:40 +0100
+Subject: [PATCH 03/80] Windows: include ordering matters; windows.h before
+ other sys headers
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This became necessary as removing the precompiled headers unearthed a
+fail of pagesize.cc to compile. While working through the `windows.h`
+includes, other show-stoppers occurred (like including windows.h in the
+middle of a constructor), so I fixed them.
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ .../include/gnuradio/high_res_timer.h           | 11 +++++------
+ .../include/gnuradio/thread/thread.h            | 17 +++++++----------
+ gnuradio-runtime/lib/pagesize.cc                | 10 ++++++++--
+ gnuradio-runtime/lib/realtime_impl.cc           |  7 ++++---
+ gnuradio-runtime/lib/thread/thread.cc           | 11 ++++++-----
+ gnuradio-runtime/lib/tpb_thread_body.cc         |  8 ++++----
+ .../lib/vmcircbuf_createfilemapping.h           |  7 ++++---
+ .../gr/bindings/high_res_timer_python.cc        |  2 +-
+ 8 files changed, 39 insertions(+), 34 deletions(-)
+
+diff --git a/gnuradio-runtime/include/gnuradio/high_res_timer.h b/gnuradio-runtime/include/gnuradio/high_res_timer.h
+index d431d81ae6..74fa67226b 100644
+--- a/gnuradio-runtime/include/gnuradio/high_res_timer.h
++++ b/gnuradio-runtime/include/gnuradio/high_res_timer.h
+@@ -11,10 +11,6 @@
+ #ifndef INCLUDED_GNURADIO_HIGH_RES_TIMER_H
+ #define INCLUDED_GNURADIO_HIGH_RES_TIMER_H
+ 
+-#include <gnuradio/api.h>
+-#include <chrono>
+-#include <ratio>
+-
+ ////////////////////////////////////////////////////////////////////////
+ // Use architecture defines to determine the implementation
+ ////////////////////////////////////////////////////////////////////////
+@@ -22,16 +18,21 @@
+ #define GNURADIO_HRT_USE_CLOCK_GETTIME
+ #include <ctime>
+ #elif defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
++#include <windows.h>
+ #define GNURADIO_HRT_USE_QUERY_PERFORMANCE_COUNTER
+ #elif defined(macintosh) || defined(__APPLE__) || defined(__APPLE_CC__)
++#include <mach/mach_time.h>
+ #define GNURADIO_HRT_USE_MACH_ABSOLUTE_TIME
+ #elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+ #define GNURADIO_HRT_USE_CLOCK_GETTIME
+ #include <ctime>
+ #else
++#include <ratio>
+ #define GNURADIO_HRT_USE_GENERIC_CLOCK
+ #endif
+ 
++#include <gnuradio/api.h>
++#include <chrono>
+ 
+ ////////////////////////////////////////////////////////////////////////
+ namespace gr {
+@@ -79,7 +80,6 @@ inline gr::high_res_timer_type gr::high_res_timer_tps(void) { return 1000000000U
+ 
+ ////////////////////////////////////////////////////////////////////////
+ #ifdef GNURADIO_HRT_USE_MACH_ABSOLUTE_TIME
+-#include <mach/mach_time.h>
+ 
+ inline gr::high_res_timer_type gr::high_res_timer_now(void)
+ {
+@@ -101,7 +101,6 @@ inline gr::high_res_timer_type gr::high_res_timer_tps(void)
+ 
+ ////////////////////////////////////////////////////////////////////////
+ #ifdef GNURADIO_HRT_USE_QUERY_PERFORMANCE_COUNTER
+-#include <windows.h>
+ 
+ inline gr::high_res_timer_type gr::high_res_timer_now(void)
+ {
+diff --git a/gnuradio-runtime/include/gnuradio/thread/thread.h b/gnuradio-runtime/include/gnuradio/thread/thread.h
+index 3683c9a124..42019b104a 100644
+--- a/gnuradio-runtime/include/gnuradio/thread/thread.h
++++ b/gnuradio-runtime/include/gnuradio/thread/thread.h
+@@ -11,6 +11,13 @@
+ #ifndef INCLUDED_THREAD_H
+ #define INCLUDED_THREAD_H
+ 
++#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
++#ifndef WIN32_LEAN_AND_MEAN
++#define WIN32_LEAN_AND_MEAN
++#endif
++#include <windows.h>
++#endif
++
+ #include <gnuradio/api.h>
+ #include <boost/thread/barrier.hpp>
+ #include <boost/thread/condition_variable.hpp>
+@@ -20,16 +27,6 @@
+ #include <memory>
+ #include <vector>
+ 
+-#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
+-
+-#ifndef WIN32_LEAN_AND_MEAN
+-#define WIN32_LEAN_AND_MEAN
+-#endif
+-
+-#include <windows.h>
+-
+-#endif
+-
+ namespace gr {
+ namespace thread {
+ 
+diff --git a/gnuradio-runtime/lib/pagesize.cc b/gnuradio-runtime/lib/pagesize.cc
+index 138dfe94ab..2b5718c0da 100644
+--- a/gnuradio-runtime/lib/pagesize.cc
++++ b/gnuradio-runtime/lib/pagesize.cc
+@@ -13,6 +13,14 @@
+ #include "config.h"
+ #endif
+ 
++#if defined(_WIN32)
++// always include <windows.h> first
++#include <windows.h>
++
++// Sysinfoapi.h MUST NOT BE included before windows.h
++#include <Sysinfoapi.h>
++#endif
++
+ #include "pagesize.h"
+ #include <gnuradio/logger.h>
+ 
+@@ -20,8 +28,6 @@ namespace gr {
+ 
+ #if defined(_WIN32)
+ 
+-#include <Sysinfoapi.h>
+-
+ int native_pagesize(const gr::logger_ptr logger)
+ {
+     SYSTEM_INFO win_sysinfo;
+diff --git a/gnuradio-runtime/lib/realtime_impl.cc b/gnuradio-runtime/lib/realtime_impl.cc
+index 9aeabcf84f..4a121fd5f0 100644
+--- a/gnuradio-runtime/lib/realtime_impl.cc
++++ b/gnuradio-runtime/lib/realtime_impl.cc
+@@ -12,6 +12,10 @@
+ #include <config.h>
+ #endif
+ 
++#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
++#include <windows.h>
++#endif
++
+ #include "realtime_impl.h"
+ #include <gnuradio/logger.h>
+ #include <gnuradio/prefs.h>
+@@ -55,9 +59,6 @@ static int rescale_virtual_pri(int virtual_pri, int min_real_pri, int max_real_p
+ 
+ 
+ #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
+-
+-#include <windows.h>
+-
+ namespace gr {
+ namespace realtime {
+ 
+diff --git a/gnuradio-runtime/lib/thread/thread.cc b/gnuradio-runtime/lib/thread/thread.cc
+index 2d0f37b91f..380ed8f348 100644
+--- a/gnuradio-runtime/lib/thread/thread.cc
++++ b/gnuradio-runtime/lib/thread/thread.cc
+@@ -8,11 +8,6 @@
+  *
+  */
+ 
+-#include <gnuradio/logger.h>
+-#include <gnuradio/thread/thread.h>
+-#include <spdlog/fmt/fmt.h>
+-#include <stdexcept>
+-
+ /* Platform detection & Platform-specific includes */
+ #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
+ #define __GR_TARGET_WIN__
+@@ -32,6 +27,12 @@
+ #include <regex>
+ #endif
+ 
++/* Platform-independent includes */
++
++#include <gnuradio/logger.h>
++#include <gnuradio/thread/thread.h>
++#include <spdlog/fmt/fmt.h>
++#include <stdexcept>
+ 
+ namespace gr {
+ namespace thread {
+diff --git a/gnuradio-runtime/lib/tpb_thread_body.cc b/gnuradio-runtime/lib/tpb_thread_body.cc
+index e70b7cb366..05a23936dd 100644
+--- a/gnuradio-runtime/lib/tpb_thread_body.cc
++++ b/gnuradio-runtime/lib/tpb_thread_body.cc
+@@ -12,12 +12,15 @@
+ #include <config.h>
+ #endif
+ 
++#if defined(_MSC_VER) || defined(__MINGW32__)
++#include <windows.h>
++#endif
++
+ #include "tpb_thread_body.h"
+ #include <gnuradio/pmt_fmt.h>
+ #include <gnuradio/prefs.h>
+ #include <pmt/pmt.h>
+ #include <boost/thread.hpp>
+-#include <iostream>
+ 
+ namespace gr {
+ 
+@@ -26,10 +29,7 @@ tpb_thread_body::tpb_thread_body(block_sptr block,
+                                  int max_noutput_items)
+     : d_exec(block, max_noutput_items)
+ {
+-    // std::cerr << "tpb_thread_body: " << block << std::endl;
+-
+ #if defined(_MSC_VER) || defined(__MINGW32__)
+-#include <windows.h>
+     thread::set_thread_name(GetCurrentThread(),
+                             block->name() + std::to_string(block->unique_id()));
+ #else
+diff --git a/gnuradio-runtime/lib/vmcircbuf_createfilemapping.h b/gnuradio-runtime/lib/vmcircbuf_createfilemapping.h
+index 9aa64b2eee..3dac8fab63 100644
+--- a/gnuradio-runtime/lib/vmcircbuf_createfilemapping.h
++++ b/gnuradio-runtime/lib/vmcircbuf_createfilemapping.h
+@@ -11,13 +11,14 @@
+ #ifndef GR_VMCIRCBUF_CREATEFILEMAPPING_H
+ #define GR_VMCIRCBUF_CREATEFILEMAPPING_H
+ 
+-#include "vmcircbuf.h"
+-#include <gnuradio/api.h>
+-
+ #ifdef HAVE_CREATEFILEMAPPING
+ #include <windows.h>
+ #endif
+ 
++#include "vmcircbuf.h"
++#include <gnuradio/api.h>
++
++
+ namespace gr {
+ 
+ /*!
+diff --git a/gnuradio-runtime/python/gnuradio/gr/bindings/high_res_timer_python.cc b/gnuradio-runtime/python/gnuradio/gr/bindings/high_res_timer_python.cc
+index 78033196d3..4218071ab4 100644
+--- a/gnuradio-runtime/python/gnuradio/gr/bindings/high_res_timer_python.cc
++++ b/gnuradio-runtime/python/gnuradio/gr/bindings/high_res_timer_python.cc
+@@ -14,7 +14,7 @@
+ /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
+ /* BINDTOOL_USE_PYGCCXML(0)                                                        */
+ /* BINDTOOL_HEADER_FILE(high_res_timer.h)                                        */
+-/* BINDTOOL_HEADER_FILE_HASH(3992258b56f41917eef9df090ef2d185)                     */
++/* BINDTOOL_HEADER_FILE_HASH(c1d38d208896a952ff0dcfb57e96d812)                     */
+ /***********************************************************************************/
+ 
+ #include <pybind11/complex.h>
+-- 
+2.47.3
+

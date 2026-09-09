@@ -1,0 +1,368 @@
+From cd8884bbe2a2cb491baef088acd6648eced4d9b2 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?H=C3=A5kon=20V=C3=A5gsether?= <hakon.vagsether@gmail.com>
+Date: Sun, 30 Mar 2025 21:11:44 +0200
+Subject: [PATCH 34/80] grc: Mostly cosmetic changes to pluggable workflows PR
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Håkon Vågsether <hakon.vagsether@gmail.com>
+---
+ grc/blocks/cpp_hb_nogui.workflow.yml                |  2 +-
+ grc/blocks/cpp_hb_qt_gui.workflow.yml               |  2 +-
+ grc/blocks/cpp_nogui.workflow.yml                   |  2 +-
+ grc/blocks/cpp_qt_gui.workflow.yml                  |  2 +-
+ grc/blocks/python_bokeh_gui.workflow.yml            |  2 +-
+ grc/blocks/python_hb_nogui.workflow.yml             |  2 +-
+ grc/blocks/python_hb_qt_gui.workflow.yml            |  2 +-
+ grc/blocks/python_nogui.workflow.yml                |  2 +-
+ grc/blocks/python_qt_gui.workflow.yml               |  2 +-
+ grc/core/Config.py                                  |  1 -
+ grc/core/blocks/options.py                          |  4 ++--
+ grc/workflows/cpp_hb_nogui/CMakeLists.txt.mako      |  4 ++--
+ .../cpp_hb_nogui/flow_graph_hb_nogui.cpp.mako       |  2 +-
+ .../cpp_hb_nogui/flow_graph_hb_nogui.hpp.mako       |  4 ----
+ grc/workflows/cpp_hb_qt_gui/CMakeLists.txt.mako     |  4 ++--
+ .../cpp_hb_qt_gui/flow_graph_hb_qt_gui.cpp.mako     |  2 +-
+ .../cpp_hb_qt_gui/flow_graph_hb_qt_gui.hpp.mako     |  4 ----
+ grc/workflows/cpp_nogui/flow_graph_nogui.cpp.mako   |  2 +-
+ grc/workflows/cpp_nogui/flow_graph_nogui.hpp.mako   |  4 ----
+ grc/workflows/cpp_qt_gui/CMakeLists.txt.mako        |  2 +-
+ grc/workflows/cpp_qt_gui/flow_graph_qt_gui.cpp.mako |  2 +-
+ grc/workflows/cpp_qt_gui/flow_graph_qt_gui.hpp.mako | 13 +++++--------
+ .../python_bokeh_gui/flow_graph_bokeh_gui.py.mako   |  2 +-
+ grc/workflows/python_hb_nogui/hier_block.py         |  5 -----
+ 24 files changed, 26 insertions(+), 47 deletions(-)
+
+diff --git a/grc/blocks/cpp_hb_nogui.workflow.yml b/grc/blocks/cpp_hb_nogui.workflow.yml
+index cc92b7ae24..841178816b 100644
+--- a/grc/blocks/cpp_hb_nogui.workflow.yml
++++ b/grc/blocks/cpp_hb_nogui.workflow.yml
+@@ -1,5 +1,5 @@
+ id: cpp_hb_nogui_workflow
+-description: "c++ hier block no gui workflow"
++description: "C++ hier block no GUI workflow"
+ output_language: cpp
+ output_language_label: C++
+ generator_module: gnuradio.grc.workflows.cpp_hb_nogui
+diff --git a/grc/blocks/cpp_hb_qt_gui.workflow.yml b/grc/blocks/cpp_hb_qt_gui.workflow.yml
+index 903d102ba9..c6edd6b906 100644
+--- a/grc/blocks/cpp_hb_qt_gui.workflow.yml
++++ b/grc/blocks/cpp_hb_qt_gui.workflow.yml
+@@ -1,5 +1,5 @@
+ id: cpp_hb_qt_gui_workflow
+-description: "c++ hier block qt gui workflow"
++description: "C++ hier block Qt GUI workflow"
+ output_language: cpp
+ output_language_label: C++
+ generator_module: gnuradio.grc.workflows.cpp_hb_qt_gui
+diff --git a/grc/blocks/cpp_nogui.workflow.yml b/grc/blocks/cpp_nogui.workflow.yml
+index 96bf9caeb4..4711f55486 100644
+--- a/grc/blocks/cpp_nogui.workflow.yml
++++ b/grc/blocks/cpp_nogui.workflow.yml
+@@ -1,5 +1,5 @@
+ id: cpp_nogui_workflow
+-description: "c++ no gui workflow"
++description: "C++ no GUI workflow"
+ output_language: cpp
+ output_language_label: C++
+ generator_module: gnuradio.grc.workflows.cpp_nogui
+diff --git a/grc/blocks/cpp_qt_gui.workflow.yml b/grc/blocks/cpp_qt_gui.workflow.yml
+index ea8aad56ee..87995ac7a4 100644
+--- a/grc/blocks/cpp_qt_gui.workflow.yml
++++ b/grc/blocks/cpp_qt_gui.workflow.yml
+@@ -1,5 +1,5 @@
+ id: cpp_qt_gui_workflow
+-description: "c++ qt gui workflow"
++description: "C++ Qt GUI workflow"
+ output_language: cpp
+ output_language_label: C++
+ generator_module: gnuradio.grc.workflows.cpp_qt_gui
+diff --git a/grc/blocks/python_bokeh_gui.workflow.yml b/grc/blocks/python_bokeh_gui.workflow.yml
+index bdb37dca57..09ce23d5e1 100644
+--- a/grc/blocks/python_bokeh_gui.workflow.yml
++++ b/grc/blocks/python_bokeh_gui.workflow.yml
+@@ -1,5 +1,5 @@
+ id: python_bokeh_gui_workflow
+-description: "python bokeh gui workflow"
++description: "Python Bokeh GUI workflow"
+ output_language: python
+ output_language_label: Python
+ generator_module: gnuradio.grc.workflows.python_bokeh_gui
+diff --git a/grc/blocks/python_hb_nogui.workflow.yml b/grc/blocks/python_hb_nogui.workflow.yml
+index 49e7e1e58d..531638446c 100644
+--- a/grc/blocks/python_hb_nogui.workflow.yml
++++ b/grc/blocks/python_hb_nogui.workflow.yml
+@@ -1,5 +1,5 @@
+ id: python_hb_nogui_workflow
+-description: "python hier block no gui workflow"
++description: "Python hier block no GUI workflow"
+ output_language: python
+ output_language_label: Python
+ generator_module: gnuradio.grc.workflows.python_hb_nogui
+diff --git a/grc/blocks/python_hb_qt_gui.workflow.yml b/grc/blocks/python_hb_qt_gui.workflow.yml
+index 16735f3667..642c58515f 100644
+--- a/grc/blocks/python_hb_qt_gui.workflow.yml
++++ b/grc/blocks/python_hb_qt_gui.workflow.yml
+@@ -1,5 +1,5 @@
+ id: python_hb_qt_gui_workflow
+-description: "python hier block qt gui workflow"
++description: "Python hier block Qt GUI workflow"
+ output_language: python
+ output_language_label: Python
+ generator_module: gnuradio.grc.workflows.python_hb_qt_gui
+diff --git a/grc/blocks/python_nogui.workflow.yml b/grc/blocks/python_nogui.workflow.yml
+index ca5ffab672..1d38e87bfa 100644
+--- a/grc/blocks/python_nogui.workflow.yml
++++ b/grc/blocks/python_nogui.workflow.yml
+@@ -1,5 +1,5 @@
+ id: python_nogui_workflow
+-description: "python no gui workflow"
++description: "Python no GUI workflow"
+ output_language: python
+ output_language_label: Python
+ generator_module: gnuradio.grc.workflows.python_nogui
+diff --git a/grc/blocks/python_qt_gui.workflow.yml b/grc/blocks/python_qt_gui.workflow.yml
+index 3716f2af03..17de24c85c 100644
+--- a/grc/blocks/python_qt_gui.workflow.yml
++++ b/grc/blocks/python_qt_gui.workflow.yml
+@@ -1,5 +1,5 @@
+ id: python_qt_gui_workflow
+-description: "python qt gui workflow"
++description: "Python Qt GUI workflow"
+ output_language: python
+ output_language_label: Python
+ generator_module: gnuradio.grc.workflows.python_qt_gui
+diff --git a/grc/core/Config.py b/grc/core/Config.py
+index d15d2d1a38..b7d52e5fa5 100644
+--- a/grc/core/Config.py
++++ b/grc/core/Config.py
+@@ -8,7 +8,6 @@ SPDX-License-Identifier: GPL-2.0-or-later
+ import os
+ from os.path import expanduser, normpath, expandvars, exists
+ from collections import OrderedDict
+-from gnuradio import gr
+ 
+ from ..main import get_state_directory, get_config_file_path
+ from . import Constants
+diff --git a/grc/core/blocks/options.py b/grc/core/blocks/options.py
+index 201a88effa..b04638a016 100644
+--- a/grc/core/blocks/options.py
++++ b/grc/core/blocks/options.py
+@@ -45,7 +45,7 @@ class Options(Block):
+                  hide="${ ('none' if copyright else 'part') }",
+                  ),
+             dict(id='description',
+-                 label='description',
++                 label='Description',
+                  workflow='',
+                  dtype='string',
+                  default='',
+@@ -186,7 +186,7 @@ class Options(Block):
+ 
+     def parse_workflows(self) -> None:
+         """
+-        Read all workflow yml file
++        Read all workflow yml files
+         for each workflow, use pair for output_language, generate_options and their label
+         then, put it on codegen_options
+ 
+diff --git a/grc/workflows/cpp_hb_nogui/CMakeLists.txt.mako b/grc/workflows/cpp_hb_nogui/CMakeLists.txt.mako
+index 5bb0c3012f..78e6a63b42 100644
+--- a/grc/workflows/cpp_hb_nogui/CMakeLists.txt.mako
++++ b/grc/workflows/cpp_hb_nogui/CMakeLists.txt.mako
+@@ -17,8 +17,8 @@ version_list = config.version_parts
+ short_version = '.'.join(version_list[0:2])
+ %>\
+ 
+-cmake_minimum_required(VERSION 3.8)
+-set(CMAKE_CXX_STANDARD 14)
++cmake_minimum_required(VERSION 3.16)
++set(CMAKE_CXX_STANDARD 17)
+ 
+ project(${class_name})
+ 
+diff --git a/grc/workflows/cpp_hb_nogui/flow_graph_hb_nogui.cpp.mako b/grc/workflows/cpp_hb_nogui/flow_graph_hb_nogui.cpp.mako
+index 8bbc712121..474cf970c2 100644
+--- a/grc/workflows/cpp_hb_nogui/flow_graph_hb_nogui.cpp.mako
++++ b/grc/workflows/cpp_hb_nogui/flow_graph_hb_nogui.cpp.mako
+@@ -18,7 +18,7 @@ GNU Radio version: ${config.version}
+ % endif
+ 
+ % if parameters:
+-
++#include <boost/program_options.hpp>
+ namespace po = boost::program_options;
+ 
+ % endif
+diff --git a/grc/workflows/cpp_hb_nogui/flow_graph_hb_nogui.hpp.mako b/grc/workflows/cpp_hb_nogui/flow_graph_hb_nogui.hpp.mako
+index b2be01e6be..77d2e2901e 100644
+--- a/grc/workflows/cpp_hb_nogui/flow_graph_hb_nogui.hpp.mako
++++ b/grc/workflows/cpp_hb_nogui/flow_graph_hb_nogui.hpp.mako
+@@ -24,10 +24,6 @@ ${inc}
+ % endfor
+ 
+ 
+-% if parameters:
+-#include <boost/program_options.hpp>
+-% endif
+-
+ using namespace gr;
+ 
+ <%
+diff --git a/grc/workflows/cpp_hb_qt_gui/CMakeLists.txt.mako b/grc/workflows/cpp_hb_qt_gui/CMakeLists.txt.mako
+index fa685b20b2..ef21c284cb 100644
+--- a/grc/workflows/cpp_hb_qt_gui/CMakeLists.txt.mako
++++ b/grc/workflows/cpp_hb_qt_gui/CMakeLists.txt.mako
+@@ -17,8 +17,8 @@ version_list = config.version_parts
+ short_version = '.'.join(version_list[0:2])
+ %>\
+ 
+-cmake_minimum_required(VERSION 3.8)
+-set(CMAKE_CXX_STANDARD 14)
++cmake_minimum_required(VERSION 3.16)
++set(CMAKE_CXX_STANDARD 17)
+ 
+ project(${class_name})
+ 
+diff --git a/grc/workflows/cpp_hb_qt_gui/flow_graph_hb_qt_gui.cpp.mako b/grc/workflows/cpp_hb_qt_gui/flow_graph_hb_qt_gui.cpp.mako
+index 37e72b6d79..da65b4d744 100644
+--- a/grc/workflows/cpp_hb_qt_gui/flow_graph_hb_qt_gui.cpp.mako
++++ b/grc/workflows/cpp_hb_qt_gui/flow_graph_hb_qt_gui.cpp.mako
+@@ -18,7 +18,7 @@ GNU Radio version: ${config.version}
+ % endif
+ 
+ % if parameters:
+-
++#include <boost/program_options.hpp>
+ namespace po = boost::program_options;
+ 
+ % endif
+diff --git a/grc/workflows/cpp_hb_qt_gui/flow_graph_hb_qt_gui.hpp.mako b/grc/workflows/cpp_hb_qt_gui/flow_graph_hb_qt_gui.hpp.mako
+index b2be01e6be..77d2e2901e 100644
+--- a/grc/workflows/cpp_hb_qt_gui/flow_graph_hb_qt_gui.hpp.mako
++++ b/grc/workflows/cpp_hb_qt_gui/flow_graph_hb_qt_gui.hpp.mako
+@@ -24,10 +24,6 @@ ${inc}
+ % endfor
+ 
+ 
+-% if parameters:
+-#include <boost/program_options.hpp>
+-% endif
+-
+ using namespace gr;
+ 
+ <%
+diff --git a/grc/workflows/cpp_nogui/flow_graph_nogui.cpp.mako b/grc/workflows/cpp_nogui/flow_graph_nogui.cpp.mako
+index 0d251d1a07..17812cad74 100644
+--- a/grc/workflows/cpp_nogui/flow_graph_nogui.cpp.mako
++++ b/grc/workflows/cpp_nogui/flow_graph_nogui.cpp.mako
+@@ -18,7 +18,7 @@ GNU Radio version: ${config.version}
+ % endif
+ 
+ % if parameters:
+-
++#include <boost/program_options.hpp>
+ namespace po = boost::program_options;
+ 
+ % endif
+diff --git a/grc/workflows/cpp_nogui/flow_graph_nogui.hpp.mako b/grc/workflows/cpp_nogui/flow_graph_nogui.hpp.mako
+index 59549369f0..10ddc84d05 100644
+--- a/grc/workflows/cpp_nogui/flow_graph_nogui.hpp.mako
++++ b/grc/workflows/cpp_nogui/flow_graph_nogui.hpp.mako
+@@ -24,10 +24,6 @@ ${inc}
+ % endfor
+ 
+ 
+-% if parameters:
+-#include <boost/program_options.hpp>
+-% endif
+-
+ using namespace gr;
+ 
+ <%
+diff --git a/grc/workflows/cpp_qt_gui/CMakeLists.txt.mako b/grc/workflows/cpp_qt_gui/CMakeLists.txt.mako
+index a294e00de7..495a77eaf1 100644
+--- a/grc/workflows/cpp_qt_gui/CMakeLists.txt.mako
++++ b/grc/workflows/cpp_qt_gui/CMakeLists.txt.mako
+@@ -18,7 +18,7 @@ short_version = '.'.join(version_list[0:2])
+ %>\
+ 
+ cmake_minimum_required(VERSION 3.16)
+-set(CMAKE_CXX_STANDARD 14)
++set(CMAKE_CXX_STANDARD 17)
+ 
+ project(${class_name})
+ 
+diff --git a/grc/workflows/cpp_qt_gui/flow_graph_qt_gui.cpp.mako b/grc/workflows/cpp_qt_gui/flow_graph_qt_gui.cpp.mako
+index a1ff82c30a..b8b08cc309 100644
+--- a/grc/workflows/cpp_qt_gui/flow_graph_qt_gui.cpp.mako
++++ b/grc/workflows/cpp_qt_gui/flow_graph_qt_gui.cpp.mako
+@@ -18,7 +18,7 @@ GNU Radio version: ${config.version}
+ % endif
+ 
+ % if parameters:
+-
++#include <boost/program_options.hpp>
+ namespace po = boost::program_options;
+ 
+ % endif
+diff --git a/grc/workflows/cpp_qt_gui/flow_graph_qt_gui.hpp.mako b/grc/workflows/cpp_qt_gui/flow_graph_qt_gui.hpp.mako
+index 666d828792..0ae85b79e8 100644
+--- a/grc/workflows/cpp_qt_gui/flow_graph_qt_gui.hpp.mako
++++ b/grc/workflows/cpp_qt_gui/flow_graph_qt_gui.hpp.mako
+@@ -23,17 +23,14 @@ GNU Radio version: ${config.version}
+ ${inc}
+ % endfor
+ 
+-#include <QVBoxLayout>
+-#include <QScrollArea>
+-#include <QWidget>
+-#include <QGridLayout>
+-#include <QSettings>
+ #include <QApplication>
+ #include <QCloseEvent>
++#include <QGridLayout>
++#include <QScrollArea>
++#include <QSettings>
++#include <QVBoxLayout>
++#include <QWidget>
+ 
+-% if parameters:
+-#include <boost/program_options.hpp>
+-% endif
+ 
+ using namespace gr;
+ 
+diff --git a/grc/workflows/python_bokeh_gui/flow_graph_bokeh_gui.py.mako b/grc/workflows/python_bokeh_gui/flow_graph_bokeh_gui.py.mako
+index 68aaf466b9..79c38d78a7 100644
+--- a/grc/workflows/python_bokeh_gui/flow_graph_bokeh_gui.py.mako
++++ b/grc/workflows/python_bokeh_gui/flow_graph_bokeh_gui.py.mako
+@@ -226,7 +226,7 @@ def main(top_block_cls=${class_name}, options=None):
+         ${'snippets_main_after_start(tb)' if snippets['main_after_start'] else ''}
+         bokehgui.utils.run_server(tb, sizing_mode = "${flow_graph.get_option('sizing_mode')}",  widget_placement =  ${flow_graph.get_option('placement')}, window_size =  ${flow_graph.get_option('window_size')})
+     finally:
+-        tb.logger.info("Exiting the simulation. Stopping Bokeh Server")
++        tb.logger.info("Exiting the flow graph. Stopping Bokeh Server")
+         tb.stop()
+         tb.wait()
+         ${'snippets_main_after_stop(tb)' if snippets['main_after_stop'] else ''}
+diff --git a/grc/workflows/python_hb_nogui/hier_block.py b/grc/workflows/python_hb_nogui/hier_block.py
+index 97328c09fa..2970070a46 100644
+--- a/grc/workflows/python_hb_nogui/hier_block.py
++++ b/grc/workflows/python_hb_nogui/hier_block.py
+@@ -29,11 +29,6 @@ class PythonHierBlockNoGuiGenerator(HierBlockGeneratorMixin, PythonNoGuiGenerato
+             os.path.dirname(__file__), "flow_graph_hb_nogui.py.mako"
+         )
+         super().__init__(flow_graph, self.get_output_dir_for_hier_block(flow_graph), py_template=py_template)
+-        # self.set_output_dir_for_hier_block()
+-        # platform = flow_graph.parent
+-        # output_dir = platform.config.hier_block_lib_dir
+-        # if not os.path.exists(output_dir):
+-        # os.mkdir(output_dir)
+ 
+         self._mode = Constants.HIER_BLOCK_FILE_MODE
+         self.file_path_yml = os.path.splitext(self.file_path)[0] + '.block.yml'
+-- 
+2.47.3
+

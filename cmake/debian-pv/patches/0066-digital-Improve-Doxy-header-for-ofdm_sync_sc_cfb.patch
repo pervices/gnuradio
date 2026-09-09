@@ -1,0 +1,72 @@
+From 9033fa85c72c8d826990563c26db342a87ec98d0 Mon Sep 17 00:00:00 2001
+From: Martin Braun <martin.braun@ettus.com>
+Date: Wed, 11 Jun 2025 17:24:26 +0200
+Subject: [PATCH 66/80] digital: Improve Doxy header for ofdm_sync_sc_cfb
+
+- Fix formatting that makes it harder for Doxygen to operate
+- Improve comment on use_even_carriers
+
+Signed-off-by: Martin Braun <martin.braun@ettus.com>
+---
+ .../gnuradio/digital/ofdm_sync_sc_cfb.h       | 24 +++++++++++--------
+ .../bindings/ofdm_sync_sc_cfb_python.cc       |  2 +-
+ 2 files changed, 15 insertions(+), 11 deletions(-)
+
+diff --git a/gr-digital/include/gnuradio/digital/ofdm_sync_sc_cfb.h b/gr-digital/include/gnuradio/digital/ofdm_sync_sc_cfb.h
+index 2fe18b1215..868aef8b25 100644
+--- a/gr-digital/include/gnuradio/digital/ofdm_sync_sc_cfb.h
++++ b/gr-digital/include/gnuradio/digital/ofdm_sync_sc_cfb.h
+@@ -43,23 +43,27 @@ namespace digital {
+  * \f[
+  * R(d) = \frac{1}{2} \sum_{k=0}^{N-1} |r_{k+d}|^2,
+  * \f]
+- * i.e., we estimate the energy from *both* half-symbols. This avoids spurious detects
+- * at the end of a burst, when the energy level suddenly drops.
++ * i.e., we estimate the energy from *both* half-symbols. This avoids spurious
++ * detections at the end of a burst, when the energy level suddenly drops.
+  *
+- * [1] Schmidl, T.M. and Cox, D.C., "Robust frequency and timing synchronization for
+- * OFDM", Communications, IEEE Transactions on, 1997.
++ * [1] Schmidl, T.M. and Cox, D.C., "Robust frequency and timing
++ * synchronization for OFDM", Communications, IEEE Transactions on, 1997.
+  */
+ class DIGITAL_API ofdm_sync_sc_cfb : virtual public hier_block2
+ {
+ public:
+     typedef std::shared_ptr<ofdm_sync_sc_cfb> sptr;
+ 
+-    /*! \param fft_len FFT length
+-     *  \param cp_len Length of the guard interval (cyclic prefix) in samples
+-     *  \param use_even_carriers If true, the carriers in the sync preamble are occupied
+-     * such that the even carriers are used (0, 2, 4, ...). If you use all carriers, that
+-     * would include the DC carrier, so be careful. \param threshold detection threshold.
+-     * Default is 0.9.
++    /*!
++     * \param fft_len FFT length
++     * \param cp_len Length of the guard interval (cyclic prefix) in samples
++     * \param use_even_carriers If true, this indicates that carriers in the
++     *                          sync preamble are occupied such that the even
++     *                          carriers are used (0, 2, 4, ...). If you use all
++     *                          carriers, that would include the DC carrier,
++     *                          so be careful. If false, it indicates the odd
++     *                          carriers are used (1, 3, 5, ...).
++     * \param threshold detection threshold. Default is 0.9.
+      */
+     static sptr
+     make(int fft_len, int cp_len, bool use_even_carriers = false, float threshold = 0.9);
+diff --git a/gr-digital/python/digital/bindings/ofdm_sync_sc_cfb_python.cc b/gr-digital/python/digital/bindings/ofdm_sync_sc_cfb_python.cc
+index f34a77c980..c997b84f32 100644
+--- a/gr-digital/python/digital/bindings/ofdm_sync_sc_cfb_python.cc
++++ b/gr-digital/python/digital/bindings/ofdm_sync_sc_cfb_python.cc
+@@ -14,7 +14,7 @@
+ /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
+ /* BINDTOOL_USE_PYGCCXML(0)                                                        */
+ /* BINDTOOL_HEADER_FILE(ofdm_sync_sc_cfb.h)                                        */
+-/* BINDTOOL_HEADER_FILE_HASH(8ec48d9c442f1699e3fa727ad27bfca1)                     */
++/* BINDTOOL_HEADER_FILE_HASH(dcf291db4c2b6cde4698acdc2a787a72)                     */
+ /***********************************************************************************/
+ 
+ #include <pybind11/complex.h>
+-- 
+2.47.3
+

@@ -2,30 +2,31 @@ Source: gnuradiopv
 Section: comm
 Priority: optional
 Maintainer: Per Vices <packages@pervices.com>
-Build-Depends: cmake,
-               debhelper (>= 12~),
+Build-Depends-Indep: doxygen-latex
+Build-Depends: cmake (>= 3.16.3),
+               cppzmq-dev [!hurd-amd64],
+               debhelper-compat (= 13),
                dh-python,
-               doxygen,
+               dpkg-dev (>= 1.22.5),
                gir1.2-gtk-3.0,
                gir1.2-pango-1.0,
                graphviz,
-               libad9361-dev,
+               libad9361-dev [linux-any],
                libasound2-dev,
                libboost-date-time-dev,
                libboost-dev,
                libboost-program-options-dev,
                libboost-regex-dev,
-               libboost-system-dev,
                libboost-test-dev,
                libboost-thread-dev,
                libcodec2-dev,
-               libcppunit-dev (>=1.9.14),
+               libcppunit-dev,
                libfftw3-dev,
-               libfontconfig1-dev,
+               libfontconfig-dev,
                libgmp-dev,
-               libgsl-dev (>= 2.0),
+               libgsl-dev,
                libgsm1-dev,
-               libiio-dev,
+               libiio-dev [linux-any],
                libjack-jackd2-dev,
                libjs-mathjax,
                libpulse-dev,
@@ -35,56 +36,54 @@ Build-Depends: cmake,
                libsdl1.2-dev,
                libsndfile1-dev,
                libsoapysdr-dev,
-               libthrift-dev (>= 0.13.0) [amd64 arm64 armel armhf i386],
-               libuhdpv-dev,
-               libunwind-dev [amd64 arm64 armel armhf hppa i386 ia64 mips mips64 mips64el mipsel powerpc powerpcspe ppc64 ppc64el sh4],
-               libusb-1.0-0-dev [!kfreebsd-any],
-               libusb2-dev [kfreebsd-any],
-               libvolk2-dev (>= 2.4.1) | libvolk-dev,
+               libspdlog-dev,
+               libthrift-dev (>= 0.13.0-5) [amd64 arm64 armel armhf i386 loong64 mips64el mipsel ppc64el s390x riscv64],
+               libuhd-dev (>= 4),
+               libunwind-dev [amd64 arm64 armel armhf hppa i386 ia64 loong64 mipsel mips64el powerpc ppc64 ppc64el sh4],
+               libusb-1.0-0-dev,
+               libvolk-dev,
                libxi-dev,
                libxrender-dev,
-               cppzmq-dev | libzmq3-dev [!hurd-i386] | libzmq-dev [!hurd-i386],
                ninja-build,
-               pkg-config,
+               pkgconf,
                portaudio19-dev,
                pybind11-dev,
                python3-click,
-               python3-click-plugins,
                python3-dev,
                python3-gi,
                python3-gi-cairo,
                python3-jsonschema,
                python3-lxml,
                python3-mako,
-               python3-numpy,
+               python3-numpy-dev,
                python3-opengl,
-               python3-pyqt5 [!hurd-i386],
+               python3-packaging,
+               python3-pygccxml (>=2.5.0) [linux-amd64 arm64 armel armhf i386 ppc64el riscv64 s390x],
+               python3-pyqt5 [!hurd-amd64],
+               python3-pytest,
                python3-schema,
                python3-scipy,
+               python3-thrift [amd64 arm64 armel armhf i386 loong64 mips64el mipsel ppc64el riscv64 s390x],
                python3-yaml,
-               python3-thrift [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el riscv64 s390x],
-               python3-zmq [!hurd-i386],
+               python3-zmq [!hurd-amd64],
                qt5-qmake,
                qtbase5-dev,
                qttools5-dev,
-               libspdlog-dev,
-               thrift-compiler [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el riscv64 s390x],
-               xmlto,
-               python3-packaging
-
-Standards-Version: 4.4.0
-Homepage: http://gnuradio.org/
+               thrift-compiler [amd64 arm64 armel armhf i386 loong64 mips64el mipsel ppc64el riscv64 s390x],
+               xauth,
+               xmlto
+Standards-Version: 4.7.3
+Rules-Requires-Root: no
+Homepage: https://gnuradio.org/
 Vcs-Browser: https://github.com/pervices/gnuradio
 Vcs-Git: https://github.com/pervices/gnuradio.git
+
 Package: gnuradiopv
 Architecture: any
-Depends: libcanberra-gtk-module,
-         libcanberra-gtk3-module,
-         gir1.2-gtk-3.0,
+Depends: gnome-terminal | x-terminal-emulator,
          libjs-mathjax,
-         libvolk2-bin | libvolk-bin,
+         libvolk-bin,
          python3-click,
-         python3-click-plugins,
          python3-gi,
          python3-gi-cairo,
          python3-jsonschema,
@@ -93,27 +92,27 @@ Depends: libcanberra-gtk-module,
          python3-numpy,
          python3-opengl,
          python3-packaging,
-         python3-pygccxml,
-         python3-pyqt5 [!hurd-i386],
+         python3-pygccxml [linux-amd64 arm64 armel armhf i386 ppc64el riscv64 s390x],
+         python3-pyqt5 [!hurd-amd64],
          python3-pyqtgraph,
          python3-schema,
-         python3-sip,
-         python3-thrift [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el riscv64 s390x],
+         python3-thrift [amd64 arm64 armel armhf i386 loong64 mips64el mipsel ppc64el riscv64 s390x],
          python3-yaml,
-         python3-zmq [!hurd-i386],
-         x-terminal-emulator|gnome-terminal,
+         python3-zmq [!hurd-amd64],
          ${misc:Depends},
          ${python3:Depends},
          ${shlibs:Depends}
 Recommends: gnuradiopv-dev,
-            python3-pygccxml (>= 2.0),
             python3-matplotlib,
             python3-networkx,
+            python3-pygccxml (>= 2.0),
             python3-pyqt5.qwt,
-            python3-scipy
-Breaks: gr-soapy, gr-iio
+            python3-scipy,
+            soapysdr-tools
+Suggests: gqrx-sdr, gr-fosphor, gr-osmosdr, rtl-sdr, uhdpv-host
 Conflicts: gnuradio
-Replaces: gr-soapy, gr-iio
+Breaks: gr-iio, gr-soapy
+Replaces: gr-iio, gr-soapy
 Multi-Arch: foreign
 Description: GNU Radio Software Radio Toolkit
  GNU Radio provides signal processing blocks to implement software
@@ -141,11 +140,15 @@ Description: GNU Radio Software Radio Toolkit
 Package: gnuradio-doc
 Section: doc
 Architecture: all
-Depends: ${misc:Depends}
+Depends: libjs-mathjax, ${misc:Depends}
 Multi-Arch: foreign
 Description: GNU Software Defined Radio toolkit documentation
  Documentation for the GNU Radio software defined radio system
- in html and xml form.
+ in html and PDF form.
+ .
+ HTML docs start file:///usr/share/doc/gnuradio-doc/html/index.html
+ .
+ PDF docs in file:///usr/share/doc/gnuradio-doc/refman.pdf.gz
  .
  Part of the main gnuradio build.
 
@@ -160,7 +163,6 @@ Depends: gnuradiopv (>= ${binary:Version}),
          libboost-filesystem${boost-version}-dev,
          libboost-program-options${boost-version}-dev,
          libboost-regex${boost-version}-dev,
-         libboost-system${boost-version}-dev,
          libboost-test${boost-version}-dev,
          libboost-thread${boost-version}-dev,
          libcppunit-dev,
@@ -168,12 +170,13 @@ Depends: gnuradiopv (>= ${binary:Version}),
          libgmp-dev,
          libgsm1-dev,
          libspdlog-dev,
-         libvolk2-dev | libvolk-dev,
+         libthrift-dev [amd64 arm64 armel armhf i386],
+         libvolk-dev,
+         pkgconf,
          pybind11-dev,
          python3-dev,
-         libthrift-dev [amd64 arm64 armel armhf i386],
          ${misc:Depends}
-Suggests: cmake, qtbase5-dev, libqwt-qt5-dev, pkg-config
+Suggests: cmake, libqwt-qt5-dev, qtbase5-dev
 Conflicts: gnuradio-dev
 Description: GNU Software Defined Radio toolkit development
  Header files for the GNU Radio software defined radio system.
@@ -183,6 +186,7 @@ Description: GNU Software Defined Radio toolkit development
  Part of the main gnuradio build.
 
 Package: libgnuradio-analog3.10.12
+Provides: ${t64:Provides}
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -194,6 +198,7 @@ Description: gnuradio analog functions
  Part of the main gnuradio build.
 
 Package: libgnuradio-audio3.10.12
+Provides: ${t64:Provides}
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -207,6 +212,7 @@ Description: gnuradio audio functions
  gnuradio build.
 
 Package: libgnuradio-blocks3.10.12
+Provides: ${t64:Provides}
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -218,6 +224,7 @@ Description: gnuradio blocks functions
  Part of the main gnuradio build.
 
 Package: libgnuradio-channels3.10.12
+Provides: ${t64:Provides}
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -229,6 +236,7 @@ Description: gnuradio channels functions
  Part of the main gnuradio build.
 
 Package: libgnuradio-digital3.10.12
+Provides: ${t64:Provides}
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -240,6 +248,7 @@ Description: gnuradio digital communications functions
  Part of the main gnuradio build.
 
 Package: libgnuradio-dtv3.10.12
+Provides: ${t64:Provides}
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -251,6 +260,7 @@ Description: gnuradio digital TV signal processing blocks
  Part of the main gnuradio build.
 
 Package: libgnuradio-fec3.10.12
+Provides: ${t64:Provides}
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -263,6 +273,7 @@ Description: gnuradio forward error correction support
  Part of the main gnuradio build.
 
 Package: libgnuradio-fft3.10.12
+Provides: ${t64:Provides}
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -274,6 +285,7 @@ Description: gnuradio fast Fourier transform functions
  Part of the main gnuradio build.
 
 Package: libgnuradio-filter3.10.12
+Provides: ${t64:Provides}
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -286,8 +298,9 @@ Description: gnuradio filter functions
  Part of the main gnuradio build.
 
 Package: libgnuradio-iio3.10.12
+Provides: ${t64:Provides}
 Section: libs
-Architecture: any
+Architecture: linux-any
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Multi-Arch: same
@@ -302,6 +315,7 @@ Description: IIO blocks for GnuRadio
  Part of the main gnuradio build.
 
 Package: libgnuradio-network3.10.12
+Provides: ${t64:Provides}
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -313,6 +327,7 @@ Description: gnuradio network library
  Part of the main gnuradio build.
 
 Package: libgnuradio-pdu3.10.12
+Provides: ${t64:Provides}
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -325,6 +340,7 @@ Description: gnuradio streaming protocol library
  Part of the main gnuradio build.
 
 Package: libgnuradio-pmt3.10.12
+Provides: ${t64:Provides}
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -337,8 +353,9 @@ Description: gnuradio pmt container library
  Part of the main gnuradio build.
 
 Package: libgnuradio-qtgui3.10.12
+Provides: ${t64:Provides}
 Section: libs
-Architecture: kfreebsd-any linux-any
+Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Multi-Arch: same
@@ -349,6 +366,7 @@ Description: gnuradio Qt graphical user interface functions
  Part of the main gnuradio build.
 
 Package: libgnuradio-runtime3.10.12
+Provides: ${t64:Provides}
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -360,6 +378,7 @@ Description: gnuradio core runtime
  Part of the main gnuradio build.
 
 Package: libgnuradio-soapy3.10.12
+Provides: ${t64:Provides}
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -370,6 +389,7 @@ Description: gnuradio SoapySDR support
  Part of the main gnuradio build.
 
 Package: libgnuradio-trellis3.10.12
+Provides: ${t64:Provides}
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -382,6 +402,7 @@ Description: gnuradio trellis modulation functions
  Part of the main gnuradio build.
 
 Package: libgnuradio-uhd3.10.12
+Provides: ${t64:Provides}
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -394,6 +415,7 @@ Description: gnuradio universal hardware driver functions
  Part of the main gnuradio build.
 
 Package: libgnuradio-video-sdl3.10.12
+Provides: ${t64:Provides}
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -405,6 +427,7 @@ Description: gnuradio video functions
  Part of the main gnuradio build.
 
 Package: libgnuradio-vocoder3.10.12
+Provides: ${t64:Provides}
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -417,6 +440,7 @@ Description: gnuradio vocoder functions
  Part of the main gnuradio build.
 
 Package: libgnuradio-wavelet3.10.12
+Provides: ${t64:Provides}
 Section: libs
 Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
@@ -430,8 +454,9 @@ Description: gnuradio wavelet functions
  Part of the main gnuradio build.
 
 Package: libgnuradio-zeromq3.10.12
+Provides: ${t64:Provides}
 Section: libs
-Architecture: kfreebsd-any linux-any
+Architecture: any
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Multi-Arch: same

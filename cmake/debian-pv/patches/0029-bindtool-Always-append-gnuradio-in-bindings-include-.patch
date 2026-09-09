@@ -1,0 +1,44 @@
+From 1c25f6bdd49fb8ccad95131d324596737940fdec Mon Sep 17 00:00:00 2001
+From: Martin Braun <martin.braun@ettus.com>
+Date: Mon, 14 Apr 2025 14:24:51 +0200
+Subject: [PATCH 29/80] bindtool: Always append gnuradio/ in bindings include
+ path
+
+Without this fix, whenever bind_oot_file.py is called (e.g., through
+CMake because something changed), a new <modulename>_python.cc file is
+generated. During the re-generation, the include path in this file is
+corrupted. After running `gr_modtool newmod foo`, and creating a block
+(`gr_modtool add bar`), the file gr-foo/python/bindings/bar_python.cc
+contains this line:
+
+```cpp
+    #include <gnuradio/foo/bar.h>
+```
+
+Afterwards, this line is modified to:
+
+```cpp
+    #include <foo/bar.h>
+```
+
+Signed-off-by: Martin Braun <martin.braun@ettus.com>
+---
+ .../templates/gr-newmod/python/howto/bindings/bind_oot_file.py  | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gr-utils/modtool/templates/gr-newmod/python/howto/bindings/bind_oot_file.py b/gr-utils/modtool/templates/gr-newmod/python/howto/bindings/bind_oot_file.py
+index 6489a9b7c9..bdb411204a 100644
+--- a/gr-utils/modtool/templates/gr-newmod/python/howto/bindings/bind_oot_file.py
++++ b/gr-utils/modtool/templates/gr-newmod/python/howto/bindings/bind_oot_file.py
+@@ -39,7 +39,7 @@ includes = ','.join(args.include)
+ name = args.module
+ 
+ namespace = ['gr', name]
+-prefix_include_root = name
++prefix_include_root = "gnuradio/" + name
+ 
+ 
+ with warnings.catch_warnings():
+-- 
+2.47.3
+

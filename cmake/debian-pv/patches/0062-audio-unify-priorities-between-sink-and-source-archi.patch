@@ -1,0 +1,238 @@
+From 4eb8de03d11a27424ea181484ecdc9af7a41e2c4 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Tue, 25 Mar 2025 20:00:40 +0100
+Subject: [PATCH 62/80] audio: unify priorities between sink and source
+ architectures
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+I made a mistake 4 years ago that gave the "windows" sink a different
+priority than the source. That led to great user confusion.
+
+Make sure that doesn't happen again. Instead, keep priorities in a
+central map.
+
+Since the `register_{sink,source}` function was rendered unused by that,
+and since it's really not a necessary function, remove it. It's in
+lib/audio_registry.h, so can't be used out of tree, anyways, and thus
+not API.
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ gr-audio/docs/audio.dox        | 18 +------
+ gr-audio/lib/audio_registry.cc | 96 +++++++++++++---------------------
+ gr-audio/lib/audio_registry.h  |  5 --
+ 3 files changed, 38 insertions(+), 81 deletions(-)
+
+diff --git a/gr-audio/docs/audio.dox b/gr-audio/docs/audio.dox
+index 258f00af1b..3f393ffdcf 100644
+--- a/gr-audio/docs/audio.dox
++++ b/gr-audio/docs/audio.dox
+@@ -94,23 +94,7 @@ registration list in gr-audio/lib/audio_registry.cc and
+ audio_registry.h files. Select the appropriate registry priority, HIGH
+ if you want this to be the default when using 'auto'. For Linux audio
+ systems, we generally want to default to ALSA, fall back on OSS, but
+-have other machine interfaces defined as MED priority. For example, in
+-the .cc file for ALSA, OSS, and PortAudio:
+-
+-\code
+-    #ifdef ALSA_FOUND
+-            s_registry.push_back(register_source(REG_PRIO_HIGH, "alsa", alsa_source_fcn));
+-    #endif /* ALSA_FOUND */
+-
+-    #ifdef OSS_FOUND
+-            s_registry.push_back(register_source(REG_PRIO_LOW, "oss", oss_source_fcn));
+-    #endif /* OSS_FOUND */
+-
+-    #ifdef PORTAUDIO_FOUND
+-            s_registry.push_back(register_source(REG_PRIO_MED, "portaudio", portaudio_source_fcn));
+-    #endif /* PORTAUDIO_FOUND */
+-\endcode
+-
++have other machine interfaces defined as MED priority.
+ 
+ 5. Follow the examples in the gr-audio/lib/CMakeLists.txt file for the
+ different machine types to add the new one, including the
+diff --git a/gr-audio/lib/audio_registry.cc b/gr-audio/lib/audio_registry.cc
+index b3607868cf..6734e3c768 100644
+--- a/gr-audio/lib/audio_registry.cc
++++ b/gr-audio/lib/audio_registry.cc
+@@ -10,11 +10,26 @@
+ #include "audio_registry.h"
+ #include <gnuradio/logger.h>
+ #include <gnuradio/prefs.h>
++#include <unordered_map>
+ #include <stdexcept>
++#include <string>
+ #include <vector>
+ 
+ namespace gr {
+ namespace audio {
++namespace details {
++static const std::unordered_map<std::string, reg_prio_type> arch_prios{
++    /* good native architectures */
++    { "alsa", REG_PRIO_HIGH },
++    { "osx", REG_PRIO_HIGH },
++    /* all-purpose cross-platform architectures */
++    { "portaudio", REG_PRIO_MED },
++    { "jack", REG_PRIO_MED },
++    /* old / little-used / bad / worse platform-specific architectures */
++    { "oss", REG_PRIO_LOW },
++    { "windows", REG_PRIO_LOW }
++};
++} // namespace details
+ 
+ /***********************************************************************
+  * Create registries
+@@ -22,103 +37,66 @@ namespace audio {
+ 
+ static std::vector<source_entry_t>& get_source_registry(void)
+ {
+-    static bool src_reg = false;
+-    static std::vector<source_entry_t> s_registry;
+-
+-    if (!src_reg) {
++    static std::vector<source_entry_t> s_registry = {
+ #ifdef ALSA_FOUND
+-        s_registry.push_back(register_source(REG_PRIO_HIGH, "alsa", alsa_source_fcn));
++        { details::arch_prios.at("alsa"), "alsa", alsa_source_fcn },
+ #endif /* ALSA_FOUND */
+ 
+ #ifdef OSS_FOUND
+-        s_registry.push_back(register_source(REG_PRIO_LOW, "oss", oss_source_fcn));
++        { details::arch_prios.at("oss"), "oss", oss_source_fcn },
+ #endif /* OSS_FOUND */
+ 
+ #ifdef PORTAUDIO_FOUND
+-        s_registry.push_back(
+-            register_source(REG_PRIO_MED, "portaudio", portaudio_source_fcn));
++        { details::arch_prios.at("portaudio"), "portaudio", portaudio_source_fcn },
+ #endif /* PORTAUDIO_FOUND */
+ 
+ #ifdef JACK_FOUND
+-        s_registry.push_back(register_source(REG_PRIO_MED, "jack", jack_source_fcn));
++        { details::arch_prios.at("jack"), "jack", jack_source_fcn },
+ #endif /* JACK_FOUND */
+ 
+ #ifdef OSX_FOUND
+-        s_registry.push_back(register_source(REG_PRIO_HIGH, "osx", osx_source_fcn));
++        { details::arch_prios.at("osx"), "osx", osx_source_fcn },
+ #endif /* OSX_FOUND */
+ 
+ #ifdef WIN32_FOUND
+-        s_registry.push_back(
+-            register_source(REG_PRIO_LOW, "windows", windows_source_fcn));
++        { details::arch_prios.at("windows"), "windows", windows_source_fcn },
+ #endif /* WIN32_FOUND */
+-
+-        src_reg = true;
+-    }
+-
++    };
+ 
+     return s_registry;
+-}
++} // namespace audio
+ 
+ static std::vector<sink_entry_t>& get_sink_registry(void)
+ {
+-    static bool snk_reg = false;
+-    static std::vector<sink_entry_t> s_registry;
+-
+-    if (!snk_reg) {
+-#if ALSA_FOUND
+-        s_registry.push_back(register_sink(REG_PRIO_HIGH, "alsa", alsa_sink_fcn));
++    static std::vector<sink_entry_t> s_registry = {
++#ifdef ALSA_FOUND
++        { details::arch_prios.at("alsa"), "alsa", alsa_sink_fcn },
+ #endif /* ALSA_FOUND */
+ 
+-#if OSS_FOUND
+-        s_registry.push_back(register_sink(REG_PRIO_LOW, "oss", oss_sink_fcn));
++#ifdef OSS_FOUND
++        { details::arch_prios.at("oss"), "oss", oss_sink_fcn },
+ #endif /* OSS_FOUND */
+ 
+-#if PORTAUDIO_FOUND
+-        s_registry.push_back(
+-            register_sink(REG_PRIO_MED, "portaudio", portaudio_sink_fcn));
++#ifdef PORTAUDIO_FOUND
++        { details::arch_prios.at("portaudio"), "portaudio", portaudio_sink_fcn },
+ #endif /* PORTAUDIO_FOUND */
+ 
+-#if JACK_FOUND
+-        s_registry.push_back(register_sink(REG_PRIO_MED, "jack", jack_sink_fcn));
++#ifdef JACK_FOUND
++        { details::arch_prios.at("jack"), "jack", jack_sink_fcn },
+ #endif /* JACK_FOUND */
+ 
+ #ifdef OSX_FOUND
+-        s_registry.push_back(register_sink(REG_PRIO_HIGH, "osx", osx_sink_fcn));
++        { details::arch_prios.at("osx"), "osx", osx_sink_fcn },
+ #endif /* OSX_FOUND */
+ 
+ #ifdef WIN32_FOUND
+-        s_registry.push_back(register_sink(REG_PRIO_HIGH, "windows", windows_sink_fcn));
++        { details::arch_prios.at("windows"), "windows", windows_sink_fcn },
+ #endif /* WIN32_FOUND */
+-
+-        snk_reg = true;
+-    }
++    };
+ 
+     return s_registry;
+ }
+ 
+-/***********************************************************************
+- * Register functions
+- **********************************************************************/
+-source_entry_t
+-register_source(reg_prio_type prio, const std::string& arch, source_factory_t source)
+-{
+-    source_entry_t entry;
+-    entry.prio = prio;
+-    entry.arch = arch;
+-    entry.source = source;
+-    return entry;
+-}
+-
+-sink_entry_t
+-register_sink(reg_prio_type prio, const std::string& arch, sink_factory_t sink)
+-{
+-    sink_entry_t entry;
+-    entry.prio = prio;
+-    entry.arch = arch;
+-    entry.sink = sink;
+-    return entry;
+-}
+-
+ /***********************************************************************
+  * Factory functions
+  **********************************************************************/
+@@ -189,5 +167,5 @@ sink::sptr sink::make(int sampling_rate, const std::string device_name, bool ok_
+     return entry.sink(sampling_rate, device_name, ok_to_block);
+ }
+ 
+-} /* namespace audio */
++} // namespace audio
+ } /* namespace gr */
+diff --git a/gr-audio/lib/audio_registry.h b/gr-audio/lib/audio_registry.h
+index c09fa34972..bd5af2444a 100644
+--- a/gr-audio/lib/audio_registry.h
++++ b/gr-audio/lib/audio_registry.h
+@@ -34,11 +34,6 @@ struct sink_entry_t {
+     sink_factory_t sink;
+ };
+ 
+-source_entry_t
+-register_source(reg_prio_type prio, const std::string& arch, source_factory_t source);
+-sink_entry_t
+-register_sink(reg_prio_type prio, const std::string& arch, sink_factory_t sink);
+-
+ #ifdef ALSA_FOUND
+ source::sptr
+ alsa_source_fcn(int sampling_rate, const std::string& device_name, bool ok_to_block);
+-- 
+2.47.3
+

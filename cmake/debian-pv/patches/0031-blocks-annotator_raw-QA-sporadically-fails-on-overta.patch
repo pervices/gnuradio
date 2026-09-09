@@ -1,0 +1,35 @@
+From 5e84d34d35df9f9e5681954faa9d813c2f92bcd5 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Sun, 8 Jun 2025 13:52:06 +0200
+Subject: [PATCH 31/80] blocks/annotator_raw: QA sporadically fails on
+ overtasked mac QA
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Increase overall processing time to increase tolerances
+
+Puh, this is really not a tight race to win, and the macOS builder still
+manages to lose it.
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ gr-blocks/python/blocks/qa_annotator_raw.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gr-blocks/python/blocks/qa_annotator_raw.py b/gr-blocks/python/blocks/qa_annotator_raw.py
+index 708ee98262..f2eda33c85 100644
+--- a/gr-blocks/python/blocks/qa_annotator_raw.py
++++ b/gr-blocks/python/blocks/qa_annotator_raw.py
+@@ -59,7 +59,7 @@ class test_annotator_raw(gr_unittest.TestCase):
+ 
+     def test_003_late_insertion(self):
+         N = 1000
+-        total_time = 0.5
++        total_time = 1.0
+         tags_in = [
+             (n * N, pmt.mp(f"key_{n}"), pmt.from_long(n * 10)) for n in range(N // 2, N)
+         ]
+-- 
+2.47.3
+

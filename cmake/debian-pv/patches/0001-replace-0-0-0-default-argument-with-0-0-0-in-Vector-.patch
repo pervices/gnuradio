@@ -1,0 +1,27 @@
+From e177a96c2d94bfe3c53b77014cb5e6e98e8eb05b Mon Sep 17 00:00:00 2001
+From: Jean-Michel Friedt <friedtj@free.fr>
+Date: Fri, 21 Feb 2025 14:50:47 +0100
+Subject: [PATCH 01/80] replace 0, 0, 0 default argument with [0, 0, 0] in
+ Vector Insert
+
+Signed-off-by: Jean-Michel Friedt <friedtj@free.fr>
+---
+ gr-blocks/grc/blocks_vector_insert_x.block.yml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gr-blocks/grc/blocks_vector_insert_x.block.yml b/gr-blocks/grc/blocks_vector_insert_x.block.yml
+index 807357a42d..d0a8b810aa 100644
+--- a/gr-blocks/grc/blocks_vector_insert_x.block.yml
++++ b/gr-blocks/grc/blocks_vector_insert_x.block.yml
+@@ -14,7 +14,7 @@ parameters:
+ -   id: vector
+     label: Vector
+     dtype: ${ type.vec_type }
+-    default: 0, 0, 0
++    default: [0, 0, 0]
+ -   id: period
+     label: Periodicity
+     dtype: int
+-- 
+2.47.3
+

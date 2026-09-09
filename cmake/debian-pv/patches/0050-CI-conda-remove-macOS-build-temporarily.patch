@@ -1,0 +1,44 @@
+From f633f51274cb854fd4be6f27faf6c2732f84940c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Sun, 25 Jan 2026 19:03:23 +0100
+Subject: [PATCH 50/80] CI/conda: remove macOS build temporarily
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+I can't figure out how to make it work, and even the simple attempt to rerender the conda stuff fails for me, even after investing time into the rerender github action. Realistically, I'll need help from an adult here.
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ .github/workflows/conda-build.yml | 15 ++++++++++-----
+ 1 file changed, 10 insertions(+), 5 deletions(-)
+
+diff --git a/.github/workflows/conda-build.yml b/.github/workflows/conda-build.yml
+index 9e30c4d237..1dc772719c 100644
+--- a/.github/workflows/conda-build.yml
++++ b/.github/workflows/conda-build.yml
+@@ -26,11 +26,16 @@ jobs:
+             os: ubuntu
+             runs_on: ['ubuntu-latest']
+             DOCKER_IMAGE: quay.io/condaforge/linux-anvil-x86_64:cos7
+-          - CONFIG: osx_64_numpy1.23python3.11.____cpython
+-            SHORT_CONFIG: osx_64_numpy1.23python3.11.____cpython
+-            UPLOAD_PACKAGES: True
+-            os: macos
+-            runs_on: ['macos-13']
++          ## Removed macos, because -13 stopped working, macos-14 fails with
++          ## linker errors in Qt code (very hard to debug without a machine or
++          ## any experience on that platform) and the best guess "just try
++          ## rerendering" fails; log on
++          ## https://github.com/gnuradio/gnuradio/pull/8019
++          # - CONFIG: osx_64_numpy1.23python3.11.____cpython
++          #   SHORT_CONFIG: osx_64_numpy1.23python3.11.____cpython
++          #   UPLOAD_PACKAGES: True
++          #   os: macos
++          #   runs_on: ['macos-13']
+           - CONFIG: win_64_numpy1.23python3.11.____cpython
+             SHORT_CONFIG: win_64_numpy1.23python3.11.____cpython
+             UPLOAD_PACKAGES: True
+-- 
+2.47.3
+

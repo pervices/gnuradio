@@ -1,0 +1,101 @@
+From 638506cc185e8966689e95316b37183925aca3df Mon Sep 17 00:00:00 2001
+From: jreitmei <johannes.reitmeier@emerson.com>
+Date: Fri, 23 May 2025 17:33:43 +0200
+Subject: [PATCH 71/80] uhd: Add FIR filter block support to RFNoC image
+ builder
+
+Signed-off-by: jreitmei <johannes.reitmeier@emerson.com>
+---
+ gr-uhd/grc/CMakeLists.txt                |  1 +
+ gr-uhd/grc/uhd.tree.yml                  |  4 +-
+ gr-uhd/grc/uhd_fpga_fir_filter.block.yml | 47 ++++++++++++++++++++++++
+ 3 files changed, 51 insertions(+), 1 deletion(-)
+ create mode 100644 gr-uhd/grc/uhd_fpga_fir_filter.block.yml
+
+diff --git a/gr-uhd/grc/CMakeLists.txt b/gr-uhd/grc/CMakeLists.txt
+index 84841519da..b061e1a466 100644
+--- a/gr-uhd/grc/CMakeLists.txt
++++ b/gr-uhd/grc/CMakeLists.txt
+@@ -63,6 +63,7 @@ if(ENABLE_UHD_RFNOC)
+         uhd_fpga_duc.block.yml
+         uhd_fpga_eth_ta.block.yml
+         uhd_fpga_fft.block.yml
++        uhd_fpga_fir_filter.block.yml
+         uhd_fpga_fosphor.block.yml
+         uhd_fpga_keep_one_in_n.block.yml
+         uhd_fpga_null_src_sink.block.yml
+diff --git a/gr-uhd/grc/uhd.tree.yml b/gr-uhd/grc/uhd.tree.yml
+index 7dd0e6e1e9..23cbb89cc9 100644
+--- a/gr-uhd/grc/uhd.tree.yml
++++ b/gr-uhd/grc/uhd.tree.yml
+@@ -25,11 +25,13 @@
+       - uhd_fpga_null_src_sink
+       - uhd_fpga_replay
+       - uhd_fpga_addsub
+-      - uhd_fpga_fosphor
++      - uhd_fpga_f15
+       - uhd_fpga_keep_one_in_n
+       - uhd_fpga_siggen
+       - uhd_fpga_split_stream
+       - uhd_fpga_switchboard
++      - uhd_fpga_vector_iir
++      - uhd_fpga_fir_filter
+     - Core:
+       - uhd_fpga_sep
+       - uhd_fpga_device_bsp
+diff --git a/gr-uhd/grc/uhd_fpga_fir_filter.block.yml b/gr-uhd/grc/uhd_fpga_fir_filter.block.yml
+new file mode 100644
+index 0000000000..26556a5131
+--- /dev/null
++++ b/gr-uhd/grc/uhd_fpga_fir_filter.block.yml
+@@ -0,0 +1,47 @@
++id: uhd_fpga_fir_filter
++label: RFNoC FIR Filter
++
++parameters:
++-   id: type
++    label: RFNoC Block Type
++    dtype: enum
++    default: 'block'
++    options: ['block', 'sep', 'device']
++    hide: all
++-   id: desc
++    label: Block Descriptor
++    dtype: string
++    default: 'fir_filter.yml'
++    hide: all
++-   id: NUM_PORTS
++    label: Number of Ports
++    dtype: int
++    default: 1
++    hide: part
++
++inputs:
++-   domain: rfnoc.clk
++    id: ce_clk
++    dtype: message
++-   domain: rfnoc.data
++    id: in_
++    dtype: fc32
++    multiplicity: ${ NUM_PORTS }
++
++outputs:
++-   domain: rfnoc.data
++    id: out_
++    dtype: fc32
++    multiplicity: ${ NUM_PORTS }
++
++doc_url: UHD_FPGA_FIR
++
++documentation: |-
++  RFNoC FIR Filter(FPGA Implementation).
++  Instantiates a FIR Filter block in the FPGA bitfile.
++  This block calculates a running average (using FIR filters) for every element
++  of a vector. This is useful to average the output of an FFT block.
++
++
++file_format: 1
++
+-- 
+2.47.3
+

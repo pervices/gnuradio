@@ -1,0 +1,37 @@
+From c234c76c774152e2c9368c1571399af378e7240a Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Wed, 11 Jun 2025 01:05:45 +0200
+Subject: [PATCH 41/80] CI: update Fedora 3.10 builders (40->41, 41->42)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ .github/workflows/make-test.yml | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/.github/workflows/make-test.yml b/.github/workflows/make-test.yml
+index 9a3eae4247..6b935dc35c 100644
+--- a/.github/workflows/make-test.yml
++++ b/.github/workflows/make-test.yml
+@@ -89,12 +89,12 @@ jobs:
+             ctest_args: '-E "qa_polar_..coder_(sc_)?systematic"'
+           - distro: 'Ubuntu 24.04'
+             containerid: 'gnuradio/ci:ubuntu-24.04-3.10'
+-          - distro: 'Fedora 40 (with 0xFE memory initialization, GLIBCXX_ASSERTIONS)'
+-            containerid: 'gnuradio/ci:fedora-40-3.10'
++          - distro: 'Fedora 41 (with 0xFE memory initialization, GLIBCXX_ASSERTIONS)'
++            containerid: 'gnuradio/ci:fedora-41-3.10'
+             cxxflags: -ftrivial-auto-var-init=pattern -Wp,-D_GLIBCXX_ASSERTIONS
+             ldpath: /usr/local/lib64
+-          - distro: 'Fedora 41 (clang, ninja)'
+-            containerid: 'gnuradio/ci:fedora-41-3.10'
++          - distro: 'Fedora 42 (clang, ninja)'
++            containerid: 'gnuradio/ci:fedora-42-3.10'
+             cxxflags: -Wno-unused-command-line-argument
+             cmakeflags: -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -GNinja
+             build_options: --
+-- 
+2.47.3
+

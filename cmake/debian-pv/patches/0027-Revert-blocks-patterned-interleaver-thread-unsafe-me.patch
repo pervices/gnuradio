@@ -1,0 +1,160 @@
+From cf829649d66a3b876b8e5077919f42f062349e0e Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Sun, 8 Jun 2025 18:01:46 +0200
+Subject: [PATCH 27/80] Revert "blocks/patterned interleaver: thread-unsafe
+ members inaccessible, flexible io"
+
+"This commit should not be backported" (oops.)
+
+This reverts commit 800ff1f50b5a7e0badd28fc9efe422c97a4fc7b7.
+---
+ gr-blocks/lib/patterned_interleaver_impl.cc | 59 +++------------------
+ gr-blocks/lib/patterned_interleaver_impl.h  | 18 ++++---
+ 2 files changed, 20 insertions(+), 57 deletions(-)
+
+diff --git a/gr-blocks/lib/patterned_interleaver_impl.cc b/gr-blocks/lib/patterned_interleaver_impl.cc
+index 88e5e0d246..299d765eb5 100644
+--- a/gr-blocks/lib/patterned_interleaver_impl.cc
++++ b/gr-blocks/lib/patterned_interleaver_impl.cc
+@@ -11,7 +11,6 @@
+ 
+ #include "patterned_interleaver_impl.h"
+ #include <gnuradio/io_signature.h>
+-#include <algorithm>
+ 
+ namespace gr {
+ namespace blocks {
+@@ -22,49 +21,19 @@ patterned_interleaver::sptr patterned_interleaver::make(size_t itemsize,
+     return gnuradio::make_block_sptr<patterned_interleaver_impl>(itemsize, pattern);
+ }
+ 
+-namespace {
+-template <typename T>
+-constexpr typename T::value_type pattern_max(const T& pattern)
+-{
+-    if (pattern.empty()) {
+-        return -1;
+-    }
+-    return *std::max_element(pattern.cbegin(), pattern.cend());
+-}
+-
+-template <typename T>
+-auto pattern_to_iosig(const T& pattern, size_t itemsize)
+-{
+-    if (pattern.empty()) {
+-        return gr::io_signature::make(0, 0, itemsize);
+-    }
+-    auto size = pattern_max(pattern) + 1;
+-    return gr::io_signature::make(size, gr::io_signature::IO_INFINITE, itemsize);
+-}
+-
+-template <typename T>
+-constexpr std::vector<typename T::value_type> pattern_to_count(const T& pattern)
+-{
+-    if (pattern.empty()) {
+-        return {};
+-    }
+-    T counts(pattern_max(pattern) + 1);
+-    for (const auto& idx : pattern) {
+-        counts[idx]++;
+-    }
+-    return counts;
+-}
+-} // namespace
+-
+ patterned_interleaver_impl::patterned_interleaver_impl(size_t itemsize,
+                                                        std::vector<int> pattern)
+     : block("patterned_interleaver",
+-            pattern_to_iosig(pattern, itemsize),
++            io_signature::make(
++                pattern_max(pattern) + 1, pattern_max(pattern) + 1, itemsize),
+             io_signature::make(1, 1, itemsize)),
+       d_pattern(pattern),
+-      d_counts(pattern_to_count(pattern)),
++      d_counts(pattern_max(pattern) + 1, 0),
+       d_itemsize(itemsize)
+ {
++    for (const auto& i : d_pattern) {
++        d_counts[i]++;
++    }
+     set_output_multiple(d_pattern.size());
+ }
+ 
+@@ -73,11 +42,9 @@ int patterned_interleaver_impl::general_work(int noutput_items,
+                                              gr_vector_const_void_star& input_items,
+                                              gr_vector_void_star& output_items)
+ {
+-    int items_left;
+-    unsigned int nblks;
++    const size_t nblks = noutput_items / d_pattern.size();
+ 
+-    for (items_left = noutput_items, nblks = 0; items_left > 0;
+-         items_left -= d_pattern.size(), nblks++) {
++    for (size_t i = 0; i < nblks; i++) {
+         for (const auto input_idx : d_pattern) {
+             memcpy(output_items[0], input_items[input_idx], d_itemsize);
+             reinterpret_cast<const char*&>(input_items[input_idx]) += d_itemsize;
+@@ -100,15 +67,5 @@ void patterned_interleaver_impl::forecast(int noutput_items,
+     }
+ }
+ 
+-bool patterned_interleaver_impl::check_topology(int ninput, int noutput)
+-{
+-    if (noutput != 1) {
+-        return false;
+-    }
+-    /* it's not OK to have fewer inputs connected than our maximum input index, but more
+-     * might be OK */
+-    return static_cast<size_t>(ninput) >= d_counts.size();
+-}
+-
+ } /* namespace blocks */
+ } /* namespace gr */
+diff --git a/gr-blocks/lib/patterned_interleaver_impl.h b/gr-blocks/lib/patterned_interleaver_impl.h
+index 2a93c0add5..9de0fe5141 100644
+--- a/gr-blocks/lib/patterned_interleaver_impl.h
++++ b/gr-blocks/lib/patterned_interleaver_impl.h
+@@ -1,7 +1,6 @@
+ /* -*- c++ -*- */
+ /*
+  * Copyright 2012 Free Software Foundation, Inc.
+- * Copyright 2025 Marcus Müller
+  *
+  * This file is part of GNU Radio
+  *
+@@ -13,6 +12,7 @@
+ #define INCLUDED_PATTERNED_INTERLEAVER_IMPL_H
+ 
+ #include <gnuradio/blocks/patterned_interleaver.h>
++#include <algorithm>
+ 
+ namespace gr {
+ namespace blocks {
+@@ -27,13 +27,19 @@ public:
+                      gr_vector_const_void_star& input_items,
+                      gr_vector_void_star& output_items) override;
+ 
++    static int pattern_max(std::vector<int> pattern)
++    {
++        if (pattern.empty()) {
++            return 0;
++        }
++        return *std::max_element(pattern.begin(), pattern.end());
++    }
++
+     void forecast(int noutput_items, gr_vector_int& ninput_items_required) override;
+-    bool check_topology(int ninput, int noutputs) override;
+ 
+-private:
+-    const std::vector<int> d_pattern;
+-    const std::vector<int> d_counts;
+-    const size_t d_itemsize;
++    std::vector<int> d_pattern;
++    std::vector<int> d_counts;
++    size_t d_itemsize;
+ };
+ 
+ } /* namespace blocks */
+-- 
+2.47.3
+

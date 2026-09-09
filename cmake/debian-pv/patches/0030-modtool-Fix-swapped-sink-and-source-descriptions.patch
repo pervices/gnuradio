@@ -1,0 +1,28 @@
+From bcc5234667a8ff795b5ddf336f981ae60d00e0ea Mon Sep 17 00:00:00 2001
+From: Julian Schuler <julianschuler@users.noreply.github.com>
+Date: Wed, 4 Jun 2025 12:05:15 +0200
+Subject: [PATCH 30/80] modtool: Fix swapped sink and source descriptions
+
+Signed-off-by: Julian Schuler <julianschuler@users.noreply.github.com>
+---
+ gr-utils/modtool/core/add.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/gr-utils/modtool/core/add.py b/gr-utils/modtool/core/add.py
+index a2bc7a2f1e..accbfc5393 100644
+--- a/gr-utils/modtool/core/add.py
++++ b/gr-utils/modtool/core/add.py
+@@ -41,8 +41,8 @@ class ModToolAdd(ModTool):
+     name = 'add'
+     description = 'Add new block into a module.'
+     block_types = {
+-        "sink": "Source block with outputs, but no stream inputs",
+-        "source": "Sink block with inputs, but no stream outputs",
++        "sink": "Sink block with inputs, but no stream outputs",
++        "source": "Source block with outputs, but no stream inputs",
+         "sync": "Block with synchronous 1:1 input-to-output",
+         "decimator": "Block with synchronous N:1 input-to-output",
+         "interpolator": "Block with synchronous 1:N input-to-output",
+-- 
+2.47.3
+

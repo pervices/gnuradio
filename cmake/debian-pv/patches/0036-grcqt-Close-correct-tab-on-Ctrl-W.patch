@@ -1,0 +1,38 @@
+From b8371a5aff330b78b803ed1a3419a9c9410f1cd1 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?H=C3=A5kon=20V=C3=A5gsether?= <hakon.vagsether@gmail.com>
+Date: Fri, 4 Apr 2025 11:20:30 +0200
+Subject: [PATCH 36/80] grcqt: Close correct tab on Ctrl+W
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Håkon Vågsether <hakon.vagsether@gmail.com>
+---
+ grc/gui_qt/components/window.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/grc/gui_qt/components/window.py b/grc/gui_qt/components/window.py
+index c3d6c60ef5..713e68edcc 100644
+--- a/grc/gui_qt/components/window.py
++++ b/grc/gui_qt/components/window.py
+@@ -1105,7 +1105,7 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
+             self.app.VariableEditor.set_scene(self.currentFlowgraphScene)
+         self.updateActions()
+ 
+-    def close_triggered(self, tab_index=None) -> Union[str, bool]:
++    def close_triggered(self, tab_index=False) -> Union[str, bool]:
+         """
+         Closes a tab.
+ 
+@@ -1118,7 +1118,7 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
+         log.debug(f"Closing a tab (index {tab_index})")
+ 
+         file_path = self.currentFlowgraphScene.filename
+-        if tab_index is None:
++        if tab_index == False:
+             tab_index = self.tabWidget.currentIndex()
+ 
+         if self.currentFlowgraphScene.saved:
+-- 
+2.47.3
+

@@ -1,0 +1,30 @@
+From ec7af62f8218e25be9e0a54acd6c30c6ef855e73 Mon Sep 17 00:00:00 2001
+From: Frank Fu <frankfustuff@gmail.com>
+Date: Mon, 20 Oct 2025 14:14:27 -0400
+Subject: [PATCH 58/80] grc, pdu: fix hidden parameter issue in pdu_lambda
+ block
+
+Fix issue in PDU Lambda block where Parameter "Key" was always hidden,
+even when mode "Metadata" was chosen.
+fixes #7938
+Signed-off-by: Frank Fu <frankfustuff@gmail.com>
+---
+ gr-pdu/grc/pdu_pdu_lambda.block.yml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gr-pdu/grc/pdu_pdu_lambda.block.yml b/gr-pdu/grc/pdu_pdu_lambda.block.yml
+index f3ead6c26b..4e24e5713f 100644
+--- a/gr-pdu/grc/pdu_pdu_lambda.block.yml
++++ b/gr-pdu/grc/pdu_pdu_lambda.block.yml
+@@ -19,7 +19,7 @@ parameters:
+     label: Key
+     dtype: raw
+     default: 'pmt.intern("key")'
+-    hide: ${ 'none' if metadict.mode == 'META' else 'all' }
++    hide: ${ 'none' if metadict == 'Metadata' else 'all' }
+ 
+ inputs:
+ -   id: pdu
+-- 
+2.47.3
+

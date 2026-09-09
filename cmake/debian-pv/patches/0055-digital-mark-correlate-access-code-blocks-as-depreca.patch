@@ -1,0 +1,39 @@
+From 810c4411bddef33c68c1606e83c99c50fcd64df4 Mon Sep 17 00:00:00 2001
+From: Gowri S <gowri21115@gmail.com>
+Date: Wed, 24 Dec 2025 20:02:10 +0530
+Subject: [PATCH 55/80] digital: mark correlate access code blocks as
+ deprecated
+
+Signed-off-by: Gowri S <gowri21115@gmail.com>
+---
+ gr-digital/grc/digital_correlate_access_code_tag_xx.block.yml | 2 +-
+ gr-digital/grc/digital_correlate_access_code_xx_ts.block.yml  | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/gr-digital/grc/digital_correlate_access_code_tag_xx.block.yml b/gr-digital/grc/digital_correlate_access_code_tag_xx.block.yml
+index afbc1d27ad..a173755f0f 100644
+--- a/gr-digital/grc/digital_correlate_access_code_tag_xx.block.yml
++++ b/gr-digital/grc/digital_correlate_access_code_tag_xx.block.yml
+@@ -1,6 +1,6 @@
+ id: digital_correlate_access_code_tag_xx
+ label: Correlate Access Code - Tag
+-flags: [ python, cpp ]
++flags: [ python, cpp, deprecated ]
+ 
+ parameters:
+ -   id: type
+diff --git a/gr-digital/grc/digital_correlate_access_code_xx_ts.block.yml b/gr-digital/grc/digital_correlate_access_code_xx_ts.block.yml
+index 5416c1c7d5..27c62fa291 100644
+--- a/gr-digital/grc/digital_correlate_access_code_xx_ts.block.yml
++++ b/gr-digital/grc/digital_correlate_access_code_xx_ts.block.yml
+@@ -1,6 +1,6 @@
+ id: digital_correlate_access_code_xx_ts
+ label: Correlate Access Code - Tag Stream
+-flags: [ python, cpp ]
++flags: [ python, cpp, deprecated ]
+ 
+ parameters:
+ -   id: type
+-- 
+2.47.3
+

@@ -1,0 +1,407 @@
+From ffd2d6b126906c019a7cdba0efbe48cb82b1860c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Sun, 12 Jan 2025 15:48:33 +0100
+Subject: [PATCH 04/80] CMake&runtime: remove precompiled header infrastructure
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ cmake/Modules/GrPybind.cmake        | 13 ------------
+ gnuradio-runtime/CMakeLists.txt     | 33 -----------------------------
+ gnuradio-runtime/lib/CMakeLists.txt |  6 ------
+ gr-analog/lib/CMakeLists.txt        |  4 ----
+ gr-audio/lib/CMakeLists.txt         |  4 ----
+ gr-blocks/lib/CMakeLists.txt        |  4 ----
+ gr-channels/lib/CMakeLists.txt      |  4 ----
+ gr-digital/lib/CMakeLists.txt       |  4 ----
+ gr-dtv/lib/CMakeLists.txt           |  4 ----
+ gr-fec/lib/CMakeLists.txt           |  4 ----
+ gr-fft/lib/CMakeLists.txt           |  4 ----
+ gr-filter/lib/CMakeLists.txt        |  4 ----
+ gr-iio/lib/CMakeLists.txt           |  4 ----
+ gr-network/lib/CMakeLists.txt       |  4 ----
+ gr-pdu/lib/CMakeLists.txt           |  4 ----
+ gr-qtgui/lib/CMakeLists.txt         |  5 -----
+ gr-soapy/lib/CMakeLists.txt         |  4 ----
+ gr-trellis/lib/CMakeLists.txt       |  4 ----
+ gr-video-sdl/lib/CMakeLists.txt     |  4 ----
+ gr-vocoder/lib/CMakeLists.txt       |  4 ----
+ gr-wavelet/lib/CMakeLists.txt       |  4 ----
+ gr-zeromq/lib/CMakeLists.txt        |  4 ----
+ 22 files changed, 129 deletions(-)
+
+diff --git a/cmake/Modules/GrPybind.cmake b/cmake/Modules/GrPybind.cmake
+index 5a6fb76337..6aaeda6e8e 100644
+--- a/cmake/Modules/GrPybind.cmake
++++ b/cmake/Modules/GrPybind.cmake
+@@ -173,19 +173,6 @@ macro(GR_PYBIND_MAKE_CHECK_HASH name updir filter files)
+         PRIVATE ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${updir}/lib
+                 ${CMAKE_CURRENT_SOURCE_DIR}/${updir}/include)
+ 
+-    # Precompile the pybind11 header
+-    # This should speed up building of the python bindings at least in larger modules
+-    # This functionality is only available in CMake >= 3.16
+-    if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.16.0")
+-        target_precompile_headers(
+-            ${name}_python
+-            PRIVATE
+-            ${pybind11_INCLUDE_DIR}/pybind11/pybind11.h
+-            ${pybind11_INCLUDE_DIR}/pybind11/complex.h
+-            ${pybind11_INCLUDE_DIR}/pybind11/operators.h
+-            ${pybind11_INCLUDE_DIR}/pybind11/stl.h)
+-    endif()
+-
+     target_link_libraries(
+         ${name}_python PRIVATE ${Boost_LIBRARIES} pybind11::pybind11 Python::Module
+                                Python::NumPy gnuradio-${MODULE_NAME})
+diff --git a/gnuradio-runtime/CMakeLists.txt b/gnuradio-runtime/CMakeLists.txt
+index adf508ec1b..12a659ab3b 100644
+--- a/gnuradio-runtime/CMakeLists.txt
++++ b/gnuradio-runtime/CMakeLists.txt
+@@ -38,39 +38,6 @@ gr_register_component(
+     Volk_FOUND)
+ 
+ get_filename_component(GNURADIO_RUNTIME_PYTHONPATH ${PROJECT_SOURCE_DIR}/python ABSOLUTE)
+-########################################################################
+-# Setup precompiled header pseudo-component
+-########################################################################
+-if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.16.0")
+-    set(GR_CMAKE_HAS_PCH ${CMAKE_VERSION})
+-endif()
+-
+-gr_register_component("common-precompiled-headers" ENABLE_COMMON_PCH
+-                      ENABLE_GNURADIO_RUNTIME GR_CMAKE_HAS_PCH)
+-
+-if(ENABLE_COMMON_PCH)
+-    add_library(common-precompiled-headers STATIC
+-                ${CMAKE_CURRENT_SOURCE_DIR}/lib/dummy.cc)
+-    target_include_directories(
+-        common-precompiled-headers
+-        PUBLIC $<INSTALL_INTERFACE:include>
+-               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+-               $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>)
+-
+-    if(MSVC)
+-        target_compile_definitions(
+-            common-precompiled-headers
+-            PUBLIC # disables stupidity and enables std::min and std::max
+-                   -DNOMINMAX)
+-    endif(MSVC)
+-
+-    target_precompile_headers(
+-        common-precompiled-headers
+-        PUBLIC
+-        $<$<COMPILE_LANGUAGE:CXX>:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/gnuradio/top_block.h>>
+-    )
+-    target_link_libraries(common-precompiled-headers PUBLIC spdlog::spdlog)
+-endif()
+ 
+ ########################################################################
+ # Register controlport component
+diff --git a/gnuradio-runtime/lib/CMakeLists.txt b/gnuradio-runtime/lib/CMakeLists.txt
+index 577262df21..4d37d6b7d0 100644
+--- a/gnuradio-runtime/lib/CMakeLists.txt
++++ b/gnuradio-runtime/lib/CMakeLists.txt
+@@ -152,12 +152,6 @@ target_compile_definitions(gnuradio-runtime PUBLIC ${MPLIB_DEFINITIONS})
+ # constants.cc includes boost::dll headers, force them to use std::filesystem
+ target_compile_definitions(gnuradio-runtime PRIVATE BOOST_DLL_USE_STD_FS)
+ 
+-if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.16.0")
+-    target_precompile_headers(
+-        gnuradio-runtime PRIVATE
+-        ${CMAKE_CURRENT_SOURCE_DIR}/../include/gnuradio/sync_block.h)
+-endif()
+-
+ ########################################################################
+ # Add controlport stuff to gnuradio-runtime
+ ########################################################################
+diff --git a/gr-analog/lib/CMakeLists.txt b/gr-analog/lib/CMakeLists.txt
+index 3d9a9caaa7..b1fcfde4da 100644
+--- a/gr-analog/lib/CMakeLists.txt
++++ b/gr-analog/lib/CMakeLists.txt
+@@ -47,10 +47,6 @@ target_link_libraries(
+     PUBLIC gnuradio-runtime gnuradio-blocks
+     PRIVATE gnuradio-filter)
+ 
+-if(ENABLE_COMMON_PCH)
+-    target_link_libraries(gnuradio-analog PRIVATE common-precompiled-headers)
+-endif()
+-
+ target_include_directories(
+     gnuradio-analog PUBLIC $<INSTALL_INTERFACE:include>
+                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+diff --git a/gr-audio/lib/CMakeLists.txt b/gr-audio/lib/CMakeLists.txt
+index 12305a2f07..4040c5b987 100644
+--- a/gr-audio/lib/CMakeLists.txt
++++ b/gr-audio/lib/CMakeLists.txt
+@@ -139,9 +139,5 @@ if(WIN32)
+     endif()
+ endif(WIN32)
+ 
+-if(ENABLE_COMMON_PCH)
+-    target_link_libraries(gnuradio-audio PRIVATE common-precompiled-headers)
+-endif()
+-
+ gr_library_foo(gnuradio-audio)
+ install(FILES ${gr_audio_confs} DESTINATION ${GR_PREFSDIR})
+diff --git a/gr-blocks/lib/CMakeLists.txt b/gr-blocks/lib/CMakeLists.txt
+index 59d8aec961..53af609219 100644
+--- a/gr-blocks/lib/CMakeLists.txt
++++ b/gr-blocks/lib/CMakeLists.txt
+@@ -179,10 +179,6 @@ if(SNDFILE_FOUND)
+     target_link_libraries(gnuradio-blocks PRIVATE sndfile::sndfile)
+ endif()
+ 
+-if(ENABLE_COMMON_PCH)
+-    target_link_libraries(gnuradio-blocks PRIVATE common-precompiled-headers)
+-endif()
+-
+ target_include_directories(
+     gnuradio-blocks PUBLIC $<INSTALL_INTERFACE:include>
+                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+diff --git a/gr-channels/lib/CMakeLists.txt b/gr-channels/lib/CMakeLists.txt
+index db866ce865..99a9739f47 100644
+--- a/gr-channels/lib/CMakeLists.txt
++++ b/gr-channels/lib/CMakeLists.txt
+@@ -25,10 +25,6 @@ target_link_libraries(
+     PUBLIC gnuradio-runtime
+     PRIVATE gnuradio-filter gnuradio-analog gnuradio-blocks)
+ 
+-if(ENABLE_COMMON_PCH)
+-    target_link_libraries(gnuradio-channels PRIVATE common-precompiled-headers)
+-endif()
+-
+ target_include_directories(
+     gnuradio-channels PUBLIC $<INSTALL_INTERFACE:include>
+                              $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+diff --git a/gr-digital/lib/CMakeLists.txt b/gr-digital/lib/CMakeLists.txt
+index 0a3fb80157..d1670793ba 100644
+--- a/gr-digital/lib/CMakeLists.txt
++++ b/gr-digital/lib/CMakeLists.txt
+@@ -95,10 +95,6 @@ target_link_libraries(
+     gnuradio-digital PUBLIC gnuradio-runtime gnuradio-filter gnuradio-blocks
+                             gnuradio-analog Boost::boost Volk::volk)
+ 
+-if(ENABLE_COMMON_PCH)
+-    target_link_libraries(gnuradio-digital PRIVATE common-precompiled-headers)
+-endif()
+-
+ target_include_directories(
+     gnuradio-digital
+     PUBLIC $<INSTALL_INTERFACE:include>
+diff --git a/gr-dtv/lib/CMakeLists.txt b/gr-dtv/lib/CMakeLists.txt
+index 35b017d996..4fca1a6c96 100644
+--- a/gr-dtv/lib/CMakeLists.txt
++++ b/gr-dtv/lib/CMakeLists.txt
+@@ -74,10 +74,6 @@ target_link_libraries(
+     PUBLIC gnuradio-runtime
+     PRIVATE gnuradio-analog gnuradio-filter gnuradio-fec Volk::volk)
+ 
+-if(ENABLE_COMMON_PCH)
+-    target_link_libraries(gnuradio-dtv PRIVATE common-precompiled-headers)
+-endif()
+-
+ target_include_directories(
+     gnuradio-dtv PUBLIC $<INSTALL_INTERFACE:include>
+                         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+diff --git a/gr-fec/lib/CMakeLists.txt b/gr-fec/lib/CMakeLists.txt
+index 39449bfed3..2e7cf9148b 100644
+--- a/gr-fec/lib/CMakeLists.txt
++++ b/gr-fec/lib/CMakeLists.txt
+@@ -77,10 +77,6 @@ endif(MSVC)
+ 
+ target_link_libraries(gnuradio-fec PUBLIC gnuradio-runtime gnuradio-blocks)
+ 
+-if(ENABLE_COMMON_PCH)
+-    target_link_libraries(gnuradio-fec PRIVATE common-precompiled-headers)
+-endif()
+-
+ # Address linker issues with std::filesystem on Centos 8 and Debian
+ target_link_libraries(
+     gnuradio-fec
+diff --git a/gr-fft/lib/CMakeLists.txt b/gr-fft/lib/CMakeLists.txt
+index 3881a3bf7b..cce6e7506f 100644
+--- a/gr-fft/lib/CMakeLists.txt
++++ b/gr-fft/lib/CMakeLists.txt
+@@ -15,10 +15,6 @@ target_link_libraries(
+     PUBLIC gnuradio-runtime Volk::volk
+     PRIVATE fftw3f::fftw3f)
+ 
+-if(ENABLE_COMMON_PCH)
+-    target_link_libraries(gnuradio-fft PRIVATE common-precompiled-headers)
+-endif()
+-
+ # Address linker issues with std::filesystem on Centos 8 and Debian
+ target_link_libraries(
+     gnuradio-fft
+diff --git a/gr-filter/lib/CMakeLists.txt b/gr-filter/lib/CMakeLists.txt
+index 1f95468c77..b34d3d11e9 100644
+--- a/gr-filter/lib/CMakeLists.txt
++++ b/gr-filter/lib/CMakeLists.txt
+@@ -58,10 +58,6 @@ target_link_libraries(
+     PUBLIC gnuradio-runtime gnuradio-fft Volk::volk
+     PRIVATE gnuradio-blocks)
+ 
+-if(ENABLE_COMMON_PCH)
+-    target_link_libraries(gnuradio-filter PRIVATE common-precompiled-headers)
+-endif()
+-
+ target_include_directories(
+     gnuradio-filter PUBLIC $<INSTALL_INTERFACE:include>
+                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+diff --git a/gr-iio/lib/CMakeLists.txt b/gr-iio/lib/CMakeLists.txt
+index 50c9431e04..edf188d7c8 100644
+--- a/gr-iio/lib/CMakeLists.txt
++++ b/gr-iio/lib/CMakeLists.txt
+@@ -34,10 +34,6 @@ if(libad9361_SUFFICIENT)
+     target_compile_definitions(gnuradio-iio PUBLIC -DGR_IIO_LIBAD9361)
+ endif(libad9361_SUFFICIENT)
+ 
+-if(ENABLE_COMMON_PCH)
+-    target_link_libraries(gnuradio-iio PRIVATE common-precompiled-headers)
+-endif()
+-
+ #Add Windows DLL resource file if using MSVC
+ if(MSVC)
+     include(${PROJECT_SOURCE_DIR}/cmake/Modules/GrVersion.cmake)
+diff --git a/gr-network/lib/CMakeLists.txt b/gr-network/lib/CMakeLists.txt
+index 1e67633dd9..8cd22557db 100644
+--- a/gr-network/lib/CMakeLists.txt
++++ b/gr-network/lib/CMakeLists.txt
+@@ -28,10 +28,6 @@ add_library(
+ 
+ target_link_libraries(gnuradio-network PUBLIC gnuradio-runtime)
+ 
+-if(ENABLE_COMMON_PCH)
+-    target_link_libraries(gnuradio-network PRIVATE common-precompiled-headers)
+-endif()
+-
+ target_include_directories(
+     gnuradio-network
+     PUBLIC $<INSTALL_INTERFACE:include>
+diff --git a/gr-pdu/lib/CMakeLists.txt b/gr-pdu/lib/CMakeLists.txt
+index da706294f4..3075e01dea 100644
+--- a/gr-pdu/lib/CMakeLists.txt
++++ b/gr-pdu/lib/CMakeLists.txt
+@@ -35,10 +35,6 @@ endif(MSVC)
+ 
+ target_link_libraries(gnuradio-pdu PUBLIC gnuradio-runtime)
+ 
+-if(ENABLE_COMMON_PCH)
+-    target_link_libraries(gnuradio-pdu PRIVATE common-precompiled-headers)
+-endif()
+-
+ target_include_directories(
+     gnuradio-pdu
+     PUBLIC $<INSTALL_INTERFACE:include>
+diff --git a/gr-qtgui/lib/CMakeLists.txt b/gr-qtgui/lib/CMakeLists.txt
+index f5b0316d0a..5d520997b6 100644
+--- a/gr-qtgui/lib/CMakeLists.txt
++++ b/gr-qtgui/lib/CMakeLists.txt
+@@ -70,11 +70,6 @@ set(QTGUI_LIBS
+     Qt5::Widgets
+ )
+ 
+-if(ENABLE_COMMON_PCH)
+-    set(PRIVATE_LIBS common-precompiled-headers)
+-endif()
+-
+-
+ add_library(
+     gnuradio-qtgui
+     ${QTGUI_SOURCES}
+diff --git a/gr-soapy/lib/CMakeLists.txt b/gr-soapy/lib/CMakeLists.txt
+index 7f4f478c65..2088175a98 100644
+--- a/gr-soapy/lib/CMakeLists.txt
++++ b/gr-soapy/lib/CMakeLists.txt
+@@ -15,10 +15,6 @@ target_compile_features(gnuradio-soapy PRIVATE ${GR_CXX_VERSION_FEATURE})
+ 
+ target_link_libraries(gnuradio-soapy PUBLIC gnuradio-runtime ${SoapySDR_LIBRARIES})
+ 
+-if(ENABLE_COMMON_PCH)
+-    target_link_libraries(gnuradio-soapy PRIVATE common-precompiled-headers)
+-endif()
+-
+ target_include_directories(
+     gnuradio-soapy PUBLIC $<INSTALL_INTERFACE:include>
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+diff --git a/gr-trellis/lib/CMakeLists.txt b/gr-trellis/lib/CMakeLists.txt
+index bc985f9876..605aebd8db 100644
+--- a/gr-trellis/lib/CMakeLists.txt
++++ b/gr-trellis/lib/CMakeLists.txt
+@@ -32,10 +32,6 @@ add_library(
+ 
+ target_link_libraries(gnuradio-trellis PUBLIC gnuradio-runtime gnuradio-digital)
+ 
+-if(ENABLE_COMMON_PCH)
+-    target_link_libraries(gnuradio-trellis PRIVATE common-precompiled-headers)
+-endif()
+-
+ target_include_directories(
+     gnuradio-trellis PUBLIC $<INSTALL_INTERFACE:include>
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+diff --git a/gr-video-sdl/lib/CMakeLists.txt b/gr-video-sdl/lib/CMakeLists.txt
+index 39458496c3..11e187f6f2 100644
+--- a/gr-video-sdl/lib/CMakeLists.txt
++++ b/gr-video-sdl/lib/CMakeLists.txt
+@@ -15,10 +15,6 @@ target_link_libraries(
+     PUBLIC gnuradio-runtime
+     PRIVATE ${SDL_LIBRARY})
+ 
+-if(ENABLE_COMMON_PCH)
+-    target_link_libraries(gnuradio-video-sdl PRIVATE common-precompiled-headers)
+-endif()
+-
+ target_include_directories(
+     gnuradio-video-sdl
+     PUBLIC $<INSTALL_INTERFACE:include>
+diff --git a/gr-vocoder/lib/CMakeLists.txt b/gr-vocoder/lib/CMakeLists.txt
+index 4e50fbca0e..2e91aef794 100644
+--- a/gr-vocoder/lib/CMakeLists.txt
++++ b/gr-vocoder/lib/CMakeLists.txt
+@@ -28,10 +28,6 @@ target_include_directories(
+     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+ target_link_libraries(gnuradio-vocoder PUBLIC gnuradio-runtime)
+ 
+-if(ENABLE_COMMON_PCH)
+-    target_link_libraries(gnuradio-vocoder PRIVATE common-precompiled-headers)
+-endif()
+-
+ if(LIBCODEC2_FOUND)
+     target_sources(gnuradio-vocoder PRIVATE codec2.cc codec2_decode_ps_impl.cc
+                                             codec2_encode_sp_impl.cc)
+diff --git a/gr-wavelet/lib/CMakeLists.txt b/gr-wavelet/lib/CMakeLists.txt
+index 5de9fe213d..142128b6d1 100644
+--- a/gr-wavelet/lib/CMakeLists.txt
++++ b/gr-wavelet/lib/CMakeLists.txt
+@@ -26,10 +26,6 @@ target_link_libraries(
+     PUBLIC gnuradio-runtime
+     PRIVATE GSL::gsl)
+ 
+-if(ENABLE_COMMON_PCH)
+-    target_link_libraries(gnuradio-wavelet PRIVATE common-precompiled-headers)
+-endif()
+-
+ target_include_directories(
+     gnuradio-wavelet
+     PUBLIC $<INSTALL_INTERFACE:include>
+diff --git a/gr-zeromq/lib/CMakeLists.txt b/gr-zeromq/lib/CMakeLists.txt
+index 44807298b3..6293ad998e 100644
+--- a/gr-zeromq/lib/CMakeLists.txt
++++ b/gr-zeromq/lib/CMakeLists.txt
+@@ -30,10 +30,6 @@ target_link_libraries(
+     PUBLIC gnuradio-runtime
+     PRIVATE ZeroMQ::ZeroMQ)
+ 
+-if(ENABLE_COMMON_PCH)
+-    target_link_libraries(gnuradio-zeromq PRIVATE common-precompiled-headers)
+-endif()
+-
+ target_include_directories(
+     gnuradio-zeromq PUBLIC $<INSTALL_INTERFACE:include>
+                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+-- 
+2.47.3
+

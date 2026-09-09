@@ -1,0 +1,11 @@
+etc
+usr/bin
+usr/lib/python*
+usr/share/applications
+usr/share/bash-completion/completions/gr_modtool
+usr/share/fish/vendor_completions.d/gr_modtool.fish
+usr/share/gnuradio
+usr/share/icons
+usr/share/metainfo
+usr/share/mime
+usr/share/zsh/site-functions/_gr_modtool

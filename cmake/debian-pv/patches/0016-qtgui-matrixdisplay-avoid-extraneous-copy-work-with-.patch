@@ -1,0 +1,46 @@
+From ca7ba89753bc5e148dd574d46306054f936faa9b Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Sun, 13 Apr 2025 13:29:59 +0200
+Subject: [PATCH 16/80] qtgui/matrixdisplay: avoid extraneous copy, work with
+ Qt<5.14
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ gr-qtgui/lib/matrix_sink_impl.cc | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/gr-qtgui/lib/matrix_sink_impl.cc b/gr-qtgui/lib/matrix_sink_impl.cc
+index 7ef474e230..3e955a2c5b 100644
+--- a/gr-qtgui/lib/matrix_sink_impl.cc
++++ b/gr-qtgui/lib/matrix_sink_impl.cc
+@@ -1,6 +1,7 @@
+ /* -*- c++ -*- */
+ /*
+  * Copyright 2023 Free Software Foundation, Inc.
++ * Copyright 2025 Marcus Müller
+  *
+  * This file is part of GNU Radio
+  *
+@@ -116,9 +117,13 @@ int matrix_sink_impl::work(int noutput_items,
+     auto in = static_cast<const input_type*>(input_items[0]);
+ 
+     for (int k = 0; k < noutput_items; k++) {
+-        std::vector<input_type> a(in + k * d_vlen, in + (k + 1) * d_vlen);
+-        QVector<double> qvec(a.begin(), a.end());
+-        emit d_signal->data_ready(qvec);
++#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
++        QVector<double> data(d_vlen);
++        std::copy_n(in + k * d_vlen, d_vlen, data.begin());
++#else
++        QVector<double> data(in + k * d_vlen, in + (k + 1) * d_vlen);
++#endif
++        emit d_signal->data_ready(data);
+     }
+ 
+     return noutput_items;
+-- 
+2.47.3
+

@@ -1,0 +1,24 @@
+From: "A. Maitland Bottoms" <bottoms@debian.org>
+Subject: examples documentation
+
+Use GR_PKG_DOC_DIR for docs rather than GR_PKG_DATA_DIR.
+
+--- a/gnuradio-runtime/examples/mp-sched/CMakeLists.txt
++++ b/gnuradio-runtime/examples/mp-sched/CMakeLists.txt
+@@ -11,4 +11,4 @@
+     PROGRAMS affinity_set.py plot_flops.py run_synthetic.py synthetic.py
+              wfm_rcv_pll_to_wav.py DESTINATION ${GR_PKG_DATA_DIR}/examples/mp-sched)
+ 
+-install(FILES README DESTINATION ${GR_PKG_DATA_DIR}/examples/mp-sched)
++install(FILES README DESTINATION ${GR_PKG_DOC_DIR}/examples/mp-sched)
+--- a/gr-trellis/examples/python/CMakeLists.txt
++++ b/gr-trellis/examples/python/CMakeLists.txt
+@@ -9,7 +9,7 @@
+ 
+ gr_python_install(PROGRAMS test_tcm.py DESTINATION ${GR_PKG_TRELLIS_EXAMPLES_DIR})
+ 
+-install(FILES README DESTINATION ${GR_PKG_DATA_DIR}/examples/trellis)
++install(FILES README DESTINATION ${GR_PKG_DOC_DIR}/examples/trellis)
+ 
+ install(
+     FILES fsm_files/awgn1o1_16rsc.fsm

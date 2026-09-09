@@ -1,0 +1,41 @@
+From 1244ee42a8da4cb618a64ec7ff32e2b95042622c Mon Sep 17 00:00:00 2001
+From: Jayesh Verma <23b3943@iitb.ac.in>
+Date: Mon, 22 Sep 2025 10:02:28 +0000
+Subject: [PATCH 74/80] GRC: Change bypassed block color to blue-gray
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The previous yellow color for bypassed blocks was often confused by new
+users with the orange for deprecated blocks or red for errored blocks.
+
+This commit changes the color to a more neutral and distinct Light
+Steel Blue (#b0c4de) for better UI clarity.
+
+Fixes #7914
+
+Signed-off-by: Jayesh Verma <23b3943@iitb.ac.in>
+
+GRC-gtk: colors: remove malformatted redundant comment
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ grc/gui/canvas/colors.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/grc/gui/canvas/colors.py b/grc/gui/canvas/colors.py
+index 89f5025d0e..f1c18131f7 100644
+--- a/grc/gui/canvas/colors.py
++++ b/grc/gui/canvas/colors.py
+@@ -49,7 +49,7 @@ FLOWGRAPH_EDGE_COLOR = COMMENT_BACKGROUND_COLOR
+ # Block color constants
+ BLOCK_ENABLED_COLOR = get_color('#F1ECFF')
+ BLOCK_DISABLED_COLOR = get_color('#CCCCCC')
+-BLOCK_BYPASSED_COLOR = get_color('#F4FF81')
++BLOCK_BYPASSED_COLOR = get_color('#b0c4de')  # Light Steel Blue
+ 
+ # Connection color constants
+ CONNECTION_ENABLED_COLOR = get_color('#000000')
+-- 
+2.47.3
+

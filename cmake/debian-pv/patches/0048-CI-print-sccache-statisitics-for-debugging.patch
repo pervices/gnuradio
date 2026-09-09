@@ -1,0 +1,39 @@
+From db878388836e377f9cf812885d2ac7aae91d5d06 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Thu, 19 Jun 2025 19:08:57 +0200
+Subject: [PATCH 48/80] CI: print sccache statisitics for debugging
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ .github/workflows/make-test.yml | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/.github/workflows/make-test.yml b/.github/workflows/make-test.yml
+index 910d775515..19bda49c4c 100644
+--- a/.github/workflows/make-test.yml
++++ b/.github/workflows/make-test.yml
+@@ -186,6 +186,9 @@ jobs:
+     - name: Check for installation duplicates
+       if: ${{ ! matrix.skip_upload }}
+       run: tools/check_installation_duplicates.bash /build/install_manifest.txt
++    - name: Sccache statistics
++      if: ${{ steps.enable_sccache.outputs.CXX_LAUNCHER }}
++      run: sccache -s
+   mingw64:
+     timeout-minutes: 80
+   # All of these shall depend on the formatting check (needs: check-formatting)
+@@ -269,3 +272,8 @@ jobs:
+     - name: Make Test
+       working-directory: ./build
+       run: ctest --output-on-failure
++    - name: Sccache statistics
++      env: 
++        SCCACHE_CONF: ${{ steps.enable_sccache.outputs.SCCACHE_CONF }}
++      if: ${{ steps.enable_sccache.outputs.CXX_LAUNCHER }}
++      run: sccache -s
+-- 
+2.47.3
+

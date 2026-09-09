@@ -1,0 +1,34 @@
+From 6839d1328e392000cb8c564b8a9f8d7903730279 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Thu, 3 Apr 2025 12:33:33 +0200
+Subject: [PATCH 13/80] uhd: remove duplicately installed files
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ gr-uhd/grc/CMakeLists.txt | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/gr-uhd/grc/CMakeLists.txt b/gr-uhd/grc/CMakeLists.txt
+index 6507a32386..23340c5e03 100644
+--- a/gr-uhd/grc/CMakeLists.txt
++++ b/gr-uhd/grc/CMakeLists.txt
+@@ -77,13 +77,10 @@ if(ENABLE_UHD_RFNOC)
+         uhd_fpga_ctrl.domain.yml
+         uhd_fpga_data.domain.yml
+         uhd_fpga_io_axi4_mm.domain.yml
+-        uhd_fpga_io_axi4_mm.domain.yml
+-        uhd_fpga_io_ctrl_port.domain.yml
+         uhd_fpga_io_ctrl_port.domain.yml
+         uhd_fpga_io_gpio.domain.yml
+         uhd_fpga_io_radio.domain.yml
+         uhd_fpga_io_time_keeper.domain.yml
+-        uhd_fpga_io_time_keeper.domain.yml
+         uhd_fpga_io_xport.domain.yml
+         DESTINATION ${GRC_BLOCKS_DIR})
+     if(PYQT5_FOUND)
+-- 
+2.47.3
+

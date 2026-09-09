@@ -1,0 +1,41 @@
+From af0c4e3e2e21c2b76f214bca7f2aba35423f6ef8 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?H=C3=A5kon=20V=C3=A5gsether?= <hakon.vagsether@gmail.com>
+Date: Fri, 26 Dec 2025 23:36:41 +0100
+Subject: [PATCH 79/80] grcqt: Let the user know where log files are
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Håkon Vågsether <hakon.vagsether@gmail.com>
+---
+ grc/gui_qt/grc.py | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/grc/gui_qt/grc.py b/grc/gui_qt/grc.py
+index 91d7055cdb..1cbc9f69b2 100644
+--- a/grc/gui_qt/grc.py
++++ b/grc/gui_qt/grc.py
+@@ -113,12 +113,18 @@ class Application(QtWidgets.QApplication):
+         # Print Startup information once everything has loaded
+         self.Console.enable()
+ 
+-        paths = "\n\t".join(config.block_paths)
++        block_paths = "\n\t".join(config.block_paths)
++        log_files = ''
++        for handler in logging.getLogger("grc").handlers:
++            if type(handler) == logging.FileHandler:
++                log_files = log_files + f"\n\t{handler.baseFilename} ({logging.getLevelName(handler.level)})"
++
+         welcome = (
+             f"<<< Welcome to {config.name} {config.version} >>>\n\n"
+             f"{('PyQt ' + PYQT_VERSION) if PYQT_VERSION else ('PySide ' + PYSIDE_VERSION)}\n"
+             f"GUI preferences file: {self.qsettings.fileName()}\n"
+-            f"Block paths:\n\t{paths}\n"
++            f"Log files: {'None' if not log_files else log_files}\n"
++            f"Block paths:\n\t{block_paths}\n"
+             f"Using {QtGui.QIcon.themeName()} icon theme\n"
+         )
+         log.info(textwrap.dedent(welcome))
+-- 
+2.47.3
+

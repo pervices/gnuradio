@@ -1,0 +1,304 @@
+From aa0c927163f424e90aa55bf6aaae2ba92dbf046c Mon Sep 17 00:00:00 2001
+From: ZakyHermawan <zaky.hermawan9615@gmail.com>
+Date: Tue, 12 Nov 2024 14:06:21 +0100
+Subject: [PATCH 21/80] grc: Fix various formatting and other minor issues
+
+Includes autopep8 fixes and fixing imports.
+
+Co-authored-by: Martin Braun <martin.braun@ettus.com>
+Signed-off-by: ZakyHermawan <zaky.hermawan9615@gmail.com>
+Signed-off-by: Martin Braun <martin.braun@ettus.com>
+---
+ grc/blocks/variable_struct.block.yml.py  |  4 ++--
+ grc/core/Constants.py                    |  3 ++-
+ grc/core/FlowGraph.py                    |  7 ++++++-
+ grc/core/blocks/__init__.py              |  3 +++
+ grc/core/blocks/block.py                 |  3 +--
+ grc/core/default_flow_graph.grc          |  4 ++++
+ grc/gui/PropsDialog.py                   |  6 +++---
+ grc/gui_qt/components/executor.py        |  8 +++-----
+ grc/gui_qt/components/variable_editor.py | 18 ++++++++++++------
+ grc/gui_qt/components/window.py          |  2 +-
+ grc/tests/test_examples.py               | 11 +++++++----
+ grc/tests/test_qtbot.py                  |  4 ++--
+ 12 files changed, 46 insertions(+), 27 deletions(-)
+
+diff --git a/grc/blocks/variable_struct.block.yml.py b/grc/blocks/variable_struct.block.yml.py
+index 9e81c1605a..b58af8bdb8 100644
+--- a/grc/blocks/variable_struct.block.yml.py
++++ b/grc/blocks/variable_struct.block.yml.py
+@@ -79,8 +79,8 @@ def make_yml(num_fields):
+     return ''.join((
+         HEADER.format(num_fields),
+         FIELD0, ''.join(FIELDS.format(i) for i in range(1, num_fields)),
+-        ''.join(VALUES.format(i) for i in range(num_fields)),'value: ${struct({',
+-        ''.join(FUNCTIONCALL.format(i) for i in range(num_fields)),'})}\n\nasserts:\n',
++        ''.join(VALUES.format(i) for i in range(num_fields)), 'value: ${struct({',
++        ''.join(FUNCTIONCALL.format(i) for i in range(num_fields)), '})}\n\nasserts:\n',
+         ''.join(ASSERTS.format(i) for i in range(num_fields)),
+         ''.join(TEMPLATES.format(num_fields)),
+         FOOTER
+diff --git a/grc/core/Constants.py b/grc/core/Constants.py
+index 2fdabd720a..3166f940d5 100644
+--- a/grc/core/Constants.py
++++ b/grc/core/Constants.py
+@@ -26,7 +26,8 @@ GRC_SUBDIR = 'grc'
+ CACHE_FILE_NAME = 'cache_v2.json'
+ FALLBACK_CACHE_FILE = os.path.expanduser(f'~/.cache/{PROJECT_DEFAULT_DIR}/{GRC_SUBDIR}/{CACHE_FILE_NAME}')
+ EXAMPLE_CACHE_FILE_NAME = 'example_cache.json'
+-FALLBACK_EXAMPLE_CACHE_FILE = os.path.expanduser(f'~/.cache/{PROJECT_DEFAULT_DIR}/{GRC_SUBDIR}/{EXAMPLE_CACHE_FILE_NAME}')
++FALLBACK_EXAMPLE_CACHE_FILE = os.path.expanduser(
++    f'~/.cache/{PROJECT_DEFAULT_DIR}/{GRC_SUBDIR}/{EXAMPLE_CACHE_FILE_NAME}')
+ 
+ BLOCK_DESCRIPTION_FILE_FORMAT_VERSION = 1
+ # File format versions:
+diff --git a/grc/core/FlowGraph.py b/grc/core/FlowGraph.py
+index 91c512a583..e71d82cc50 100644
+--- a/grc/core/FlowGraph.py
++++ b/grc/core/FlowGraph.py
+@@ -186,8 +186,13 @@ class FlowGraph(Element):
+ 
+         Returns:
+             the value held by that param
++            will return None if the key param key doesn't exist
+         """
+-        return self.options_block.params[key].get_evaluated()
++        param = self.options_block.params.get(key)
++        if param:
++            return param.get_evaluated()
++        else:
++            return None
+ 
+     def get_run_command(self, file_path, split=False) -> Union[str, List[str]]:
+         run_command = self.get_option('run_command')
+diff --git a/grc/core/blocks/__init__.py b/grc/core/blocks/__init__.py
+index cc5297ece4..93a675ed63 100644
+--- a/grc/core/blocks/__init__.py
++++ b/grc/core/blocks/__init__.py
+@@ -22,6 +22,9 @@ def register_build_in(cls):
+     return cls
+ 
+ 
++# fmt: off
++# These need to come after register_build_in
+ from .dummy import DummyBlock
+ from .embedded_python import EPyBlock, EPyModule
+ from .virtual import VirtualSink, VirtualSource
++# fmt: on
+diff --git a/grc/core/blocks/block.py b/grc/core/blocks/block.py
+index 6c5722919f..3df44dae73 100644
+--- a/grc/core/blocks/block.py
++++ b/grc/core/blocks/block.py
+@@ -19,7 +19,6 @@ from ._templates import MakoTemplates, no_quotes
+ from ._flags import Flags
+ 
+ from ..base import Element
+-from ..params import Param
+ from ..utils.descriptors import lazy_property
+ 
+ 
+@@ -62,7 +61,7 @@ class Block(Element):
+         param_factory = self.parent_platform.make_param
+         port_factory = self.parent_platform.make_port
+ 
+-        self.params: typing.OrderedDict[str, Param] = collections.OrderedDict(
++        self.params = collections.OrderedDict(
+             (data['id'], param_factory(parent=self, **data)) for data in self.parameters_data)
+         if self.key == 'options':
+             self.params['id'].hide = 'part'
+diff --git a/grc/core/default_flow_graph.grc b/grc/core/default_flow_graph.grc
+index 7654db6866..1ef8fd0b46 100644
+--- a/grc/core/default_flow_graph.grc
++++ b/grc/core/default_flow_graph.grc
+@@ -7,6 +7,10 @@ options:
+   parameters:
+     id: 'default'
+     title: 'Not titled yet'
++    author: ''
++    copyright: ''
++    description: ''
++    hier_block_src_path: '.:'
+   states:
+     coordinate:
+     - 8
+diff --git a/grc/gui/PropsDialog.py b/grc/gui/PropsDialog.py
+index 8a3e5761be..be30a369bf 100644
+--- a/grc/gui/PropsDialog.py
++++ b/grc/gui/PropsDialog.py
+@@ -134,17 +134,17 @@ class PropsDialog(Gtk.Dialog):
+     def _params_changed(self):
+         """
+         Have the params in this dialog changed?
+-        Ex: Added, removed, type change, hide change...
++        Ex: Added, removed, type change, hide change, and updated value
+         To the props dialog, the hide setting of 'none' and 'part' are identical.
+         Therefore, the props dialog only cares if the hide setting is/not 'all'.
+         Make a hash that uniquely represents the params' state.
+ 
+         Returns:
+-            true if changed
++            True if changed
+         """
+         old_hash = self._hash
+         new_hash = self._hash = hash(tuple(
+-            (hash(param), param.name, param.dtype, param.hide == 'all',)
++            (hash(param), param.name, param.dtype, param.hide == 'all', param.get_value())
+             for param in self._block.params.values()
+         ))
+         return new_hash != old_hash
+diff --git a/grc/gui_qt/components/executor.py b/grc/gui_qt/components/executor.py
+index d3e6e9b2ce..d31a5204fb 100644
+--- a/grc/gui_qt/components/executor.py
++++ b/grc/gui_qt/components/executor.py
+@@ -5,6 +5,7 @@ import threading
+ import time
+ from pathlib import Path
+ from shutil import which as find_executable
++from gnuradio import gr
+ 
+ from ...core import Messages
+ from ...core.utils.system import get_cmake_nproc
+@@ -21,7 +22,7 @@ class ExecFlowGraphThread(threading.Thread):
+ 
+         self.view = view
+         self.flow_graph = flowgraph
+-        self.xterm_executable = xterm_executable
++        self.xterm_executable = xterm_executable or gr.prefs().get_string('grc', 'xterm_executable', 'xterm')
+         self.update_callback = callback
+ 
+         try:
+@@ -57,11 +58,8 @@ class ExecFlowGraphThread(threading.Thread):
+         # it looks really ugly and confusing in the console panel.
+         Messages.send_start_exec(' '.join(run_command_args))
+ 
+-        dirname = Path(generator.file_path).parent
+-
+         return subprocess.Popen(
+             args=run_command_args,
+-            cwd=dirname,
+             stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+             shell=False, universal_newlines=True
+         )
+@@ -84,7 +82,7 @@ class ExecFlowGraphThread(threading.Thread):
+ 
+         nproc = get_cmake_nproc()
+ 
+-        run_command_args = f'cmake .. && cmake --build . -j{nproc} && cd ../.. && {xterm_executable} -e {run_command}'
++        run_command_args = f'cmake .. && cmake --build . -j{nproc} && {xterm_executable} -e {os.path.abspath(run_command)}'
+         Messages.send_start_exec(run_command_args)
+ 
+         return subprocess.Popen(
+diff --git a/grc/gui_qt/components/variable_editor.py b/grc/gui_qt/components/variable_editor.py
+index e1ddc3c7d4..19ca5e4b9a 100644
+--- a/grc/gui_qt/components/variable_editor.py
++++ b/grc/gui_qt/components/variable_editor.py
+@@ -189,8 +189,10 @@ class VariableEditor(QDockWidget, base.Component):
+                     variable_.setForeground(0, self._tree.palette().color(self.palette().WindowText))
+                     variable_.setForeground(1, self._tree.palette().color(self.palette().WindowText))
+                 else:
+-                    variable_.setForeground(0, self._tree.palette().color(self.palette().Disabled, self.palette().WindowText))
+-                    variable_.setForeground(1, self._tree.palette().color(self.palette().Disabled, self.palette().WindowText))
++                    variable_.setForeground(0, self._tree.palette().color(
++                        self.palette().Disabled, self.palette().WindowText))
++                    variable_.setForeground(1, self._tree.palette().color(
++                        self.palette().Disabled, self.palette().WindowText))
+             else:
+                 variable_.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                 if block.enabled:
+@@ -201,12 +203,16 @@ class VariableEditor(QDockWidget, base.Component):
+                     except Exception:
+                         log.exception(f'Failed to evaluate variable block {block.name}', exc_info=True)
+                         variable_.setText(1, '<Open Properties>')
+-                        variable_.setForeground(0, self._tree.palette().color(self.palette().Disabled, self.palette().WindowText))
+-                        variable_.setForeground(1, self._tree.palette().color(self.palette().Disabled, self.palette().WindowText))
++                        variable_.setForeground(0, self._tree.palette().color(
++                            self.palette().Disabled, self.palette().WindowText))
++                        variable_.setForeground(1, self._tree.palette().color(
++                            self.palette().Disabled, self.palette().WindowText))
+                 else:
+                     variable_.setText(1, '<Open Properties>')
+-                    variable_.setForeground(0, self._tree.palette().color(self.palette().Disabled, self.palette().WindowText))
+-                    variable_.setForeground(1, self._tree.palette().color(self.palette().Disabled, self.palette().WindowText))
++                    variable_.setForeground(0, self._tree.palette().color(
++                        self.palette().Disabled, self.palette().WindowText))
++                    variable_.setForeground(1, self._tree.palette().color(
++                        self.palette().Disabled, self.palette().WindowText))
+             variable_.setIcon(2, QtGui.QIcon.fromTheme("list-remove"))
+ 
+         self.currently_rebuilding = False
+diff --git a/grc/gui_qt/components/window.py b/grc/gui_qt/components/window.py
+index 9b446681c8..313f0dc70b 100644
+--- a/grc/gui_qt/components/window.py
++++ b/grc/gui_qt/components/window.py
+@@ -1341,7 +1341,7 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
+     def properties_triggered(self):
+         log.debug("properties")
+         if len(self.currentFlowgraphScene.selected_blocks()) != 1:
+-            log.warn("Opening Properties even though selected_blocks() != 1 ")
++            log.warning("Opening Properties even though selected_blocks() != 1 ")
+         self.currentFlowgraphScene.selected_blocks()[0].open_properties()
+ 
+     def enable_triggered(self):
+diff --git a/grc/tests/test_examples.py b/grc/tests/test_examples.py
+index 25b518b80a..899306d582 100644
+--- a/grc/tests/test_examples.py
++++ b/grc/tests/test_examples.py
+@@ -13,9 +13,10 @@ except FileExistsError:
+ 
+ # Gather blocks
+ BLOCK_PATHS = []
+-ROOT = path.join(path.dirname(__file__), '../..')
++ROOT = path.join(path.dirname(__file__), '..', '..')
+ BLOCK_PATHS = [path.abspath(path.join(ROOT, 'grc/blocks')),
+                path.abspath(path.join(ROOT, 'build/gr-uhd/grc'))]
++
+ for file_dir in os.scandir(ROOT):
+     # If it is a module
+     if path.isdir(file_dir) and file_dir.name.startswith("gr-"):
+@@ -53,7 +54,11 @@ def gather_examples():
+     example_paths = []
+     for file_dir in os.scandir(ROOT):
+         # If it is a module
+-        if path.isdir(file_dir) and file_dir.name.startswith("gr-") and not file_dir.name.startswith('gr-trellis'):
++        if (
++            path.isdir(file_dir) and
++            file_dir.name.startswith("gr-") and not
++            file_dir.name.startswith('gr-trellis')
++        ):
+             try:
+                 for pos_ex in os.scandir(path.join(file_dir, "examples")):
+                     if path.isfile(pos_ex) and pos_ex.name.endswith(".grc") and not path.basename(pos_ex) in BLACKLISTED:
+@@ -79,8 +84,6 @@ def print_proper(element):
+ def test_all_examples(example):
+     global BLOCK_PATHS
+ 
+-    print(example.path)
+-
+     platform = Platform(
+         name='GNU Radio Companion Compiler',
+         prefs=None,
+diff --git a/grc/tests/test_qtbot.py b/grc/tests/test_qtbot.py
+index bfcdb3a151..739038d0a7 100644
+--- a/grc/tests/test_qtbot.py
++++ b/grc/tests/test_qtbot.py
+@@ -288,7 +288,7 @@ def test_change_id(qtbot, qapp_cls_):
+     )
+     qtbot.wait(100)
+     qtbot.mouseDClick(
+-        opts.gui.props_dialog.edit_params[1],
++        opts.gui.props_dialog.edit_params[0],
+         QtCore.Qt.LeftButton,
+     )
+     type_text(qtbot, qapp_cls_, "changed")
+@@ -911,7 +911,7 @@ def test_generate(qtbot, qapp_cls_, monkeypatch, tmp_path):
+     click_on(qtbot, qapp_cls_, n_sink.sinks[0])
+     assert not fg_path.exists(), "File/Save (setup): .grc file already exists"
+     assert not py_path.exists(), "File/Save (setup): Python file already exists"
+-    menu_shortcut(qtbot, qapp_cls_, "build", QtCore.Qt.Key_B, QtCore.Qt.Key_G)
++    menu_shortcut(qtbot, qapp_cls_, "build", QtCore.Qt.Key_B, QtCore.Qt.Key_Enter)
+     qtbot.wait(500)
+     assert fg_path.exists(), "File/Save: Could not save .grc file"
+     assert py_path.exists(), "File/Save: Could not save Python file"
+-- 
+2.47.3
+

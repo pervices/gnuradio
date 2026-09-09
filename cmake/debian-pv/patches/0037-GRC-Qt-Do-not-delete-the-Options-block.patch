@@ -1,0 +1,37 @@
+From ffb0e91b25ec4f1e75c6f520022cfb07b4484a98 Mon Sep 17 00:00:00 2001
+From: Volker Schroer <3470424+dl1ksv@users.noreply.github.com>
+Date: Sun, 18 May 2025 18:00:48 +0200
+Subject: [PATCH 37/80] GRC Qt: Do not delete the Options block
+
+The Options block must not be deleted (like in grc --gtk)
+
+Signed-off-by: Volker Schroer <3470424+dl1ksv@users.noreply.github.com>
+---
+ grc/gui_qt/components/undoable_actions.py | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/grc/gui_qt/components/undoable_actions.py b/grc/gui_qt/components/undoable_actions.py
+index c7935cb7f3..bc9c7a02d1 100644
+--- a/grc/gui_qt/components/undoable_actions.py
++++ b/grc/gui_qt/components/undoable_actions.py
+@@ -213,10 +213,13 @@ class DeleteElementAction(QUndoCommand):
+         self.setText('Delete')
+         self.scene = scene
+         self.g_connections = scene.selected_connections()
+-        self.g_blocks = scene.selected_blocks()
+-        for block in self.g_blocks:
+-            for conn in block.core.connections():
+-                self.g_connections = self.g_connections + [conn.gui]
++        g_blocks = scene.selected_blocks()
++        self.g_blocks = []
++        for block in g_blocks:
++            if not (block.core is scene.core.options_block):
++                self.g_blocks = self.g_blocks + [block]
++                for conn in block.core.connections():
++                    self.g_connections = self.g_connections + [conn.gui]
+ 
+     def redo(self):
+         for con in self.g_connections:
+-- 
+2.47.3
+

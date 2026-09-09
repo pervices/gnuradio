@@ -1,0 +1,62 @@
+From 9b4d803deed092f6262d18912451d168d33042fb Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Thu, 19 Jun 2025 16:57:00 +0200
+Subject: [PATCH 46/80] CI: Only run sccache setup if variables set
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ .github/workflows/make-test.yml    |  3 ++-
+ tools/setup_cmake_cache_flags.bash | 11 ++++++++---
+ 2 files changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/.github/workflows/make-test.yml b/.github/workflows/make-test.yml
+index 7295862828..7bfbd6fe0f 100644
+--- a/.github/workflows/make-test.yml
++++ b/.github/workflows/make-test.yml
+@@ -116,7 +116,8 @@ jobs:
+     steps:
+     - uses: actions/checkout@v1
+       name: Checkout Project
+-    - name: Prepare sccache usage (if installed)
++    - name: Prepare sccache usage (if available)
++      if: ${{ vars.SCCACHE_S3_BUCKET && vars.SCCACHE_S3_ENDPOINT }}
+       id: enable_sccache
+       env:
+         SCCACHE_S3_ENDPOINT: ${{ vars.SCCACHE_S3_ENDPOINT }}
+diff --git a/tools/setup_cmake_cache_flags.bash b/tools/setup_cmake_cache_flags.bash
+index 81ee9454b1..3bd9bfc8d8 100755
+--- a/tools/setup_cmake_cache_flags.bash
++++ b/tools/setup_cmake_cache_flags.bash
+@@ -6,14 +6,17 @@ bail_with_message() {
+   exit 0
+ }
+ 
+-type -p sccache || bail_with_message 'skipping sccache setup' 'sccache not found'
++type -p sccache > /dev/null || bail_with_message 'skipping sccache setup' 'sccache not found'
++[[ -z "${SCCACHE_S3_BUCKET}" ]] && bail_with_message 'skipping sccache setup' 'S3 bucket not defined (empty/missing SCCACHE_S3_BUCKET env var)'
++
++SCCACHE_BIN="$(type -p sccache)"
+ 
+ add_output() {
+   printf '%s=%s\n' "$1" "$2" >> "${GITHUB_OUTPUT}"
+ }
+ 
+-add_output C_LAUNCHER   "-DCMAKE_C_COMPILER_LAUNCHER=$(type -p sccache)"
+-add_output CXX_LAUNCHER "-DCMAKE_CXX_COMPILER_LAUNCHER=$(type -p sccache)"
++add_output C_LAUNCHER   "-DCMAKE_C_COMPILER_LAUNCHER=${SCCACHE_BIN}"
++add_output CXX_LAUNCHER "-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE_BIN}"
+ 
+ mkdir -p ~/.config/sccache
+ 
+@@ -27,3 +30,5 @@ no_credentials = false
+ region = "${SCCACHE_S3_REGION}"
+ EOF
+ 
++bail_with_message 'enabling sccache' "Using ${SCCACHE_BIN} ($(${SCCACHE_BIN} --version)) as sccache binary."
++
+-- 
+2.47.3
+

@@ -1,0 +1,97 @@
+From dd82a52d1e5a49d084ce3b4c6d047e6b7eca7b27 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Thu, 19 Jun 2025 15:50:57 +0200
+Subject: [PATCH 45/80] CI: use sccache where available
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ .github/workflows/make-test.yml    | 16 +++++++++++++++-
+ tools/setup_cmake_cache_flags.bash | 29 +++++++++++++++++++++++++++++
+ 2 files changed, 44 insertions(+), 1 deletion(-)
+ create mode 100755 tools/setup_cmake_cache_flags.bash
+
+diff --git a/.github/workflows/make-test.yml b/.github/workflows/make-test.yml
+index fd22a733af..7295862828 100644
+--- a/.github/workflows/make-test.yml
++++ b/.github/workflows/make-test.yml
+@@ -116,17 +116,28 @@ jobs:
+     steps:
+     - uses: actions/checkout@v1
+       name: Checkout Project
++    - name: Prepare sccache usage (if installed)
++      id: enable_sccache
++      env:
++        SCCACHE_S3_ENDPOINT: ${{ vars.SCCACHE_S3_ENDPOINT }}
++        SCCACHE_S3_BUCKET: ${{ vars.SCCACHE_S3_BUCKET }}
++        SCCACHE_S3_REGION: ${{ vars.SCCACHE_S3_REGION }}
++      run: tools/setup_cmake_cache_flags.bash "${{ matrix.distro }}"
+     - name: CMake
+       env:
+         CXXFLAGS: ${{ matrix.ignore_errors || '-Werror' }} ${{ matrix.cxxflags }}
++        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY }}
++        AWS_ACCESS_KEY_ID: ${{ vars.SCCACHE_S3_KEY_ID }}
+       run: >
+         cd /build
+         && cmake
+         -DENABLE_DEFAULT=${{ matrix.enable_default || 'On' }}
+         -DENABLE_DOXYGEN=${{ matrix.enable_doxygen || 'Off' }}
+         -DENABLE_PYTHON=${{  matrix.enable_python  || 'On' }}
+-        -DCMAKE_BUILD_TYPE=RelWithDebInfo
++        ${{ steps.enable_sccache.outputs.CXX_LAUNCHER }}
++        ${{ steps.enable_sccache.outputs.C_LAUNCHER }}
+         ${{ matrix.cmakeflags }}
++        -DCMAKE_BUILD_TYPE=RelWithDebInfo
+         ${GITHUB_WORKSPACE}
+     - name: Dump compile commands
+       if: ${{ ! matrix.skip_upload }}
+@@ -136,6 +147,9 @@ jobs:
+         path: /build/compile_commands.json
+         if-no-files-found: ignore
+     - name: Make
++      env:
++        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_KEY }}
++        AWS_ACCESS_KEY_ID: ${{ vars.SCCACHE_S3_KEY_ID }}
+       run: cmake --build /build ${{ matrix.build_options || '--parallel $(nproc)' }}
+     - name: Make Test
+       env:
+diff --git a/tools/setup_cmake_cache_flags.bash b/tools/setup_cmake_cache_flags.bash
+new file mode 100755
+index 0000000000..81ee9454b1
+--- /dev/null
++++ b/tools/setup_cmake_cache_flags.bash
+@@ -0,0 +1,29 @@
++#!/bin/bash
++runname="$1"
++
++bail_with_message() {
++  printf '::notice title="%s: %s"::%s\n' "${runname}" "$1" "$2"
++  exit 0
++}
++
++type -p sccache || bail_with_message 'skipping sccache setup' 'sccache not found'
++
++add_output() {
++  printf '%s=%s\n' "$1" "$2" >> "${GITHUB_OUTPUT}"
++}
++
++add_output C_LAUNCHER   "-DCMAKE_C_COMPILER_LAUNCHER=$(type -p sccache)"
++add_output CXX_LAUNCHER "-DCMAKE_CXX_COMPILER_LAUNCHER=$(type -p sccache)"
++
++mkdir -p ~/.config/sccache
++
++>> ~/.config/sccache/config cat << EOF
++[cache.s3]
++endpoint = "${SCCACHE_S3_ENDPOINT}"
++bucket = "${SCCACHE_S3_BUCKET}"
++use_ssl = true
++server_side_encryption = false
++no_credentials = false
++region = "${SCCACHE_S3_REGION}"
++EOF
++
+-- 
+2.47.3
+

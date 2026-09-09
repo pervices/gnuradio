@@ -1,0 +1,28 @@
+From 5b6b9ac46b8c59ff29986ca04feb1a2ae76355c1 Mon Sep 17 00:00:00 2001
+From: Amith Biju <amithbiju@ug.cusat.ac.in>
+Date: Mon, 5 Jan 2026 16:35:25 +0530
+Subject: [PATCH 80/80] grcqt: fix crash when loading invalid  .grc files
+
+Signed-off-by: Amith Biju <amithbiju@ug.cusat.ac.in>
+---
+ grc/gui_qt/components/window.py | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/grc/gui_qt/components/window.py b/grc/gui_qt/components/window.py
+index ba6d11bc18..75ed6517e0 100644
+--- a/grc/gui_qt/components/window.py
++++ b/grc/gui_qt/components/window.py
+@@ -184,9 +184,8 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
+                         self.open_triggered(file)
+                         grc_file_found = True
+                     except Exception as e:
+-                        import traceback
+                         log.error(f"failed to load flowgraph file {file} with exception {e}")
+-                        log.debug(f"file {file}: {traceback.format_exception(value=e, tb=e.__traceback__)}")
++                        log.debug(f"file {file}:", exc_info=True)
+         if not grc_file_found:
+             self.new_triggered()
+ 
+-- 
+2.47.3
+

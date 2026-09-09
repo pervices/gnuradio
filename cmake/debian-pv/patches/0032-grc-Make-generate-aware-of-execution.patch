@@ -1,0 +1,137 @@
+From ceda902f612031e332d666715b4741dfdcefe005 Mon Sep 17 00:00:00 2001
+From: Martin Braun <martin.braun@ettus.com>
+Date: Wed, 20 Nov 2024 16:37:38 +0100
+Subject: [PATCH 32/80] grc: Make generate aware of execution
+
+When generating a flow graph, we make the generator aware if it's being
+called directly, or implied by "execute". This can be useful for future
+workflows.
+
+Signed-off-by: Martin Braun <martin.braun@ettus.com>
+---
+ grc/core/generator/cpp_hier_block.py | 2 +-
+ grc/core/generator/cpp_top_block.py  | 2 +-
+ grc/core/generator/hier_block.py     | 2 +-
+ grc/core/generator/top_block.py      | 2 +-
+ grc/gui/Application.py               | 9 +++++++--
+ grc/gui_qt/components/window.py      | 6 +++---
+ 6 files changed, 14 insertions(+), 9 deletions(-)
+
+diff --git a/grc/core/generator/cpp_hier_block.py b/grc/core/generator/cpp_hier_block.py
+index e278d4b600..deee416f2b 100644
+--- a/grc/core/generator/cpp_hier_block.py
++++ b/grc/core/generator/cpp_hier_block.py
+@@ -30,7 +30,7 @@ class CppHierBlockGenerator(CppTopBlockGenerator):
+         self._mode = Constants.HIER_BLOCK_FILE_MODE
+         self.file_path_yml = self.file_path + '.block.yml'
+ 
+-    def write(self):
++    def write(self, _=None):
+         """generate output and write it to files"""
+         CppTopBlockGenerator.write(self)
+ 
+diff --git a/grc/core/generator/cpp_top_block.py b/grc/core/generator/cpp_top_block.py
+index 136c9b7802..3bd264f7b8 100644
+--- a/grc/core/generator/cpp_top_block.py
++++ b/grc/core/generator/cpp_top_block.py
+@@ -70,7 +70,7 @@ class CppTopBlockGenerator(object):
+         for key in deprecated_block_keys:
+             Messages.send_warning("The block {!r} is deprecated.".format(key))
+ 
+-    def write(self):
++    def write(self, _=None):
+         """create directory, generate output and write it to files"""
+         self._warnings()
+ 
+diff --git a/grc/core/generator/hier_block.py b/grc/core/generator/hier_block.py
+index c3d0d2f2a4..298a410d8f 100644
+--- a/grc/core/generator/hier_block.py
++++ b/grc/core/generator/hier_block.py
+@@ -29,7 +29,7 @@ class HierBlockGenerator(TopBlockGenerator):
+         self._mode = Constants.HIER_BLOCK_FILE_MODE
+         self.file_path_yml = self.file_path[:-3] + '.block.yml'
+ 
+-    def write(self):
++    def write(self, _=None):
+         """generate output and write it to files"""
+         TopBlockGenerator.write(self)
+ 
+diff --git a/grc/core/generator/top_block.py b/grc/core/generator/top_block.py
+index 108d86a785..f958bec6a0 100644
+--- a/grc/core/generator/top_block.py
++++ b/grc/core/generator/top_block.py
+@@ -64,7 +64,7 @@ class TopBlockGenerator(object):
+         for key in deprecated_block_keys:
+             Messages.send_warning("The block {!r} is deprecated.".format(key))
+ 
+-    def write(self):
++    def write(self, _=None):
+         """generate output and write it to files"""
+         self._warnings()
+ 
+diff --git a/grc/gui/Application.py b/grc/gui/Application.py
+index 64b7a4d10f..46507c65c0 100644
+--- a/grc/gui/Application.py
++++ b/grc/gui/Application.py
+@@ -69,6 +69,9 @@ class Application(Gtk.Application):
+         self.init_file_paths = [os.path.abspath(
+             file_path) for file_path in file_paths]
+         self.init = False
++        # exec_called tracks if "generate" is implied by "execute", or called
++        # directly. If true, then "execute" was called previously.
++        self.exec_called = False
+ 
+     def do_startup(self):
+         Gtk.Application.do_startup(self)
+@@ -760,14 +763,16 @@ class Application(Gtk.Application):
+                     generator = page.get_generator()
+                     try:
+                         Messages.send_start_gen(generator.file_path)
+-                        generator.write()
++                        generator.write(self.exec_called)
+                         self.generator = generator
+                     except Exception as e:
+                         Messages.send_fail_gen(e)
+ 
+         elif action == Actions.FLOW_GRAPH_EXEC:
+-            if not page.process:
++            if not page.process:  # Don't execute if already running
++                self.exec_called = True
+                 Actions.FLOW_GRAPH_GEN()
++                self.exec_called = False
+                 if self.generator:
+                     xterm = self.platform.config.xterm_executable
+                     if self.config.xterm_missing() != xterm:
+diff --git a/grc/gui_qt/components/window.py b/grc/gui_qt/components/window.py
+index 313f0dc70b..a01f6f691a 100644
+--- a/grc/gui_qt/components/window.py
++++ b/grc/gui_qt/components/window.py
+@@ -1397,7 +1397,7 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
+     def block_dec_type_triggered(self):
+         log.debug("block_dec_type")
+ 
+-    def generate_triggered(self):
++    def generate_triggered(self, called_from_exec=False):
+         log.debug("generate")
+         if not self.currentFlowgraphScene.saved:
+             self.save_triggered()
+@@ -1410,14 +1410,14 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
+         generator = self.platform.Generator(
+             self.currentFlowgraph, os.path.dirname(filename)
+         )
+-        generator.write()
++        generator.write(called_from_exec)
+         self.currentView.generator = generator
+         log.info(f"Generated {generator.file_path}")
+ 
+     def execute_triggered(self):
+         log.debug("execute")
+         if self.currentView.process_is_done():
+-            self.generate_triggered()
++            self.generate_triggered(called_from_exec=True)
+             if self.currentView.generator:
+                 xterm = self.app.qsettings.value("grc/xterm_executable", "")
+                 '''if self.config.xterm_missing() != xterm:
+-- 
+2.47.3
+

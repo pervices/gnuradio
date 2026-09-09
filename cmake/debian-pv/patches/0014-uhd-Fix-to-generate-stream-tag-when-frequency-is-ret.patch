@@ -1,0 +1,27 @@
+From 6c97c65150bb0119b08de6453a41e8a0d85c75c0 Mon Sep 17 00:00:00 2001
+From: Jimmy Fitzpatrick <jcfitzpatrick12@gmail.com>
+Date: Tue, 25 Feb 2025 20:50:29 +0000
+Subject: [PATCH 14/80] uhd: Fix to generate stream tag when frequency is
+ retuned via message passing.
+
+Signed-off-by: Jimmy Fitzpatrick <jcfitzpatrick12@gmail.com>
+---
+ gr-uhd/lib/usrp_source_impl.cc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gr-uhd/lib/usrp_source_impl.cc b/gr-uhd/lib/usrp_source_impl.cc
+index 484e2a8b83..556c0437d4 100644
+--- a/gr-uhd/lib/usrp_source_impl.cc
++++ b/gr-uhd/lib/usrp_source_impl.cc
+@@ -118,7 +118,7 @@ usrp_source_impl::_set_center_freq_from_internals(size_t chan, pmt::pmt_t direct
+         return _dev->set_tx_freq(_curr_tx_tune_req[chan], _stream_args.channels[chan]);
+     } else {
+         _rx_chans_to_tune[chan] = false;
+-        return _dev->set_rx_freq(_curr_rx_tune_req[chan], _stream_args.channels[chan]);
++        return set_center_freq(_curr_rx_tune_req[chan], chan);
+     }
+ }
+ 
+-- 
+2.47.3
+

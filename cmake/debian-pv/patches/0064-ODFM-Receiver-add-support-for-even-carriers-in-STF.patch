@@ -1,0 +1,57 @@
+From 46b3b677eeef98f8b043de95eca444b6b187ab23 Mon Sep 17 00:00:00 2001
+From: Fred Fierling <fff@spukhafte.net>
+Date: Mon, 2 Jun 2025 13:39:07 -0700
+Subject: [PATCH 64/80] ODFM Receiver: add support for even carriers in STF
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Without this fix OFDM Receiver can't synchronize if
+Sync Word 1 (the STF in 802.15.4) uses even carriers.
+This fix detects whether even or odd carriers are used,
+complains if both are and sets the use_even_carriers
+parameter in the call to Schmidl & Cox synchronizer
+accordingly.
+
+Signed-off-by: Fred Fierling <fff@spukhafte.net>
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ gr-digital/python/digital/ofdm_txrx.py | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/gr-digital/python/digital/ofdm_txrx.py b/gr-digital/python/digital/ofdm_txrx.py
+index 60109ceaaa..7960e8d540 100644
+--- a/gr-digital/python/digital/ofdm_txrx.py
++++ b/gr-digital/python/digital/ofdm_txrx.py
+@@ -319,11 +319,19 @@ class ofdm_rx(gr.hier_block2):
+         if sync_word1 is None:
+             self.sync_word1 = _make_sync_word1(
+                 fft_len, occupied_carriers, pilot_carriers)
++            even_carriers = any(self.sync_word1[0::2])
+         else:
+             if len(sync_word1) != self.fft_len:
+                 raise ValueError(
+                     "Length of sync sequence(s) must be FFT length.")
++
++            even_carriers = any(sync_word1[0::2])
++            if even_carriers and any(sync_word1[1::2]):
++                raise ValueError(
++                    "Alternate carriers in Sync Word 1 must be zero for Schmidl & Cox synchronization"
++                )
+             self.sync_word1 = sync_word1
++
+         self.sync_word2 = ()
+         if sync_word2 is None:
+             self.sync_word2 = _make_sync_word2(
+@@ -340,7 +348,7 @@ class ofdm_rx(gr.hier_block2):
+         else:
+             self.scramble_seed = 0x00  # We deactivate the scrambler by init'ing it with zeros
+         ### Sync ############################################################
+-        sync_detect = digital.ofdm_sync_sc_cfb(fft_len, cp_len)
++        sync_detect = digital.ofdm_sync_sc_cfb(fft_len, cp_len, even_carriers)
+         delay = blocks.delay(gr.sizeof_gr_complex, fft_len + cp_len)
+         oscillator = analog.frequency_modulator_fc(-2.0 / fft_len)
+         mixer = blocks.multiply_cc()
+-- 
+2.47.3
+

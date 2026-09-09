@@ -1,0 +1,8 @@
+#!/bin/sh
+
+set -eu
+
+for python in $(py3versions -d); do
+  echo "Testing some $python numpy using modules..."
+  $python -c 'import gnuradio.digital; print(gnuradio.digital.numpy)'
+done

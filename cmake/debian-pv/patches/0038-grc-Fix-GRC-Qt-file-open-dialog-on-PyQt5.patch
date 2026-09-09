@@ -1,0 +1,39 @@
+From 056d38bf834181c1ded84fb7507eb3c0cc7684bf Mon Sep 17 00:00:00 2001
+From: Martin Braun <martin.braun@ettus.com>
+Date: Mon, 24 Mar 2025 11:19:42 +0100
+Subject: [PATCH 38/80] grc: Fix GRC-Qt file open dialog on PyQt5
+
+Despite using qtpy, the signature for opening files on PyQt5 and PySide2
+is different. Luckily, the order of arguments is the same, so by not
+using keyword arguments, we can make this call cross-compatible.
+
+On PyQt5, the third argument is called 'directory', and on PySide2, it's
+called 'dir'.
+
+Signed-off-by: Martin Braun <martin.braun@ettus.com>
+---
+ grc/gui_qt/components/window.py | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/grc/gui_qt/components/window.py b/grc/gui_qt/components/window.py
+index 713e68edcc..43ced2c86b 100644
+--- a/grc/gui_qt/components/window.py
++++ b/grc/gui_qt/components/window.py
+@@ -890,10 +890,11 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
+         else:
+             dirname = os.getcwd()
+         Open = QtWidgets.QFileDialog.getOpenFileName
++        # Despite qtpy, PyQt5 and PySide2 have different signatures for getOpenFileName
+         filename, filtr = Open(
+-            self,
+-            self.actions["open"].statusTip(),
+-            dir=dirname,
++            self,  # parent
++            self.actions["open"].statusTip(),  # caption
++            dirname,  # dir
+             filter="Flow Graph Files (*.grc);;All files (*.*)",
+         )
+         return filename
+-- 
+2.47.3
+

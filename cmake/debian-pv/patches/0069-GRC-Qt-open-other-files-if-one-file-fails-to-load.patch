@@ -1,0 +1,36 @@
+From 14d41e8ab0e6b296b86fa77e4dae3cad25272a9c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Sat, 4 Oct 2025 17:54:22 +0200
+Subject: [PATCH 69/80] GRC-Qt: open other files if one file fails to load
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ grc/gui_qt/components/window.py | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/grc/gui_qt/components/window.py b/grc/gui_qt/components/window.py
+index 43ced2c86b..ba6d11bc18 100644
+--- a/grc/gui_qt/components/window.py
++++ b/grc/gui_qt/components/window.py
+@@ -180,8 +180,13 @@ class MainWindow(QtWidgets.QMainWindow, base.Component):
+         if files_open:
+             for file in files_open:
+                 if os.path.isfile(file):
+-                    self.open_triggered(file)
+-                    grc_file_found = True
++                    try:
++                        self.open_triggered(file)
++                        grc_file_found = True
++                    except Exception as e:
++                        import traceback
++                        log.error(f"failed to load flowgraph file {file} with exception {e}")
++                        log.debug(f"file {file}: {traceback.format_exception(value=e, tb=e.__traceback__)}")
+         if not grc_file_found:
+             self.new_triggered()
+ 
+-- 
+2.47.3
+

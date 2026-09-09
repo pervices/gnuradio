@@ -1,0 +1,463 @@
+From 160b35d93c9dd3fb17a1570124407d8d9680cb00 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Daniel=20Est=C3=A9vez?= <daniel@destevez.net>
+Date: Wed, 2 Jul 2025 10:39:38 +0200
+Subject: [PATCH 68/80] digital: improve FLL Band Edge loop filter
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The loop filter in the FLL Band Edge block has two problems:
+
+1. It acts on the phase, performing an update that looks like:
+
+d_freq += d_beta * error;
+d_phase += d_freq + d_alpha * error;
+
+This is not correct. An FLL should act only on the frequency, since
+the error that it measures is a frequency error. The loop update
+should look like:
+
+d_freq += d_beta * error;
+d_phase += d_freq;
+
+2. It does not take into account the gain of the error discriminant.
+
+This PR addresses these two problems by redesigning the loop filter.
+Since it is not possible to make this change in a backwards-compatible
+way that preserves the semantics of the 'bandwidth' parameter (since
+'bandwidth' has broken/inconsistent semantics due to the two problems
+listed above), a new constructor parameter 'improved_loop_filter' that
+defaults to false is added. When 'improved_loop_filter' is false, the
+legacy behavior is preserved. When 'improved_loop_filter' is true, the
+new fixed loop filter is used.
+
+The legacy loop filter uses control_loop() to set the loop coefficients
+d_alpha and d_beta. This sets
+
+d_alpha = (2 * sqrt(2) * bw) / (1 + sqrt(2) * bw + bw**2)
+d_beta = (4 * bw**2) / (1 + sqrt(2) * bw + bw**2)
+
+The new loop filter forces the following filter coefficients:
+
+d_alpha = 0
+d_beta = 8 * pi * bw / samps_per_sym
+
+Since having a non-zero alpha term mostly contributes additional
+(unwanted) loop noise, the legacy and new loop filters can be compared
+by comparing their expressions for beta. This remaks gives that to
+maintain a behavior similar to the legacy one with a particular
+bandwidth 'bw', the new loop bandwidth needs to be set to
+
+(bw**2 * samps_per_sym) / ((1 + sqrt(2) * bw + bw**2) * 2 * pi).
+
+The new loop filter is designed so that the 'bandwidth' parameter
+has the semantics of BL*T, where BL is the loop bandwidth in Hz and
+T is the sampling period in seconds. It uses the continuous-update
+approximation for a 1st order loop.
+
+The 'improved_loop_filter' constructor parameter has also been added
+to the generic_demod() and psk_demod() classes, which use the FLL
+Band-Edge block, and their QA tests have been updated to set this
+parameter to true. The loop bandwidths in these tests have been changed
+to something reasonable.
+
+Signed-off-by: Daniel Estévez <daniel@destevez.net>
+---
+ .../grc/digital_fll_band_edge_cc.block.yml    | 11 +++-
+ gr-digital/grc/digital_psk_demod.block.yml    |  7 ++-
+ .../gnuradio/digital/fll_band_edge_cc.h       | 15 ++++-
+ gr-digital/lib/fll_band_edge_cc_impl.cc       | 63 ++++++++++++++-----
+ gr-digital/lib/fll_band_edge_cc_impl.h        |  7 ++-
+ .../bindings/fll_band_edge_cc_python.cc       |  3 +-
+ .../python/digital/generic_mod_demod.py       |  6 +-
+ .../digital/qa_constellation_receiver.py      |  8 ++-
+ gr-digital/python/digital/qa_fll_band_edge.py |  8 +--
+ 9 files changed, 94 insertions(+), 34 deletions(-)
+
+diff --git a/gr-digital/grc/digital_fll_band_edge_cc.block.yml b/gr-digital/grc/digital_fll_band_edge_cc.block.yml
+index ee3a555f22..25cd54b5bb 100644
+--- a/gr-digital/grc/digital_fll_band_edge_cc.block.yml
++++ b/gr-digital/grc/digital_fll_band_edge_cc.block.yml
+@@ -19,11 +19,15 @@ parameters:
+     label: Filter Rolloff Factor
+     dtype: real
+ -   id: filter_size
+-    label: Prototype Filter Size
++    label: Filter Size
+     dtype: int
+ -   id: w
+     label: Loop Bandwidth
+     dtype: real
++-   id: improved_loop_filter
++    label: Improved Loop Filter
++    dtype: bool
++    default: False
+ 
+ inputs:
+ -   domain: stream
+@@ -47,7 +51,7 @@ outputs:
+ 
+ templates:
+     imports: from gnuradio import digital
+-    make: digital.fll_band_edge_cc(${samps_per_sym}, ${rolloff}, ${filter_size}, ${w})
++    make: digital.fll_band_edge_cc(${samps_per_sym}, ${rolloff}, ${filter_size}, ${w}, ${improved_loop_filter})
+     callbacks:
+     - set_loop_bandwidth(${w})
+ 
+@@ -59,7 +63,8 @@ cpp_templates:
+             ${samps_per_sym},
+             ${rolloff},
+             ${filter_size},
+-            ${w});
++            ${w},
++            ${improved_loop_filter});
+     link: ['gnuradio::gnuradio-digital']
+     callbacks:
+     - set_loop_bandwidth(${w})
+diff --git a/gr-digital/grc/digital_psk_demod.block.yml b/gr-digital/grc/digital_psk_demod.block.yml
+index 8ace94e456..90dd0d34e1 100644
+--- a/gr-digital/grc/digital_psk_demod.block.yml
++++ b/gr-digital/grc/digital_psk_demod.block.yml
+@@ -53,6 +53,10 @@ parameters:
+     options: ['True', 'False']
+     option_labels: ['On', 'Off']
+     hide: ${ ('part' if str(log) == 'False' else 'none') }
++-   id: improved_fll
++    label: Improved FLL
++    dtype: bool
++    default: False
+ 
+ inputs:
+ -   domain: stream
+@@ -74,6 +78,7 @@ templates:
+             timing_bw=${timing_bw},
+             mod_code=${mod_code},
+             verbose=${verbose},
+-            log=${log})
++            log=${log},
++            improved_fll=${improved_fll})
+ 
+ file_format: 1
+diff --git a/gr-digital/include/gnuradio/digital/fll_band_edge_cc.h b/gr-digital/include/gnuradio/digital/fll_band_edge_cc.h
+index 66f348f6d7..38cbbe483a 100644
+--- a/gr-digital/include/gnuradio/digital/fll_band_edge_cc.h
++++ b/gr-digital/include/gnuradio/digital/fll_band_edge_cc.h
+@@ -1,6 +1,7 @@
+ /* -*- c++ -*- */
+ /*
+  * Copyright 2009,2011,2012 Free Software Foundation, Inc.
++ * Copyright 2025 Daniel Estevez <daniel@destevez.net>
+  *
+  * This file is part of GNU Radio
+  *
+@@ -81,10 +82,18 @@ public:
+      * \param samps_per_sym (float) number of samples per symbol
+      * \param rolloff (float) Rolloff (excess bandwidth) of signal filter
+      * \param filter_size (int) number of filter taps to generate
+-     * \param bandwidth (float) Loop bandwidth
++     * \param bandwidth (float) Loop bandwidth. If improved_loop_filter is true, then
++     * this paramter is BL*T, where BL is the loop noise bandwidth in Hz, and
++     * T is the sampling period in seconds.
++     * \param improved_loop_filter (bool) Improved loop filter. If true, the
++     * loop filter is implemented correctly, but the loop bandwidth parameter is
++     * not backwards compatible. If false, the legacy behavior is maintained.
+      */
+-    static sptr
+-    make(float samps_per_sym, float rolloff, int filter_size, float bandwidth);
++    static sptr make(float samps_per_sym,
++                     float rolloff,
++                     int filter_size,
++                     float bandwidth,
++                     bool improved_loop_filter = false);
+ 
+     /*******************************************************************
+      SET FUNCTIONS
+diff --git a/gr-digital/lib/fll_band_edge_cc_impl.cc b/gr-digital/lib/fll_band_edge_cc_impl.cc
+index 2b757e4e1b..9f71628734 100644
+--- a/gr-digital/lib/fll_band_edge_cc_impl.cc
++++ b/gr-digital/lib/fll_band_edge_cc_impl.cc
+@@ -1,6 +1,7 @@
+ /* -*- c++ -*- */
+ /*
+  * Copyright 2009-2012,2014 Free Software Foundation, Inc.
++ * Copyright 2025 Daniel Estevez <daniel@destevez.net>
+  *
+  * This file is part of GNU Radio
+  *
+@@ -35,10 +36,11 @@ float sinc(float x)
+ fll_band_edge_cc::sptr fll_band_edge_cc::make(float samps_per_sym,
+                                               float rolloff,
+                                               int filter_size,
+-                                              float bandwidth)
++                                              float bandwidth,
++                                              bool improved_loop_filter)
+ {
+     return gnuradio::make_block_sptr<fll_band_edge_cc_impl>(
+-        samps_per_sym, rolloff, filter_size, bandwidth);
++        samps_per_sym, rolloff, filter_size, bandwidth, improved_loop_filter);
+ }
+ 
+ static int ios[] = { sizeof(gr_complex), sizeof(float), sizeof(float), sizeof(float) };
+@@ -46,7 +48,8 @@ static std::vector<int> iosig(ios, ios + sizeof(ios) / sizeof(int));
+ fll_band_edge_cc_impl::fll_band_edge_cc_impl(float samps_per_sym,
+                                              float rolloff,
+                                              int filter_size,
+-                                             float bandwidth)
++                                             float bandwidth,
++                                             bool improved_loop_filter)
+     : sync_block("fll_band_edge_cc",
+                  io_signature::make(1, 1, sizeof(gr_complex)),
+                  io_signature::makev(1, 4, iosig)),
+@@ -54,15 +57,50 @@ fll_band_edge_cc_impl::fll_band_edge_cc_impl(float samps_per_sym,
+           bandwidth, M_TWOPI * (2.0 / samps_per_sym), -M_TWOPI * (2.0 / samps_per_sym)),
+       d_sps(samps_per_sym),
+       d_rolloff(rolloff),
+-      d_filter_size(filter_size)
++      d_filter_size(filter_size),
++      d_bandwidth(bandwidth),
++      d_improved_loop_filter(improved_loop_filter)
+ {
++    if (improved_loop_filter) {
++        // override control loop gains, since we need an FLL-type update of the
++        // form
++        //
++        // d_freq = d_freq + d_beta * error;
++        // d_phase = d_phase + d_freq;
++
++        set_alpha(0.0f); // do not update phase directly
++
++        // For a 1st order loop filter in the continuous update approximation,
++        // the loop constant is K1 = 4*BL*T (see Stephen & Thomas:
++        // Controlled-Root Formulation for Digital Phase-Locked Loops)
++        //
++        // bandwidth here is interpreted as BL*T, where T is the sampling
++        // period.
++        //
++        // This assumes that the error and the phase use the same units (cycles,
++        // in the case of the paper). In our case, the phase uses units of
++        // radians, but the error is in units of cycles/sample (when normalized
++        // with the discriminant gain factored in below into the loop
++        // gain). Therefore, the loop gain needs to be multiplied by 2*pi to
++        // perform unit conversion.
++        //
++        // The frequency discriminant has gain samps_per_sym. We compensate this
++        // by dividing the loop gain by samps_per_sym here.
++        set_beta(M_TWOPI * 4.0 * bandwidth / samps_per_sym);
++    } else {
++        d_logger->warn(
++            "Using legacy FLL loop filter. Consider updating to the improved loop "
++            "filter, which requires a change in the bandwidth setting. See "
++            "https://github.com/gnuradio/gnuradio/pull/7890 for more information.");
++    }
++
+     // Value-check samples per symbol
+-    if (samps_per_sym <= 0) {
++    if (samps_per_sym <= 0.0f) {
+         throw std::out_of_range("fll_band_edge_cc: invalid number of sps. Must be > 0.");
+     }
+ 
+     // Value-check rolloff factor
+-    if (rolloff < 0 || rolloff > 1.0) {
++    if (rolloff < 0.0f || rolloff > 1.0f) {
+         throw std::out_of_range(
+             "fll_band_edge_cc: invalid rolloff factor. Must be in [0,1].");
+     }
+@@ -73,7 +111,7 @@ fll_band_edge_cc_impl::fll_band_edge_cc_impl(float samps_per_sym,
+     }
+ 
+     // Value-check bandwidth
+-    if (samps_per_sym <= 0) {
++    if (bandwidth <= 0.0f) {
+         throw std::out_of_range("fll_band_edge_cc: invalid bandwidth. Must be > 0.");
+     }
+ 
+@@ -98,6 +136,9 @@ void fll_band_edge_cc_impl::set_samples_per_symbol(float sps)
+     }
+     set_max_freq(M_TWOPI * (2.0 / sps));
+     set_min_freq(-M_TWOPI * (2.0 / sps));
++    if (d_improved_loop_filter) {
++        set_beta(4.0 * d_bandwidth / sps);
++    }
+     design_filter();
+ }
+ 
+@@ -193,10 +234,6 @@ void fll_band_edge_cc_impl::design_filter()
+         d_taps_upper[index] = std::conj(d_taps_lower[d_filter_size - i - 1]);
+     }
+ 
+-    d_updated = true;
+-
+-    // Set the history to ensure enough input items for each filter
+-    set_history(d_filter_size + 1);
+     d_filter_upper =
+         std::make_unique<gr::filter::kernel::fir_filter_with_buffer_ccc>(d_taps_upper);
+     d_filter_lower =
+@@ -226,10 +263,6 @@ int fll_band_edge_cc_impl::work(int noutput_items,
+                                 gr_vector_void_star& output_items)
+ {
+     gr::thread::scoped_lock lock(d_setlock);
+-    if (d_updated) {
+-        d_updated = false;
+-        return 0; // history requirements may have changed.
+-    }
+ 
+     const auto* in = reinterpret_cast<const gr_complex*>(input_items[0]);
+     auto* out = reinterpret_cast<gr_complex*>(output_items[0]);
+diff --git a/gr-digital/lib/fll_band_edge_cc_impl.h b/gr-digital/lib/fll_band_edge_cc_impl.h
+index b872f77110..51ec72dfdb 100644
+--- a/gr-digital/lib/fll_band_edge_cc_impl.h
++++ b/gr-digital/lib/fll_band_edge_cc_impl.h
+@@ -1,6 +1,7 @@
+ /* -*- c++ -*- */
+ /*
+  * Copyright 2009,2011,2012,2014 Free Software Foundation, Inc.
++ * Copyright 2025 Daniel Estevez <daniel@destevez.net>
+  *
+  * This file is part of GNU Radio
+  *
+@@ -24,10 +25,11 @@ private:
+     float d_sps;
+     float d_rolloff;
+     size_t d_filter_size;
++    float d_bandwidth;
++    const bool d_improved_loop_filter;
+ 
+     std::vector<gr_complex> d_taps_lower;
+     std::vector<gr_complex> d_taps_upper;
+-    bool d_updated = false;
+     std::unique_ptr<gr::filter::kernel::fir_filter_with_buffer_ccc> d_filter_lower;
+     std::unique_ptr<gr::filter::kernel::fir_filter_with_buffer_ccc> d_filter_upper;
+ 
+@@ -41,7 +43,8 @@ public:
+     fll_band_edge_cc_impl(float samps_per_sym,
+                           float rolloff,
+                           int filter_size,
+-                          float bandwidth);
++                          float bandwidth,
++                          bool improved_loop_filter);
+ 
+     void set_samples_per_symbol(float sps) override;
+     void set_rolloff(float rolloff) override;
+diff --git a/gr-digital/python/digital/bindings/fll_band_edge_cc_python.cc b/gr-digital/python/digital/bindings/fll_band_edge_cc_python.cc
+index e483f41488..89d50e9875 100644
+--- a/gr-digital/python/digital/bindings/fll_band_edge_cc_python.cc
++++ b/gr-digital/python/digital/bindings/fll_band_edge_cc_python.cc
+@@ -14,7 +14,7 @@
+ /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
+ /* BINDTOOL_USE_PYGCCXML(0)                                                        */
+ /* BINDTOOL_HEADER_FILE(fll_band_edge_cc.h)                                        */
+-/* BINDTOOL_HEADER_FILE_HASH(51e6cbbcfdfc7f02df62d6fb1533f821)                     */
++/* BINDTOOL_HEADER_FILE_HASH(aed09b6d33792ce815856d4de93654f1)                     */
+ /***********************************************************************************/
+ 
+ #include <pybind11/complex.h>
+@@ -46,6 +46,7 @@ void bind_fll_band_edge_cc(py::module& m)
+              py::arg("rolloff"),
+              py::arg("filter_size"),
+              py::arg("bandwidth"),
++             py::arg("improved_loop_filter") = false,
+              D(fll_band_edge_cc, make))
+ 
+ 
+diff --git a/gr-digital/python/digital/generic_mod_demod.py b/gr-digital/python/digital/generic_mod_demod.py
+index 2db9e4482a..c47e0b83bd 100644
+--- a/gr-digital/python/digital/generic_mod_demod.py
++++ b/gr-digital/python/digital/generic_mod_demod.py
+@@ -232,6 +232,7 @@ class generic_demod(gr.hier_block2):
+         phase_bw: phase recovery loop bandwidth (float)
+         verbose: Print information about modulator? (boolean)
+         log: Log modulation data to files? (boolean)
++        improved_fll: Improved FLL loop filter (boolean)
+     """
+ 
+     def __init__(self, constellation,
+@@ -243,7 +244,8 @@ class generic_demod(gr.hier_block2):
+                  timing_bw=_def_timing_bw,
+                  phase_bw=_def_phase_bw,
+                  verbose=_def_verbose,
+-                 log=_def_log):
++                 log=_def_log,
++                 improved_fll=False):
+ 
+         gr.hier_block2.__init__(self, "generic_demod",
+                                 # Input signature
+@@ -277,7 +279,7 @@ class generic_demod(gr.hier_block2):
+         # Frequency correction
+         fll_ntaps = 55
+         self.freq_recov = digital.fll_band_edge_cc(self._samples_per_symbol, self._excess_bw,
+-                                                   fll_ntaps, self._freq_bw)
++                                                   fll_ntaps, self._freq_bw, improved_fll)
+ 
+         # symbol timing recovery with RRC data filter
+         taps = filter.firdes.root_raised_cosine(nfilts, nfilts * self._samples_per_symbol,
+diff --git a/gr-digital/python/digital/qa_constellation_receiver.py b/gr-digital/python/digital/qa_constellation_receiver.py
+index cf345d5b47..d8a5c87088 100644
+--- a/gr-digital/python/digital/qa_constellation_receiver.py
++++ b/gr-digital/python/digital/qa_constellation_receiver.py
+@@ -39,7 +39,7 @@ FREQUENCY_OFFSET = 0.01
+ TIMING_OFFSET = 1.0
+ 
+ # RECEIVER PARAMETERS
+-FREQ_BW = 2 * math.pi / 100.0
++FREQ_BW = 2.3e-3
+ PHASE_BW = 2 * math.pi / 100.0
+ 
+ 
+@@ -189,10 +189,12 @@ class rec_test_tb(gr.top_block):
+         if freq_offset:
+             demod = generic_demod(constellation, differential=differential,
+                                   freq_bw=FREQ_BW,
+-                                  phase_bw=PHASE_BW)
++                                  phase_bw=PHASE_BW,
++                                  improved_fll=True)
+         else:
+             demod = generic_demod(constellation, differential=differential,
+-                                  freq_bw=0, phase_bw=0)
++                                  freq_bw=0, phase_bw=0,
++                                  improved_fll=True)
+         self.dst = blocks.vector_sink_b()
+         self.connect(src, packer, mod, channel, demod, self.dst)
+ 
+diff --git a/gr-digital/python/digital/qa_fll_band_edge.py b/gr-digital/python/digital/qa_fll_band_edge.py
+index 663be4f066..3dcb161527 100644
+--- a/gr-digital/python/digital/qa_fll_band_edge.py
++++ b/gr-digital/python/digital/qa_fll_band_edge.py
+@@ -28,7 +28,7 @@ class test_fll_band_edge_cc(gr_unittest.TestCase):
+     def test01(self):
+         sps = 4
+         rolloff = 0.35
+-        bw = 2 * math.pi / 100.0
++        bw = 2.3e-3
+         ntaps = 45
+ 
+         # Create pulse shape filter
+@@ -49,7 +49,7 @@ class test_fll_band_edge_cc(gr_unittest.TestCase):
+         self.mix = blocks.multiply_cc()
+ 
+         # FLL will despin the symbols to an arbitrary phase
+-        self.fll = digital.fll_band_edge_cc(sps, rolloff, ntaps, bw)
++        self.fll = digital.fll_band_edge_cc(sps, rolloff, ntaps, bw, True)
+ 
+         # Create sinks for all outputs of the FLL
+         # we will only care about the freq and error outputs
+@@ -76,7 +76,7 @@ class test_fll_band_edge_cc(gr_unittest.TestCase):
+     def test02_noisy(self):
+         sps = 4
+         rolloff = 0.35
+-        bw = 2 * math.pi / 100.0
++        bw = 2.3e-3
+         ntaps = 45
+         noise_std = 1 / 16
+         length = 2 * 10**5
+@@ -101,7 +101,7 @@ class test_fll_band_edge_cc(gr_unittest.TestCase):
+         self.mix = blocks.multiply_cc()
+ 
+         # FLL will despin the symbols to an arbitrary phase
+-        self.fll = digital.fll_band_edge_cc(sps, rolloff, ntaps, bw)
++        self.fll = digital.fll_band_edge_cc(sps, rolloff, ntaps, bw, True)
+ 
+         # Create sinks for all outputs of the FLL
+         # we will only care about the freq and error outputs
+-- 
+2.47.3
+

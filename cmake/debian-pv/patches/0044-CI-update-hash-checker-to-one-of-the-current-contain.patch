@@ -1,0 +1,30 @@
+From f6621ee219217729540bdbcc397394bec84466d1 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marcus=20M=C3=BCller?= <mmueller@gnuradio.org>
+Date: Thu, 19 Jun 2025 16:09:37 +0200
+Subject: [PATCH 44/80] CI: update hash checker to one of the current
+ containers
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Marcus Müller <mmueller@gnuradio.org>
+---
+ .github/workflows/make-test.yml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/.github/workflows/make-test.yml b/.github/workflows/make-test.yml
+index 6b935dc35c..fd22a733af 100644
+--- a/.github/workflows/make-test.yml
++++ b/.github/workflows/make-test.yml
+@@ -13,7 +13,7 @@ jobs:
+     timeout-minutes: 10
+     name: Check hashes
+     container:
+-      image: 'gnuradio/ci:fedora-40-3.10'
++      image: 'gnuradio/ci:fedora-42-3.10'
+     steps:
+     - name: Checkout project
+       uses: actions/checkout@v4
+-- 
+2.47.3
+
