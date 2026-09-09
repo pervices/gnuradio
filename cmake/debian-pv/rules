@@ -22,11 +22,11 @@ override_dh_auto_install:
 	dh_auto_install
 	rm -f debian/tmp/usr/lib/py*/site-packages/gnuradio/ctrlport/GNURadio/*remotec
 	rm -f debian/tmp/usr/lib/py*/site-packages/gnuradio/ctrlport/GNURadio/*remoteo
-	rm -f  debian/gnuradio-pv/usr/share/doc/gnuradio/html/*md5
+	rm -f  debian/gnuradiopv/usr/share/doc/gnuradio/html/*md5
 	rm -f  debian/gnuradio-doc/usr/share/doc/gnuradio-doc/html/*md5
 	if [ -f debian/tmp/usr/share/doc/gnuradio*/config/thrift.conf.example ] ; then \
 	 install -d debian/gnuradiopv/usr/share/doc/gnuradio/config &&\
-	 mv debian/tmp/usr/share/doc/gnuradiopv*/config/* debian/gnuradiopv/usr/share/doc/gnuradio/config/ ; fi
+	 mv debian/tmp/usr/share/doc/gnuradio*/config/* debian/gnuradiopv/usr/share/doc/gnuradio/config/ ; fi
 
 #	- if case "$(DEB_BUILD_ARCH)" in *"i386"*) false;; *"hppa"*) false;; *) true;; esac; then ARGS='--timeout 10' HOME=$(CURDIR)/debian/test xvfb-run dh_auto_test ; fi
 override_dh_auto_test:
@@ -41,7 +41,7 @@ override_dh_acc:
 
 override_dh_installmime:
 	dh_installmime
-	rm -f debian/gnuradio/usr/share/mime/packages/gnuradio.xml
+	rm -f debian/gnuradiopv/usr/share/mime/packages/gnuradio.xml
 
 override_dh_gencontrol:
 	dh_gencontrol -- -Vboost-version=`dpkg-query -W -f='$${Depends}' libboost-date-time-dev| cut -b19- |cut -b-4`
