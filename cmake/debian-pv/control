@@ -74,7 +74,7 @@ Build-Depends: cmake (>= 3.16.3),
                xmlto
 Standards-Version: 4.7.3
 Rules-Requires-Root: no
-Homepage: https://gnuradio.org/
+Homepage: https://www.gnuradio.org/
 Vcs-Browser: https://github.com/pervices/gnuradio
 Vcs-Git: https://github.com/pervices/gnuradio.git
 
@@ -137,6 +137,8 @@ Description: GNU Radio Software Radio Toolkit
  creating signal flow graphs and generating flow-graph source code.
  Also included are a variety of tools and utility programs.
 
+# TODO: gnuradio-doc intentionally left with the same name as upstream since that is how our version of the package is named on older distro.
+# Revist the name once our packaging system is easier to work with.
 Package: gnuradio-doc
 Section: doc
 Architecture: all

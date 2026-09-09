@@ -1,7 +1,10 @@
 Version: 5
 
-Template: Github
-Owner: gnuradio
-Project: gnuradio
-Update-Script: uupdate
-Uversionmangle: s/-rc/~rc/
+# We are using a monorepo so no watch file is needed
+# TODO: fix and re-enable this watch file if/when we move to a separate repo
+
+# Template: Github
+# Owner: gnuradio
+# Project: gnuradio
+# Update-Script: uupdate
+# Uversionmangle: s/-rc/~rc/

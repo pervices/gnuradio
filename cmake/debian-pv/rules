@@ -22,11 +22,11 @@ override_dh_auto_install:
 	dh_auto_install
 	rm -f debian/tmp/usr/lib/py*/site-packages/gnuradio/ctrlport/GNURadio/*remotec
 	rm -f debian/tmp/usr/lib/py*/site-packages/gnuradio/ctrlport/GNURadio/*remoteo
-	rm -f  debian/gnuradio/usr/share/doc/gnuradio/html/*md5
+	rm -f  debian/gnuradio-pv/usr/share/doc/gnuradio/html/*md5
 	rm -f  debian/gnuradio-doc/usr/share/doc/gnuradio-doc/html/*md5
 	if [ -f debian/tmp/usr/share/doc/gnuradio*/config/thrift.conf.example ] ; then \
-	 install -d debian/gnuradio/usr/share/doc/gnuradio/config &&\
-	 mv debian/tmp/usr/share/doc/gnuradio*/config/* debian/gnuradio/usr/share/doc/gnuradio/config/ ; fi
+	 install -d debian/gnuradiopv/usr/share/doc/gnuradio/config &&\
+	 mv debian/tmp/usr/share/doc/gnuradiopv*/config/* debian/gnuradiopv/usr/share/doc/gnuradio/config/ ; fi
 
 #	- if case "$(DEB_BUILD_ARCH)" in *"i386"*) false;; *"hppa"*) false;; *) true;; esac; then ARGS='--timeout 10' HOME=$(CURDIR)/debian/test xvfb-run dh_auto_test ; fi
 override_dh_auto_test:
@@ -37,7 +37,7 @@ override_dh_auto_test:
 
 override_dh_acc:
 	- dh_acc $@
-	- cat logs/gnuradio-dev/*/log.txt
+	- cat logs/gnuradiopv-dev/*/log.txt
 
 override_dh_installmime:
 	dh_installmime
