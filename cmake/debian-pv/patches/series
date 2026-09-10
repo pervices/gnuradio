@@ -1,3 +1,16 @@
+0001-replace-0-0-0-default-argument-with-0-0-0-in-Vector-.patch
+0002-grc-Factor-out-get_cmake_nproc-and-get_modifier_key.patch
+0003-Windows-include-ordering-matters-windows.h-before-ot.patch
+0004-CMake-runtime-remove-precompiled-header-infrastructu.patch
+0005-qtgui-don-t-include-block-detail-You-re-not-even-usi.patch
+0006-qtgui-include-nsf-QSS-theme.patch
+0007-grc-qt-Right-clicking-in-the-canvas-doesn-t-bring-up.patch
+0008-grc-qt-fix-broken-complexity-calculation.patch
+0009-pybind-building-don-t-error-on-deprecated-symbols.patch
+0010-ctrlport-mark-potentially-unused-parameters-as-such.patch
+0011-filter-mmse_resampler-fix-out-of-bounds-access-resam.patch
+0013-uhd-remove-duplicately-installed-files.patch
+0014-uhd-Fix-to-generate-stream-tag-when-frequency-is-ret.patch
 0017-gr-digital-fix-early_late-ted-computation-depth-to-m.patch
 0018-Modernize-code-use-override.patch
 0019-whole-tree-use-container.empty-instead-of-.length-1-.patch
