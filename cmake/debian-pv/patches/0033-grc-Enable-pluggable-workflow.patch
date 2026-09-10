@@ -2652,11 +2652,12 @@ index a01f6f691a..c3d6c60ef5 100644
  
      def kill_triggered(self):
 diff --git a/grc/tests/.gitignore b/grc/tests/.gitignore
-index f477b802c4..af52cfe175 100644
---- a/grc/tests/.gitignore
+new file mode 100644
+index 0000000000..af52cfe175
+--- /dev/null
 +++ b/grc/tests/.gitignore
-@@ -1,3 +1,18 @@
- .pytest_cache
+@@ -0,0 +1,18 @@
++.pytest_cache
 +resources/horn/
 +resources/test_cpp_hb_nogui_workflow.block.yml
 +resources/test_cpp_hb_nogui_workflow/
@@ -2671,9 +2672,7 @@ index f477b802c4..af52cfe175 100644
 +resources/test_python_hb_nogui_workflow.py
 +resources/test_python_hb_qt_gui_workflow.block.yml
 +resources/test_python_hb_qt_gui_workflow.py
- resources/top_block.py
--tests/resources/tests/
-\ No newline at end of file
++resources/top_block.py
 +resources/tests/
 +
 diff --git a/grc/tests/CMakeLists.txt b/grc/tests/CMakeLists.txt
