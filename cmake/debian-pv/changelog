@@ -1,3 +1,9 @@
+gnuradiopv (3.10.12.1-0ubuntu1) ubuntu_release; urgency=medium
+
+  *  Fixing dependencies on Ubuntu
+
+ -- Per Vices <packages@pervices.com>  Tue, 15 Sep 2026 14:29:01 -0400
+
 gnuradiopv (3.10.12.0-0ubuntu1) ubuntu_release; urgency=medium
 
   *  Update to upstream 3.10.12.0
