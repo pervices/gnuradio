@@ -1,3 +1,9 @@
+gnuradiopv (3.10.12.3-0ubuntu1) ubuntu_release; urgency=low
+
+  *  Updated patch to match upstream version of patch
+
+ -- Per Vices <packages@pervices.com>  Thu, 25 Sep 2026 16:45:26 -0400
+
 gnuradiopv (3.10.12.2-0ubuntu1) ubuntu_release; urgency=low
 
   *  Version bump to recompile for updated dependencies. No internal changes
