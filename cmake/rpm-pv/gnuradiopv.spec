@@ -1,9 +1,28 @@
-# %%define _binaries_in_noarch_packages_terminate_build 0
-# %%define _unpackaged_files_terminate_build 0
-%undefine _hardened_build
-%undefine _annotated_build
+# Error message to use when using this spec file with versions other than EL8 and EL9
+%define pv_unsupported_os %{error:gnuradiopv.spec only supports EL8 and EL9 (rhel='%{?rhel}')}
+
+# Specify the python version on 8 since the system default (3.6) is below GNU Radio's minimum
+# Leave it as the system default on 9
+%if 0%{?rhel} == 8
 %global __python3 /usr/bin/python3.11
 %global python3_pkgversion 3.11
+%else
+%if 0%{?rhel} != 9
+%{pv_unsupported_os}
+%endif
+%endif
+
+# Disable _hardened_build, _annotated_build, and set debug_package to empty for compatibility on EL8
+# Leave defaults as is on EL9
+%if 0%{?rhel} == 8
+%undefine _hardened_build
+%undefine _annotated_build
+%global debug_package %{nil}
+%else
+%if 0%{?rhel} != 9
+%{pv_unsupported_os}
+%endif
+%endif
 
 # NEON support is by default enabled on aarch64 and disabled on other ARMs (it can be overridden)
 %ifarch aarch64
@@ -28,28 +47,55 @@
 
 # For versions not yet on ftp, pull from git
 #%%global git_commit 441a3767e05d15e62c519ea66b848b5adb0f4b3a
-%global debug_package %{nil}
+
 #%%global alphatag rc1
 
+# Set Name to gnuradiopv to avoid conflicts with upstream gnuradio
 Name:		gnuradiopv
+# Set the real_name to gnuradio so internal paths are still correct
 %global real_name gnuradio
-Version:	3.10.7.0
-Release:	2%{?alphatag:.%{alphatag}}%{?dist}
+# CI sets UNSET to the latest version in the changelog at cmake/debian-pv/changelog.
+# An error it triggered if it is not set.
+Version:	UNSET
+%if "%{version}" == "UNSET"
+%{error:Version is UNSET: CI must set it from the Debian changelog before building}
+%endif
+# Per Vices: our own release numbering, independent of Fedora's.
+Release:	1%{?alphatag:.%{alphatag}}%{?dist}
 Summary:	Software defined radio framework
 
-License:	GPLv3
-URL:		https://www.github.com/pervices/gnuradio
+License:	GPL-3.0-or-later
+URL:		https://www.gnuradio.org/
 #Source0:	http://gnuradio.org/releases/gnuradio/gnuradio-%%{version}%%{?alphatag}.tar.xz
 #Source0:	http://gnuradio.org/releases/gnuradio/gnuradio-%%{version}.tar.gz
-#Source0:	https://github.com/gnuradio/%%{real_name}/archive/v%%{version}/%%{real_name}-%%{version}.tar.gz
-Source0:    %{name}.tar.gz
+# Set the source to a tarball which we later generate using git archive
+Source0:	%{real_name}-%{version}.tar.gz
 
 Requires(pre):	shadow-utils
 BuildRequires:	cmake
+# EL8's default gcc doesn't support C++17 so use 13
+# EL9's default workd with C++17 so it can be used
+%if 0%{?rhel} == 8
 BuildRequires:	gcc-toolset-13
+%else
+%if 0%{?rhel} == 9
+BuildRequires:	gcc-c++
+%else
+%{pv_unsupported_os}
+%endif
+%endif
 BuildRequires:	libtool
 BuildRequires:	alsa-lib-devel
-BuildRequires:	boost169-devel
+# Match the boost version used by libuhdpv
+%if 0%{?rhel} == 8
+BuildRequires:	boost1.78-devel
+%else
+%if 0%{?rhel} == 9
+BuildRequires:	boost-devel
+%else
+%{pv_unsupported_os}
+%endif
+%endif
 BuildRequires:	codec2-devel
 BuildRequires:	cppzmq-devel
 BuildRequires:	desktop-file-utils
@@ -63,11 +109,18 @@ BuildRequires:	gsm-devel
 BuildRequires:	gtk3-devel
 BuildRequires:	jack-audio-connection-kit-devel
 BuildRequires:	portaudio-devel
-BuildRequires:	python%{python3_pkgversion}-setuptools
-BuildRequires:	python%{python3_pkgversion}-packaging
+BuildRequires:	gobject-introspection
 BuildRequires:	python%{python3_pkgversion}-devel
+# python3.x-packaging is included in python3.x-devel on EL9 but not EL8
+%if 0%{?rhel} == 8
+BuildRequires:	python%{python3_pkgversion}-packaging
+%else
+%if 0%{?rhel} != 9
+%{pv_unsupported_os}
+%endif
+%endif
 BuildRequires:	python%{python3_pkgversion}-cairo
-BuildRequires:	python%{python3_pkgversion}-click-plugins
+BuildRequires:	python%{python3_pkgversion}-click
 BuildRequires:	python%{python3_pkgversion}-gobject
 BuildRequires:	python%{python3_pkgversion}-numpy
 BuildRequires:	python%{python3_pkgversion}-pyyaml
@@ -77,11 +130,13 @@ BuildRequires:	python%{python3_pkgversion}-qt5-devel
 BuildRequires:	python%{python3_pkgversion}-scipy
 BuildRequires:	python%{python3_pkgversion}-thrift
 BuildRequires:	python%{python3_pkgversion}-zmq
+BuildRequires:	python%{python3_pkgversion}-jsonschema
 BuildRequires:	qwt-qt5-devel
 BuildRequires:	tex(latex)
 BuildRequires:	SDL-devel
 BuildRequires:	thrift
-# BuildRequires:	uhd-devel
+# There is no separate libuhdpv-devel package for libuhdpv
+# If we separate the packages out then the devel version will need to be added
 BuildRequires:	libuhdpv
 BuildRequires:	xdg-utils
 BuildRequires:	xmlto
@@ -92,6 +147,9 @@ BuildRequires:	volk-devel
 BuildRequires:	libsndfile-devel
 BuildRequires:	SoapySDR-devel
 BuildRequires:	spdlog-devel
+# Per Vices: gr-iio is disabled. libiio-devel and libad9361-iio-devel aren't available in
+# Oracle Linux 9's repos or EPEL 9 (checked 2026-10-09); Fedora enables it. GNU Radio's CMake
+# skips gr-iio when they're missing. Re-add both lines if the packages become available.
 # for pygccxml
 #BuildRequires:	castxml
 
@@ -104,13 +162,17 @@ Requires:	python%{python3_pkgversion}-pyopengl
 Requires:	python%{python3_pkgversion}-pyyaml
 Requires:	python%{python3_pkgversion}-gobject
 Requires:	python%{python3_pkgversion}-mako
-Requires:	python%{python3_pkgversion}-click-plugins
+Requires:	python%{python3_pkgversion}-click
 Requires:	python%{python3_pkgversion}-qt5
-Requires:	python%{python3_pkgversion}-scipy 
+Requires:	python%{python3_pkgversion}-scipy
 Requires:	python%{python3_pkgversion}-pyqtgraph
 Requires:	python%{python3_pkgversion}-zmq
+Requires:	python%{python3_pkgversion}-jsonschema
 Requires:	gtk3
 Suggests:	soapy-rtlsdr
+# gnuradiopv replaces upstream's gnuradio (same files, but built against libuhdpv instead of uhd).
+# Using both together is unsupported and has caused problems on Ubuntu.
+Conflicts:	gnuradio
 
 %description
 GNU Radio is a collection of software that when combined with minimal
@@ -129,7 +191,16 @@ GNU Radio Python 3 module
 Summary:	GNU Radio
 Requires:	%{name}%{?_isa} = %{version}-%{release}
 Requires:	cmake
-Requires:	boost169-devel%{?_isa}
+# Per Vices: same Boost as BuildRequires (must match libuhdpv).
+%if 0%{?rhel} == 8
+Requires:	boost1.78-devel%{?_isa}
+%else
+%if 0%{?rhel} == 9
+Requires:	boost-devel%{?_isa}
+%else
+%{pv_unsupported_os}
+%endif
+%endif
 
 %description devel
 GNU Radio Headers
@@ -149,42 +220,59 @@ Requires:	%{name} = %{version}-%{release}
 GNU Radio examples
 
 %prep
-%setup -q -n %{real_name}
+# Setup using the upstream project name, not the package name
+%autosetup -p1 -n %{real_name}-%{version}%{?alphatag}
 
 %build
+# this could be dropped when f32 get retired (not counting EPEL)
+%undefine __cmake_in_source_build
+
+# Use gcc 13 on EL8 since the system default does not support C++ 17
+# EL9's default supports C++ 17
+%if 0%{?rhel} == 8
 source /opt/rh/gcc-toolset-13/enable
-mkdir build
-cd build
+%else
+%if 0%{?rhel} != 9
+%{pv_unsupported_os}
+%endif
+%endif
+
+# -DLIB_SUFFIX workaround due to:
+# https://github.com/gnuradio/gnuradio/issues/7766
+# https://bugzilla.redhat.com/show_bug.cgi?id=2351130
+# The DLIB_SUFFIX fix is only needed from 3.10.12 but allowed for older versions anyway
+
+# DENABLE_UHD_RFNOC is disabled because it is not supported by Per Vices devices/libuhdpv
 %cmake \
 -DSYSCONFDIR=%{_sysconfdir} \
--DGR_PKG_DOC_DIR=%{_docdir}/%{real_name} \
+-DGR_PKG_DOC_DIR=%{_docdir}/%{name} \
 -DGR_PYTHON_DIR=%{python3_sitearch} \
 -DPYTHON_EXECUTABLE=%{__python3} \
 -DENABLE_UHD_RFNOC=OFF \
--DENABLE_GR_ZEROMQ=OFF \
--Dspdlog_DIR=/usr/lib64 \
 %{?mfpu_neon} \
-..
+%if "%{?_lib}"=="lib64"
+-DLIB_SUFFIX=64
+%endif
 #-DENABLE_DOXYGEN=FALSE \
 
-%make_build CFLAGS="%{optflags} -fno-strict-aliasing" CXXFLAGS="%{optflags} -fno-strict-aliasing"
+%cmake_build
 
 %install
-%make_install -C build
+%cmake_install
 
 # desktop file
 desktop-file-install --dir=%{buildroot}%{_datadir}/applications \
   grc/scripts/freedesktop/gnuradio-grc.desktop
 # mime
-install -Dp grc/scripts/freedesktop/gnuradio-grc.xml \
+install -Dpm 0644 grc/scripts/freedesktop/gnuradio-grc.xml \
   %{buildroot}%{_datadir}/mime/packages/gnuradio-grc.xml
 # metainfo
-install -Dp grc/scripts/freedesktop/org.gnuradio.grc.metainfo.xml \
+install -Dpm 0644 grc/scripts/freedesktop/org.gnuradio.grc.metainfo.xml \
   %{buildroot}%{_datadir}/metainfo/org.gnuradio.grc.metainfo.xml
 # icons
 for i in 16 24 32 48 64 128 256
 do
-  install -Dp grc/scripts/freedesktop/grc-icon-${i}.png \
+  install -Dpm 0644 grc/scripts/freedesktop/grc-icon-${i}.png \
     %{buildroot}%{_datadir}/icons/hicolor/${i}x${i}/apps/gnuradio-grc.png
 done
 
@@ -202,13 +290,17 @@ done
 %{_mandir}/man1/*
 %config(noreplace) %{_sysconfdir}/gnuradio
 %exclude %{_datadir}/gnuradio/examples
-%exclude %{_docdir}/%{real_name}/html
-%exclude %{_docdir}/%{real_name}/xml
-%doc %{_docdir}/%{real_name}
+%exclude %{_docdir}/%{name}/html
+%exclude %{_docdir}/%{name}/xml
+%doc %{_docdir}/%{name}
 
 %files -n python%{python3_pkgversion}-%{name}
 %{python3_sitearch}/%{real_name}/
 %{python3_sitearch}/pmt/
+# Remove these 3 files on if this spec is used for GNU Radio before 3.10.12.
+%{_datadir}/bash-completion/completions/gr_modtool
+%{_datadir}/fish/vendor_completions.d/gr_modtool.fish
+%{_datadir}/zsh/site-functions/_gr_modtool
 
 %files devel
 %{_includedir}/*
@@ -217,10 +309,975 @@ done
 %{_libdir}/cmake/gnuradio
 
 %files doc
-%doc %{_docdir}/%{real_name}/html
-%doc %{_docdir}/%{real_name}/xml
+%doc %{_docdir}/%{name}/html
+%doc %{_docdir}/%{name}/xml
 
 %files examples
 %{_datadir}/gnuradio/examples
 
 %changelog
+* Wed Oct 14 2026 Per Vices <packages@pervices.com> - 3.10.12.4-0
+- Created a spec for EL9 based on Fedora's gnuradio 3.10.12.0-19
+- Build against libuhdpv; package renamed to gnuradiopv; Conflicts: gnuradio
+- Support EL9 only but designed to be easy to backport to EL9 in the future
+- Disable RFNoC (not implmented on Per Vices devices) and gr-iio (missing dependency for it on EL9)
+
+* Wed Jul 22 2026 Python Maint <python-maint@redhat.com> - 3.10.12.0-19
+- Rebuilt for Python 3.15.0b4 ABI change
+
+* Thu Jul 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 3.10.12.0-18
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_45_Mass_Rebuild
+
+* Thu Jun 25 2026 František Zatloukal <fzatlouk@redhat.com> - 3.10.12.0-17
+- Rebuilt for fmt/spdlog
+
+* Thu Jun 04 2026 Python Maint <python-maint@redhat.com> - 3.10.12.0-16
+- Rebuilt for Python 3.15
+
+* Tue Apr 28 2026 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.12.0-15
+- Rebuilt for new uhd
+
+* Wed Apr 08 2026 Sandro Mani <manisandro@gmail.com> - 3.10.12.0-14
+- Rebuild (qwt)
+
+* Tue Feb 17 2026 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.12.0-13
+- Rebuilt for new volk
+
+* Fri Jan 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 3.10.12.0-12
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_44_Mass_Rebuild
+
+* Tue Jan 13 2026 Jonathan Wakely <jwakely@fedoraproject.org> - 3.10.12.0-11
+- Rebuilt for Boost 1.90
+
+* Sat Jan 03 2026 Jaroslav Škarvada  <jskarvad@redhat.com> - 3.10.12.0-10
+- Fixed build of gnuradio-companion
+  Resolves: rhbz#2424093
+
+* Wed Nov 12 2025 Jaroslav Škarvada  <jskarvad@redhat.com> - 3.10.12.0-9
+- Enabled iio
+
+* Fri Sep 19 2025 Python Maint <python-maint@redhat.com> - 3.10.12.0-8
+- Rebuilt for Python 3.14.0rc3 bytecode
+
+* Thu Sep 11 2025 Jaroslav Škarvada  <jskarvad@redhat.com> - 3.10.12.0-7
+- Rebuilt for new uhd
+
+* Fri Aug 15 2025 Python Maint <python-maint@redhat.com> - 3.10.12.0-6
+- Rebuilt for Python 3.14.0rc2 bytecode
+
+* Wed Jul 23 2025 Fedora Release Engineering <releng@fedoraproject.org> - 3.10.12.0-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_43_Mass_Rebuild
+
+* Wed Jun 04 2025 Python Maint <python-maint@redhat.com> - 3.10.12.0-4
+- Rebuilt for Python 3.14
+
+* Mon Mar 17 2025 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.12.0-3
+- Rebuilt for new uhd
+
+* Mon Mar 10 2025 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.12.0-2
+- Rebuild for new volk
+
+* Thu Feb 20 2025 Marcus Müller <mueller_fedora@hostalia.de> - 3.10.12.0-1
+- New version
+- Corrected stated license to actually be GPLv3 (or later)
+- Remove unused python3-click-plugins dependency (GNU Radio now only needs python3-click)
+- Add python3-jsonschema dependency, needed for JSON configuration blocks
+- Include the shell completion scripts for gr_modtool in the installed files
+
+* Sun Feb 02 2025 Orion Poplawski <orion@nwra.com> - 3.10.11.0-6
+- Rebuild with gsl 2.8
+
+* Thu Jan 16 2025 Fedora Release Engineering <releng@fedoraproject.org> - 3.10.11.0-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_42_Mass_Rebuild
+
+* Thu Nov 28 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.11.0-4
+- Rebuilt for new spdlog
+
+* Tue Nov 26 2024 František Zatloukal <fzatlouk@redhat.com> - 3.10.11.0-3
+- Rebuilt for spdlog 1.15.0
+
+* Mon Sep 23 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.11.0-2
+- Fixed icon mode, dropped the executable bit
+  Resolves: rhbz#2312386
+
+* Mon Jul 29 2024 Miroslav Suchý <msuchy@redhat.com> - 3.10.11.0-1.1
+- convert license to SPDX
+
+* Fri Jul 26 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.11.0-1
+- New version
+  Resolves: rhbz#2297835
+
+* Thu Jul 18 2024 Fedora Release Engineering <releng@fedoraproject.org> - 3.10.10.0-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_41_Mass_Rebuild
+
+* Mon Jul 15 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.10.0-4
+- Rebuilt for new uhd
+
+* Sun Jun 09 2024 Python Maint <python-maint@redhat.com> - 3.10.10.0-3
+- Rebuilt for Python 3.13
+
+* Tue May 21 2024 František Zatloukal <fzatlouk@redhat.com> - 3.10.10.0-2
+- Rebuilt for spdlog 1.14.1
+
+* Thu Apr 25 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.10.0-1
+- New version
+  Resolves: rhbz#2273782
+
+* Thu Feb  1 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.9.2-2
+- Added python3-zmq requirement
+  Resolves: rhbz#2262173
+
+* Mon Jan 22 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.9.2-1
+- New version
+  Resolves: rhbz#2258885
+
+* Fri Jan 19 2024 Fedora Release Engineering <releng@fedoraproject.org> - 3.10.9.1-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Thu Jan 18 2024 Jonathan Wakely <jwakely@redhat.com> - 3.10.9.1-2
+- Rebuilt for Boost 1.83
+
+* Tue Jan  2 2024 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.9.1-1
+- New version
+  Resolves: rhbz#2255186
+
+* Mon Dec 11 2023 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.6.0-12
+- Rebuilt for new volk
+
+* Tue Nov 21 2023 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.6.0-11
+- Rebuilt for new uhd
+
+* Mon Sep 25 2023 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.6.0-10
+- Rebuilt for new uhd
+
+* Sat Aug 05 2023 Richard Shaw <hobbes1069@gmail.com> - 3.10.6.0-9
+- Rebuild for codec2.
+
+* Wed Jul 19 2023 Fedora Release Engineering <releng@fedoraproject.org> - 3.10.6.0-8
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_39_Mass_Rebuild
+
+* Tue Jul 11 2023 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.6.0-7
+- Rebuilt for new python
+
+* Sat Jul 08 2023 Vitaly Zaitsev <vitaly@easycoding.org> - 3.10.6.0-6
+- Rebuilt due to spdlog 1.12 update.
+
+* Sat Jul 01 2023 Python Maint <python-maint@redhat.com> - 3.10.6.0-5
+- Rebuilt for Python 3.12
+
+* Wed Jun 28 2023 Mamoru TASAKA <mtasaka@fedoraproject.org> - 3.10.6.0-4
+- Patch for fmt10 for not accepting enum by default
+
+* Wed Jun 28 2023 Vitaly Zaitsev <vitaly@easycoding.org> - 3.10.6.0-3
+- Rebuilt due to fmt 10 update.
+
+* Fri Jun 16 2023 Python Maint <python-maint@redhat.com> - 3.10.6.0-2
+- Rebuilt for Python 3.12
+
+* Mon Jun  5 2023 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.6.0-1
+- New version
+
+* Mon Feb 20 2023 Jonathan Wakely <jwakely@redhat.com> - 3.10.4.0-7
+- Rebuilt for Boost 1.81
+
+* Wed Feb  1 2023 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.4.0-6
+- Rebuilt for new uhd
+
+* Thu Jan 19 2023 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.4.0-5
+- Rebuilt for new volk
+
+* Thu Jan 19 2023 Fedora Release Engineering <releng@fedoraproject.org> - 3.10.4.0-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_38_Mass_Rebuild
+
+* Wed Dec 21 2022 Sandro Mani <manisandro@gmail.com> - 3.10.4.0-3
+- Rebuild (qwt)
+
+* Thu Nov 03 2022 Vitaly Zaitsev <vitaly@easycoding.org> - 3.10.4.0-2
+- Rebuilt due to spdlog update.
+
+* Sat Sep 24 2022 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.4.0-1
+- New version
+  Resolves: rhbz#2127514
+
+* Tue Aug 23 2022 Mamoru TASAKA <mtasaka@fedoraproject.org> - 3.10.3.0-5
+- Rebuild for gsl-2.7.1
+
+* Sat Jul 30 2022 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.3.0-4
+- Rebuilt for new uhd
+
+* Thu Jul 21 2022 Fedora Release Engineering <releng@fedoraproject.org> - 3.10.3.0-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_37_Mass_Rebuild
+
+* Sat Jul 09 2022 Richard Shaw <hobbes1069@gmail.com> - 3.10.3.0-2
+- Rebuild for codec2 1.0.4.
+
+* Tue Jun 21 2022 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.3.0-1
+- New version
+  Resolves: rhbz#2099614
+
+* Mon Jun 20 2022 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.2.0-4
+- Rebuilt for new python
+  Resolves: rhbz#2098711
+
+* Wed May 04 2022 Thomas Rodgers <trodgers@redhat.com> - 3.10.2.0-3
+- Rebuilt for Boost 1.78
+
+* Mon Apr 25 2022 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.2.0-2
+- Rebuilt for new uhd
+  Resolves: rhbz#2077801
+
+* Tue Apr 12 2022 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.2.0-1
+- New version
+  Resolves: rhbz#2073766
+
+* Tue Feb 22 2022 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.1.1-1
+- New version
+  Resolves: rhbz#2049503
+
+* Sun Jan 30 2022 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.1.0-1
+- New version
+  Resolves: rhbz#2048110
+
+* Thu Jan 20 2022 Jaroslav Škarvada <jskarvad@redhat.com> - 3.10.0.0-1
+- New version
+  Resolves: rhbz#2040787
+
+* Thu Jan 20 2022 Fedora Release Engineering <releng@fedoraproject.org> - 3.9.5.0-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_36_Mass_Rebuild
+
+* Mon Jan 10 2022 Jaroslav Škarvada <jskarvad@redhat.com> - 3.9.5.0-1
+- New version
+  Resolves: rhbz#2038703
+
+* Wed Dec 15 2021 Jaroslav Škarvada <jskarvad@redhat.com> - 3.9.4.0-3
+- Added missing runtime dependencies
+  Related: rhbz#2032668
+
+* Sun Dec 05 2021 Richard Shaw <hobbes1069@gmail.com> - 3.9.4.0-2
+- Rebuild for codec2 1.0.1.
+
+* Mon Nov  1 2021 Jaroslav Škarvada <jskarvad@redhat.com> - 3.9.4.0-1
+- New version
+  Resolves: rhbz#2018818
+
+* Wed Oct 20 2021 Jaroslav Škarvada <jskarvad@redhat.com> - 3.9.3.0-3
+- Synced gtk-init patch with the upstream
+- Added requirement for the python3-qt5
+  Resolves: rhbz#2015642
+
+* Tue Oct 19 2021 Jaroslav Škarvada <jskarvad@redhat.com> - 3.9.3.0-2
+- Fixed gnuradio-companion traceback on gtk init
+  Resolves: rhbz#2014797
+
+* Tue Oct  5 2021 Jaroslav Škarvada <jskarvad@redhat.com> - 3.9.3.0-1
+- New version
+  Resolves: rhbz#2009572
+
+* Tue Aug 24 2021 Jaroslav Škarvada <jskarvad@redhat.com> - 3.9.2.0-7
+- Rebuilt for new soapy and codec2
+
+* Mon Aug 23 2021 Richard Shaw <hobbes1069@gmail.com> - 3.9.2.0-6
+- Rebuild for codec2 1.0.
+
+* Sat Aug 07 2021 Jonathan Wakely <jwakely@redhat.com> - 3.9.2.0-5
+- Rebuilt for Boost 1.76
+
+* Thu Jul 22 2021 Fedora Release Engineering <releng@fedoraproject.org> - 3.9.2.0-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_35_Mass_Rebuild
+
+* Fri Jul  2 2021 Jaroslav Škarvada <jskarvad@redhat.com> - 3.9.2.0-3
+- Rebuilt for new uhd
+
+* Sat Jun 12 2021 Jaroslav Škarvada <jskarvad@redhat.com> - 3.9.2.0-2
+- Enabled Soapy support
+
+* Fri Jun 11 2021 Jaroslav Škarvada <jskarvad@redhat.com> - 3.9.2.0-1
+- New version
+  Resolves: rhbz#1970659
+
+* Fri Jun 04 2021 Python Maint <python-maint@redhat.com> - 3.9.1.0-3
+- Rebuilt for Python 3.10
+
+* Mon May 10 2021 Jonathan Wakely <jwakely@redhat.com> - 3.9.1.0-2
+- Rebuilt for removed libstdc++ symbols (#1937698)
+
+* Tue Mar 23 2021 Jaroslav Škarvada <jskarvad@redhat.com> - 3.9.1.0-1
+- New version
+  Resolves: rhbz#1941867
+
+* Wed Feb 17 2021 Jaroslav Škarvada <jskarvad@redhat.com> - 3.9.0.0-5
+- Built with libsndfile
+
+* Wed Feb  3 2021 Jaroslav Škarvada <jskarvad@redhat.com> - 3.9.0.0-4
+- Fixed FTBFS
+  Resolves: rhbz#1919794
+  Resolves: rhbz#1921503
+
+* Tue Jan 26 2021 Fedora Release Engineering <releng@fedoraproject.org> - 3.9.0.0-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_34_Mass_Rebuild
+
+* Fri Jan 22 2021 Jonathan Wakely <jwakely@redhat.com> - 3.9.0.0-2
+- Rebuilt for Boost 1.75
+
+* Mon Jan 18 2021 Jaroslav Škarvada <jskarvad@redhat.com> - 3.9.0.0-1
+- New version
+  Resolves: rhbz#1917167
+
+* Mon Nov 30 2020 Dan Horák <dan[at]danny.cz> - 3.8.2.0-3
+- use GMP exclusively
+
+* Tue Aug 25 2020 Jaroslav Škarvada <jskarvad@redhat.com> - 3.8.2.0-2
+- Explicitly disabled in-source build
+
+* Mon Aug 24 2020 Jaroslav Škarvada <jskarvad@redhat.com> - 3.8.2.0-1
+- New version
+  Resolves: rhbz#1871259
+
+* Tue Aug  4 2020 Jaroslav Škarvada <jskarvad@redhat.com> - 3.8.1.0-7
+- Fixed FTBFS due to cmake changes
+  Resolves: rhbz#1863736
+
+* Sat Aug 01 2020 Fedora Release Engineering <releng@fedoraproject.org> - 3.8.1.0-6
+- Second attempt - Rebuilt for
+  https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
+
+* Mon Jul 27 2020 Fedora Release Engineering <releng@fedoraproject.org> - 3.8.1.0-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
+
+* Wed Jun 03 2020 Jonathan Wakely <jwakely@redhat.com> - 3.8.1.0-4
+- Rebuilt and patched for Boost 1.73.0
+
+* Tue May 26 2020 Miro Hrončok <mhroncok@redhat.com> - 3.8.1.0-3
+- Rebuilt for Python 3.9
+
+* Mon May  4 2020 Jaroslav Škarvada <jskarvad@redhat.com> - 3.8.1.0-2
+- Rebuilt for new codec2
+  Resolves: rhbz#1830672
+
+* Tue Apr 14 2020 Jaroslav Škarvada <jskarvad@redhat.com> - 3.8.1.0-1
+- New version
+  Resolves: rhbz#1822797
+  Resolves: rhbz#1822842
+
+* Tue Mar 24 2020 Jaroslav Škarvada <jskarvad@redhat.com> - 3.8.0.0-7
+- Added requirement on python3-six and python3-mako
+
+* Mon Mar 23 2020 Jaroslav Škarvada <jskarvad@redhat.com> - 3.8.0.0-6
+- Dropped python3-pyopengl on RHEL
+  Resolves: rhbz#1816179
+
+* Tue Jan 28 2020 Fedora Release Engineering <releng@fedoraproject.org> - 3.8.0.0-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild
+
+* Thu Dec 05 2019 Orion Poplawski <orion@nwra.com> - 3.8.0.0-4
+- Rebuild for thrift-0.13
+
+* Wed Nov 13 2019 Jaroslav Škarvada <jskarvad@redhat.com> - 3.8.0.0-3
+- Added gtk3 requirements
+
+* Wed Nov 13 2019 Jaroslav Škarvada <jskarvad@redhat.com> - 3.8.0.0-2
+- Added python3-pyyaml requirement
+
+* Thu Oct 31 2019 Orion Poplawski <orion@nwra.com> - 3.8.0.0-1
+- Update to 3.8.0.0
+- Drop old obsoletes
+- Split out python modules into separate package
+- Use https in URLs
+- Re-enable Doxygen doc build
+
+* Mon Aug 26 2019 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.13.5-8
+- Rebuilt for new GSL
+
+* Tue Aug 20 2019 Susi Lehtola <jussilehtola@fedoraproject.org> - 3.7.13.5-7
+- Rebuilt for GSL 2.6.
+
+* Mon Aug  5 2019 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.13.5-6
+- Rebuilt for new uhd
+
+* Thu Jul 25 2019 Fedora Release Engineering <releng@fedoraproject.org> - 3.7.13.5-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
+
+* Tue Jul 09 2019 Filipe Rosset <rosset.filipe@gmail.com> - 3.7.13.5-4
+- Rebuilt for comedilib 0.11
+
+* Mon May  6 2019 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.13.5-2
+- Dropped PyQwt in f31+
+
+* Wed Apr 24 2019 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.13.5-1
+- New version
+- Updated source URL to point to github
+- Dropped python2-sphinx support (not in Fedora)
+
+* Thu Jan 31 2019 Fedora Release Engineering <releng@fedoraproject.org> - 3.7.13.4-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
+
+* Fri Jan 25 2019 Jonathan Wakely <jwakely@redhat.com> - 3.7.13.4-4
+- Rebuilt for Boost 1.69
+
+* Fri Aug 10 2018 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.13.4-3
+- Dropped patented content
+  Resolves: rhbz#1608973
+- Enabled ZeroMQ, sphinx, comedilib, jack, and log4cpp
+  Resolves: rhbz#1610513
+- Temporaly disabled doxygen (the doc subpackage is mostly useless now),
+  because due to various bugs in different packages the documentation builds
+  differently on different architectures
+- Fixed python hashbangs
+- Unlimited number of make processes
+
+* Sun Jul 22 2018 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.13.4-2
+- Rebuilt for new uhd
+
+* Tue Jul 17 2018 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.13.4-1
+- New version
+  Resolves: rhbz#1601288
+  Resolves: rhbz#1601263
+
+* Mon Jul 16 2018 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.13.3-7
+- Fixed python2 macros
+
+* Fri Jul 13 2018 Fedora Release Engineering <releng@fedoraproject.org> - 3.7.13.3-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
+
+* Wed Jul  4 2018 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.13.3-5
+- Rebuild to fix provides
+
+* Wed Jul  4 2018 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.13.3-4
+- Fixed python requirements
+
+* Wed Jun 27 2018 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.13.3-3
+- Added all upstream cmake modules
+
+* Mon Jun 18 2018 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.13.3-2
+- Added some missing cmake modules
+
+* Fri Jun 15 2018 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.13.3-1
+- New version
+  Resolves: rhbz#1591524
+- Dropped gcc-7-compile fix patch (not needed)
+- De-fuzzified size_t patch
+
+* Thu Feb 22 2018 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.11-10
+- Rebuilt for new python-cheetah
+
+* Wed Feb 07 2018 Fedora Release Engineering <releng@fedoraproject.org> - 3.7.11-9
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_28_Mass_Rebuild
+
+* Fri Feb  2 2018 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.11-8
+- Rebuilt for new boost
+
+* Sat Jan 06 2018 Igor Gnatenko <ignatenkobrain@fedoraproject.org> - 3.7.11-7
+- Remove obsolete scriptlets
+
+* Mon Aug 07 2017 Björn Esser <besser82@fedoraproject.org> - 3.7.11-6
+- Rebuilt for AutoReq cmake-filesystem
+
+* Wed Aug 02 2017 Fedora Release Engineering <releng@fedoraproject.org> - 3.7.11-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Binutils_Mass_Rebuild
+
+* Sun Jul 30 2017 Florian Weimer <fweimer@redhat.com> - 3.7.11-4
+- Rebuild with binutils fix for ppc64le (#1475636)
+
+* Wed Jul 26 2017 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.11-3
+- Rebuilt for new gsl
+
+* Fri Jul 21 2017 Kalev Lember <klember@redhat.com> - 3.7.11-2
+- Rebuilt for Boost 1.64
+
+* Wed May 24 2017 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.11-1
+- New version
+
+* Tue Feb 07 2017 Kalev Lember <klember@redhat.com> - 3.7.10.1-5
+- Rebuilt for Boost 1.63
+
+* Tue Nov 22 2016 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.10.1-4
+- Rebuilt for new uhd
+
+* Thu Sep 22 2016 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.10.1-3
+- Uncoditionally enabled NEON support on aarch64
+
+* Fri Sep 16 2016 Peter Robinson <pbrobinson@fedoraproject.org> 3.7.10.1-2
+- NEON is compulary part of aarch64 so enable unconditionally on that arch
+
+* Wed Aug 31 2016 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.10.1-1
+- New version
+  Resolves: rhbz#1370728
+
+* Tue Jul 19 2016 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.7.10-2
+- https://fedoraproject.org/wiki/Changes/Automatic_Provides_for_Python_RPM_Packages
+
+* Mon Jul  4 2016 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.10-1
+- New version
+  Resolves: rhbz#1352483
+- Dropped stdc11-fix and cmake35 patches (both upstreamed)
+- Defuzzified size_t patch
+
+* Tue May 10 2016 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.9.1-4
+- Rebuilt for new uhd
+
+* Mon Mar  7 2016 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.9.1-3
+- Rebuilt for new gsl
+
+* Tue Feb 23 2016 Orion Poplawski <orion@cora.nwra.com> - 3.7.9.1-2
+- Rebuild for gsl 2.1
+- Add patch for cmake 3.5 (bug #1311358)
+
+* Wed Feb 10 2016 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.9.1-1
+- New version
+  Resolves: rhbz#1306066
+
+* Wed Feb 03 2016 Fedora Release Engineering <releng@fedoraproject.org> - 3.7.9-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
+
+* Sat Jan 16 2016 Jonathan Wakely <jwakely@redhat.com> - 3.7.9-2
+- Rebuilt for Boost 1.60
+
+* Mon Jan  4 2016 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.9-1
+- New version
+  Resolves: rhbz#1294379
+
+* Tue Dec 15 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.9-0.1.rc1
+- New version
+  Resolves: rhbz#1291659
+- Dropped dos2unix and conversion from CR + LF to LF (not needed)
+
+* Thu Nov  5 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.8.1-1
+- New version
+  Resolves: rhbz#1276888
+
+* Thu Oct  1 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.8-3
+- Fixed icon and desktop file locations
+  Resolves: rhbz#1266700
+
+* Thu Aug 27 2015 Jonathan Wakely <jwakely@redhat.com> - 3.7.8-2
+- Rebuilt for Boost 1.59
+
+* Wed Aug 12 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.8-1
+- New version
+  Resolves: rhbz#1251650
+
+* Wed Jul 29 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.7.8-0.2.rc1
+- Rebuilt for https://fedoraproject.org/wiki/Changes/F23Boost159
+
+* Mon Jul 27 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.8-0.1.rc1
+- New version
+  Resolves: rhbz#1246803
+- Updated size_t patch
+- Dropped docdir-override (not needed)
+
+* Wed Jul 22 2015 David Tardon <dtardon@redhat.com> - 3.7.7.1-3
+- rebuild for Boost 1.58
+
+* Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.7.7.1-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+
+* Tue May 12 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.7.1-1
+- New version
+  Resolves: rhbz#1220588
+- Rebased size_t patch
+- Dropped volk-memalign-fix patch (not needed)
+- Dropped wxpython3-gtk3 patch (upstreamed)
+- Set DOCDIR to match Fedora documentation location (by docdir-override patch)
+
+* Sun May 03 2015 Kalev Lember <kalevlember@gmail.com> - 3.7.6.1-4
+- Rebuilt for GCC 5 C++11 ABI change
+
+* Thu Mar 12 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.6.1-3
+- Enabled uhd on ppc64 on RHEL-7
+- Built with -j2 to speed-up the build process a bit
+
+* Wed Mar 11 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.6.1-2
+- Enabled optional building with NEON support on aarch64
+- Built with -j1 to prevent internal compiler errors due to excessive
+  use of resources
+
+* Thu Feb 19 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.6.1-1
+- New version
+  Resolves: rhbz#1193588
+- De-fuzzified size_t patch
+
+* Wed Feb 04 2015 Petr Machata <pmachata@redhat.com> - 3.7.5.1-5
+- Bump for rebuild.
+
+* Thu Jan 29 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.5.1-4
+- Added fix for wxPython3 (by wxpython3-gtk3 patch). Patch
+  provided by Scott Talbert
+
+* Tue Jan 27 2015 Petr Machata <pmachata@redhat.com> - 3.7.5.1-3
+- Rebuild for boost 1.57.0
+
+* Mon Jan 26 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.5.1-2
+- Workaround for volk memalign (by volk-memalign-fix patch)
+  Resolves: rhbz#1185710
+- Rebuilt for current uhd
+  Resolves: rhbz#1185508
+
+* Tue Oct 21 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.5.1-1
+- New versio
+  Resolves: rhbz#1155252
+
+* Tue Oct  7 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.5-3
+- Fixed swig bug regarding size_t (by size_t patch)
+  This fixes building on s390
+  Resolves: rhbz#1143914
+
+* Wed Sep 17 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.5-2
+- Added PyOpenGL requirement
+  Resolves: rhbz#1049770
+
+* Mon Sep  1 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.5-1
+- New version
+  Resolves: rhbz#1135814
+
+* Mon Aug 18 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.4-6
+- Removed explicit PyQwt requirement on RHEL-7
+
+* Sat Aug 16 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.7.4-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_22_Mass_Rebuild
+
+* Fri Aug  8 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.4-4
+- Fixed building on RHEL-7
+
+* Fri Aug  8 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.4-3
+- Enabled UHD on RHEL-7 non ppc64
+
+* Fri Aug  8 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.4-2
+- Added workaround to build on RHEL-7
+
+* Wed Jul 16 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.4-1
+- New version
+  Resolves: rhbz#1120106
+- Dropped system-gsm patch (not needed)
+
+* Sat Jun 07 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.7.3-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
+
+* Fri May 23 2014 David Tardon <dtardon@redhat.com> - 3.7.3-3
+- rebuild for boost 1.55.0
+
+* Sun Mar 16 2014 Ville Skyttä <ville.skytta@iki.fi> - 3.7.3-2
+- Use system gsm instead of bundled one
+
+* Tue Mar 11 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.3-1
+- New version
+  Resolves: rhbz#1074899
+- Dropped qwt61 patch (not needed)
+
+* Tue Feb 11 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.2.1-4
+- Rebuilt due to new uhd
+
+* Mon Jan  6 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.2.1-3
+- Enabled use of qwt61 (by qwt61 patch)
+  Resolves: rhbz#1045935
+- Added sphinx to buildrequires
+  Related: rhbz#1045935
+- Fixed whitespaces in description
+
+* Fri Jan  3 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.2.1-2
+- Added boost-devel as requirement for gnuradio-devel
+  Resolves: rhbz#1002148
+
+* Mon Dec  2 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.2.1-1
+- New version
+  Resolves: rhbz#1036554
+
+* Mon Nov 18 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.2-1
+- New version
+  Resolves: rhbz#1030865
+- Dropped uhd-fft-err, cmake-libdir patches (all upstreamed)
+
+* Tue Sep 17 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.1-5
+- Fixed defaults to use libdir for cmake modules (by cmake-libdir patch)
+- Defuzzified uhd-fft-err patch
+
+* Tue Sep 17 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.1-4
+- Moved cmake modules to libdir/cmake
+
+* Wed Sep  4 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.1-3
+- Fixed FindGnuradio.cmake (by findgnuradio-cmake-fix patch)
+
+* Mon Sep  2 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.1-2
+- Do not install bundled cmake modules
+
+* Mon Sep  2 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.1-1
+- New version
+  Resolves: rhbz#1003319
+- Dropped cmake-modules-fix, bigendian, build-fix patches (upstreamed)
+- Fixed uhd_fft error handling
+  Resolves: rhbz#1003075
+
+* Tue Aug  6 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.0-0.5.rc0
+- Used unversioned doc directory
+  Resolves: rhbz#993794
+
+* Tue Jul 30 2013 Dennis Gilmore <dennis@ausil.us> - 3.7.0-0.4.rc0
+- rebuild against 1.54.0 again
+
+* Mon Jul 29 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.0-0.3.rc0
+- Symlinked FindGnuradio.cmake
+
+* Sun Jul 28 2013 Petr Machata <pmachata@redhat.com> - 3.7.0-0.2.rc0
+- Rebuild for boost 1.54.0
+
+* Mon Jun 24 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 3.7.0-0.1.rc0
+- New version
+  Resolves: rhbz#976982
+- Defuzzified cmake-modules-fix patch
+
+* Wed Jun 12 2013 Dan Horák <dan[at]danny.cz> - 3.6.5-2
+- fix build on big endian arches
+
+* Tue Jun  4 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 3.6.5-1
+- New version
+  Resolves: rhbz#967804
+- Make cmake modules installation directory configurable
+  (by cmake-modules-fix patch)
+- Tried to switch back to parallel build (hopefully the koji builder
+  machines have now enough resources)
+
+* Wed Mar 20 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 3.6.4.1-1
+- New version
+  Resolves: rhbz#923699
+
+* Thu Feb 28 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 3.6.4-1
+- New version
+  Resolves: rhbz#916530
+
+* Sun Feb 10 2013 Denis Arnaud <denis.arnaud_fedora@m4x.org> - 3.6.3-0.4.rc0
+- Rebuild for Boost-1.53.0
+
+* Sat Feb 09 2013 Denis Arnaud <denis.arnaud_fedora@m4x.org> - 3.6.3-0.3.rc0
+- Rebuild for Boost-1.53.0
+
+* Fri Jan 11 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 3.6.3-0.2.rc0
+- Fixed unowned directories
+  Resolves: rhbz#894200
+
+* Wed Jan  2 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 3.6.3-0.1.rc0
+- New version
+  Resolves: rhbz#890393
+- Fixed bogus date in changelog
+
+* Thu Nov 15 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 3.6.2-4
+- Added PyQwt requirement
+  Resolves: rhbz#876830
+
+* Wed Oct 31 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 3.6.2-3
+- Forced gr-core build
+
+* Tue Oct 30 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 3.6.2-2
+- Fixed libusb requirements
+- Enabled gr-fcd
+  Resolves: rhbz#871513
+
+* Thu Oct 25 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 3.6.2-1
+- New version
+  Resolves: rhbz#869840
+- Dropped neon patch (upstreamed)
+
+* Fri Oct 19 2012 Rex Dieter <rdieter@fedoraproject.org> 3.6.1-8
+- rebuild (qwt)
+
+* Mon Sep 24 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 3.6.1-7
+- Fixed doc subpackage to be noarch
+
+* Wed Aug 29 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 3.6.1-6
+- Added conditional for ARM NEON build (%%bcond_with neon)
+
+* Fri Aug 10 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 3.6.1-5
+- Rebuilt for new boost
+
+* Tue Jul 24 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 3.6.1-4
+- On non ARM expand disable_mfpu_neon macro to empty string
+
+* Thu Jul 19 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.6.1-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
+
+* Fri Jul 13 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 3.6.1-2
+- Disabled NEON optimisations (neon patch, sent upstream)
+  Resolves: rhbz#837028
+- Removed sdcc build requires (not needed)
+
+* Tue Jun 12 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 3.6.1-1
+- New version
+  Resolves: rhbz#831187
+  Dropped pygtk2-no-x-detect patch (upstreamed)
+
+* Mon Apr 23 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 3.6.0-1
+- New version
+  Resolves: rhbz#815070
+- Dropped ARM patch (not used in new buildsystem)
+- Fixed pygtk detection (pygtk2-no-x-detect patch)
+
+* Wed Apr 18 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 3.5.3.1-1
+- New version
+  Resolves: rhbz#813725
+
+* Wed Apr 18 2012 Peter Robinson <pbrobinson@fedoraproject.org> - 3.5.3-2
+- Fix building on ARM
+
+* Tue Apr 10 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 3.5.3-1
+- New version
+  Resolves: rhbz#810683
+
+* Tue Mar 27 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 3.5.2.1-2
+- Rebuilt with new uhd
+
+* Fri Mar 16 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 3.5.2.1-1
+- New version
+  Resolves: rhbz#804032
+
+* Thu Mar 15 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 3.5.2-1
+- New version
+  Resolves: rhbz#802950
+- Dropped compile-fix patch (upstreamed)
+
+* Tue Feb 28 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.5.1-3
+- Rebuilt for c++ ABI breakage
+
+* Tue Jan 17 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 3.5.1-2
+- Added explicit requires on PyQt4
+  Resolves: rhbz#781494
+
+* Fri Jan 13 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 3.5.1-1
+- New version
+  Resolves: rhbz#781355
+- Fixed compilation with gcc-4.7.0 (compile-fix patch)
+
+* Fri Jan 13 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.5.0-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
+
+* Tue Dec 20 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 3.5.0-2
+- Fixed double packaging of doc
+  Resolves: rhbz#769069
+- Fixed rpmlint warnings
+
+* Tue Dec 13 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 3.5.0-1
+- New version
+- Used macros instead of variables in spec
+- Dropped sdcc hack, was needed by obsoleted libusrp
+
+* Sun Dec  4 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 3.5.0-0.2.rc0
+- Added python-cheetah dependency
+  Resolves: rhbz#759834
+
+* Fri Dec 02 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 3.5.0-0.1.rc0
+- New pre-release version
+- Followed upstream and dropped support for usrp, use uhd instead
+- Dropped sdcc3 and libusb-detect-fix patches
+- Dropped 10-usrp.rules and usrp group creation, now handled by uhd
+
+* Sun Nov 20 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 3.4.2-2
+- Rebuilt for new boost
+
+* Thu Oct 27 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 3.4.2-1
+- New version
+- Dropped retval patch
+
+* Fri Oct 21 2011 Dan Horák <dan[at]danny.cz> - 3.4.0-5
+- add missing return value in generated code
+- add BR: orc-devel - needed for secondary arches in volk
+
+* Thu Oct 20 2011 Dan Horák <dan[at]danny.cz> - 3.4.0-4
+- explicitly set boost libdir to workaround build failures on non-x86 64-bit arches
+
+* Thu Jul 21 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 3.4.0-3
+- Enabled volk
+- Rebuilt for new boost
+
+* Sun Jul 03 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 3.4.0-2
+- Rebuilt with -j1, otherwise the build process may fail on machines with low RAM
+- Define changed to global
+
+* Mon Jun 27 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 3.4.0-1
+- New version
+- Updated 10-usrp.rules
+  Resolves: rhbz#597023
+- Merged usrp to gnuradio, fixes some packaging bugs
+  Resolves: rhbz#516352
+  Resolves: rhbz#619195
+- Rebuilt with included grc, obsoleted grc package
+  Resolves: rhbz#592486
+- Removed unneeded patches (libtool, configure, gcc45, ptrdifft-std)
+- Fixed compilation with sdcc3 (sdcc3 patch)
+- Fixed detection of libusb (libusb-detect-fix patch)
+- Compiled with -fno-strict-aliasing
+
+* Thu Apr 07 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 3.2.2-13
+- Rebuild for new boost
+
+* Tue Mar 15 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 3.2.2-12
+- Rebuild for new boost
+
+* Tue Feb 15 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 3.2.2-11
+- Fix compilation with ptrdifft-std patch
+- Rebuild for new boost
+
+* Tue Feb 08 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.2.2-10
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
+
+* Mon Feb 07 2011 Thomas Spura <tomspur@fedoraproject.org> - 3.2.2-9
+- rebuild for new boost
+
+* Tue Sep 07 2010 Dan Horák <dan[at]danny.cz> - 3.2.2-8
+- Add sparc64 and s390x to 64-bit platforms
+
+* Sun Aug 01 2010 Orcan Ogetbil <oget[dot]fedora[at]gmail[dot]com> - 3.2.2-7
+- Fix gcc-4.5 build errors
+
+* Wed Jul 21 2010 David Malcolm <dmalcolm@redhat.com> - 3.2.2-6
+- Rebuilt for https://fedoraproject.org/wiki/Features/Python_2.7/MassRebuild
+
+* Fri May 21 2010 Tom "spot" Callaway <tcallawa@redhat.com> - 3.2.2-5
+- re-export PATH for %%install
+
+* Fri May 21 2010 Tom "spot" Callaway <tcallawa@redhat.com> - 3.2.2-4
+- don't BuildRequires: comedilib-devel, code doesn't use it
+
+* Tue Feb 09 2010 Caolán McNamara <caolanm@redhat.com> - 3.2.2-3
+- Resolves: rhbz#539069 FTBFS
+
+* Fri Jan 22 2010 Rahul Sundaram <sundaram@fedoraproject.org> - 3.2.2-2
+- Rebuild for Boost soname bump
+
+* Wed Jul 29 2009 Marek Mahut <mmahut@fedoraproject.org> - 3.2.2-1
+- Upstream release 3.2.2
+- Dropped patch gnuradio-3.2-gcc44.patch
+
+* Sat Jul 25 2009 Marek Mahut <mmahut@fedoraproject.org> - 3.2-1
+- Upstream release 3.2
+
+* Wed Mar  4 2009 Lubomir Rintel <lkundrak@v3.sk> - 3.1.3-5
+- Fix build with GCC 4.4
+
+* Tue Feb 24 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.1.3-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_11_Mass_Rebuild
+
+* Wed Dec 31 2008 Marek Mahut <mmahut@fedoraproject.org> - 3.1.3-3
+- Adding udev rule for USRP device
+- Adding usrp system group
+
+* Fri Dec 19 2008 Marek Mahut <mmahut@fedoraproject.org> - 3.1.3-2
+- Upstream release 3.1.3
+- Comedi support
+- RHBZ#473928 Unowned directories
+
+* Sat Nov 29 2008 Ignacio Vazquez-Abrams <ivazqueznet+rpm@gmail.com> - 3.1.2-3
+- Rebuild for Python 2.6
+
+* Tue Jun 10 2008 Marek Mahut <mmahut@fedoraproject.org> - 3.1.2-2
+- Moving usrp header files to usrp-devel (reported by Philip Balister)
+
+* Fri Apr  4 2008 Marek Mahut <mmahut@fedoraproject.org> - 3.1.2-1
+- Upstream release
+- Modification of gnuradio-3.1.2-gcc34.patch to the new release
+
+* Thu Mar 27 2008 Marek Mahut <mmahut@fedoraproject.org> - 3.1.1-4
+- Moving libusrp to gnuradio package
+
+* Wed Feb 20 2008 Marek Mahut <mmahut@fedoraproject.org> - 3.1.1-2
+- Upstream release
+- Spec file rewrite
+
+* Mon Mar 12 2007 Trond Danielsen <trond.danielsen@gmail.com> - 3.0.3-1
+- Initial version.
