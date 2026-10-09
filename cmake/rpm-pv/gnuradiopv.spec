@@ -58,7 +58,7 @@
 # libuhdpv instead of uhd). real_name is the upstream project/module name.
 Name:		gnuradiopv
 %global real_name gnuradio
-Version:	3.10.12.0
+Version:	3.10.12.3
 # Per Vices: our own release numbering, independent of Fedora's.
 Release:	1%{?alphatag:.%{alphatag}}%{?dist}
 Summary:	Software defined radio framework
