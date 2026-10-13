@@ -58,7 +58,12 @@
 # libuhdpv instead of uhd). real_name is the upstream project/module name.
 Name:		gnuradiopv
 %global real_name gnuradio
-Version:	3.10.12.3
+# Per Vices: CI replaces UNSET with the version from the Debian changelog.
+# Stop with a clear error if that step was skipped.
+Version:	UNSET
+%if "%{version}" == "UNSET"
+%{error:Version is UNSET: CI must set it from the Debian changelog before building}
+%endif
 # Per Vices: our own release numbering, independent of Fedora's.
 Release:	1%{?alphatag:.%{alphatag}}%{?dist}
 Summary:	Software defined radio framework
@@ -69,7 +74,10 @@ URL:		https://www.gnuradio.org/
 #Source0:	http://gnuradio.org/releases/gnuradio/gnuradio-%%{version}.tar.gz
 # Per Vices: build from the Per Vices fork (same source as our Ubuntu package). The fork's
 # GNU Radio code is identical to upstream; only packaging files differ.
-Source0:	https://github.com/pervices/%{real_name}/archive/v%{version}/%{real_name}-%{version}.tar.gz
+# No download URL: CI creates this tarball from the cloned branch with
+#   git archive --format=tar.gz --prefix=%%{real_name}-%%{version}/ HEAD
+# so builds do not need a matching tag on the fork.
+Source0:	%{real_name}-%{version}.tar.gz
 # git clone git://gnuradio.org/gnuradio
 # cd gnuradio
 # git archive --format=tar --prefix=%%{name}-%%{version}/ %%{git_commit} | \
